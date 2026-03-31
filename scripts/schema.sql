@@ -249,8 +249,8 @@ CREATE INDEX idx_overrides_customer ON recommendation_overrides(customer_id);
 CREATE INDEX idx_risk_register_status ON ai_act_risk_register(status);
 CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
 CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
-CREATE INDEX idx_api_tokens_hash ON api_tokens(token_hash);
-CREATE INDEX idx_api_tokens_active ON api_tokens(revoked, expires_at);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_active ON api_tokens(revoked, expires_at);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');
