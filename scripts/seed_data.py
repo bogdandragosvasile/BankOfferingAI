@@ -110,8 +110,15 @@ def seed_customers(conn, customers_data, features_data):
                     has_debt, risk_profile, marital_status, dependents_count,
                     homeowner_status, existing_products, financial_health,
                     profiling_consent, profiling_consent_ts,
+                    automated_decision_consent, automated_decision_consent_ts,
+                    marketing_push, marketing_push_ts,
+                    marketing_email, marketing_email_ts,
+                    marketing_sms, marketing_sms_ts,
+                    family_context_consent, family_context_consent_ts,
                     sensitive_data_consent, sensitive_data_consent_ts)
                 VALUES (%s,%s::uuid,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                        TRUE, NOW(), TRUE, NOW(),
+                        TRUE, NOW(), TRUE, NOW(), FALSE, NULL,
                         TRUE, NOW(), TRUE, NOW())
                 ON CONFLICT (customer_id) DO NOTHING
             """, (
