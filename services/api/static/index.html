@@ -126,8 +126,8 @@ tailwind.config = {
       <p class="text-xs text-dark-300 mt-0.5" id="pageSubtitle" data-i18n="dashboard.subtitle">AI-powered personalization engine</p>
     </div>
     <div class="flex items-center gap-4">
-      <a href="/portal" class="text-xs text-accent-light hover:text-white transition flex items-center gap-1" data-i18n="nav.customer_portal">Customer Portal <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
-      <a href="/admin" class="text-xs text-red-400/70 hover:text-red-400 transition flex items-center gap-1" data-i18n="nav.admin">Admin <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></a>
+      <a href="/portal" class="text-xs text-accent-light hover:text-white transition flex items-center gap-1"><span data-i18n="nav.customer_portal">Customer Portal</span> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
+      <a href="/admin" class="text-xs text-red-400/70 hover:text-red-400 transition flex items-center gap-1"><span data-i18n="nav.admin">Admin</span> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></a>
       <div class="relative">
         <input type="text" id="searchInput" placeholder="Search customer ID..." data-i18n-placeholder="dashboard.search_customer" class="bg-dark-800 border border-dark-600/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-56 transition-all focus:w-72"/>
         <svg class="w-4 h-4 text-dark-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -240,7 +240,7 @@ tailwind.config = {
             <div class="relative">
               <input type="text" id="auditFilterCustomer" placeholder="Filter by customer ID..." data-i18n-placeholder="compliance.filter_customer" class="bg-dark-800 border border-dark-600/50 rounded-lg pl-3 pr-3 py-2 text-xs text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-48"/>
             </div>
-            <button onclick="loadAuditTrail()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Refresh</button>
+            <button onclick="loadAuditTrail()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition" data-i18n="common.refresh">Refresh</button>
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -269,25 +269,25 @@ tailwind.config = {
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-base font-semibold text-white flex items-center gap-2">
             <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-            Customer Feedback Review
+            <span data-i18n="compliance.feedback_review">Customer Feedback Review</span>
           </h2>
           <div class="flex items-center gap-3">
             <div class="relative">
-              <input type="number" id="feedbackCustomerId" placeholder="Customer ID..." min="1" max="50" class="bg-dark-800 border border-dark-600/50 rounded-lg pl-3 pr-3 py-2 text-xs text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-40"/>
+              <input type="number" id="feedbackCustomerId" placeholder="Customer ID..." data-i18n-placeholder="compliance.filter_customer" min="1" max="50" class="bg-dark-800 border border-dark-600/50 rounded-lg pl-3 pr-3 py-2 text-xs text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-40"/>
             </div>
-            <button onclick="loadCustomerFeedback()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Load Feedback</button>
+            <button onclick="loadCustomerFeedback()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition" data-i18n="common.load_feedback">Load Feedback</button>
           </div>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
             <thead>
               <tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
-                <th class="py-3 px-4">Time</th>
-                <th class="py-3 px-4">Customer</th>
-                <th class="py-3 px-4">Offer</th>
-                <th class="py-3 px-4">Action</th>
-                <th class="py-3 px-4">Reason</th>
-                <th class="py-3 px-4">Actor Type</th>
+                <th class="py-3 px-4" data-i18n="common.time">Time</th>
+                <th class="py-3 px-4" data-i18n="common.customer">Customer</th>
+                <th class="py-3 px-4" data-i18n="compliance.offer">Offer</th>
+                <th class="py-3 px-4" data-i18n="compliance.action">Action</th>
+                <th class="py-3 px-4" data-i18n="common.reason">Reason</th>
+                <th class="py-3 px-4" data-i18n="compliance.actor_type">Actor Type</th>
               </tr>
             </thead>
             <tbody id="feedbackTableBody">
@@ -303,52 +303,52 @@ tailwind.config = {
       <div class="grid grid-cols-3 gap-5 mb-6">
         <div class="glass-card rounded-2xl p-6 stat-glow-green">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Profiling Consent Active</span>
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider" data-i18n="compliance.profiling_active">Profiling Consent Active</span>
             <div class="w-9 h-9 rounded-xl bg-neon-green/10 flex items-center justify-center">
               <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="consentProfilingCount">--</p>
-          <p class="text-xs text-neon-green mt-1">Customers with profiling consent</p>
+          <p class="text-xs text-neon-green mt-1" data-i18n="compliance.customers_profiling">Customers with profiling consent</p>
         </div>
         <div class="glass-card rounded-2xl p-6 stat-glow-cyan">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Sensitive Data Consent</span>
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider" data-i18n="compliance.sensitive_active">Sensitive Data Consent</span>
             <div class="w-9 h-9 rounded-xl bg-neon-cyan/10 flex items-center justify-center">
               <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="consentSensitiveCount">--</p>
-          <p class="text-xs text-neon-cyan mt-1">Customers with sensitive data consent</p>
+          <p class="text-xs text-neon-cyan mt-1" data-i18n="compliance.customers_sensitive">Customers with sensitive data consent</p>
         </div>
         <div class="glass-card rounded-2xl p-6 stat-glow-amber">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Consent Withdrawn</span>
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider" data-i18n="compliance.consent_withdrawn">Consent Withdrawn</span>
             <div class="w-9 h-9 rounded-xl bg-neon-amber/10 flex items-center justify-center">
               <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="consentWithdrawnCount">--</p>
-          <p class="text-xs text-neon-amber mt-1">Customers with consent withdrawn</p>
+          <p class="text-xs text-neon-amber mt-1" data-i18n="compliance.customers_withdrawn">Customers with consent withdrawn</p>
         </div>
       </div>
       <div class="glass-card rounded-2xl p-6">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-base font-semibold text-white flex items-center gap-2">
             <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Customer Consent Details
+            <span data-i18n="compliance.consent_details">Customer Consent Details</span>
           </h2>
-          <button onclick="loadConsentOverview()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Refresh</button>
+          <button onclick="loadConsentOverview()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition" data-i18n="common.refresh">Refresh</button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
             <thead>
               <tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
-                <th class="py-3 px-4">Customer ID</th>
-                <th class="py-3 px-4">Profiling Consent</th>
-                <th class="py-3 px-4">Sensitive Data</th>
-                <th class="py-3 px-4">Life Stage</th>
-                <th class="py-3 px-4">Risk Score</th>
+                <th class="py-3 px-4" data-i18n="customers.id">Customer ID</th>
+                <th class="py-3 px-4" data-i18n="consent.profiling">Profiling Consent</th>
+                <th class="py-3 px-4" data-i18n="consent.sensitive">Sensitive Data</th>
+                <th class="py-3 px-4" data-i18n="customers.life_stage">Life Stage</th>
+                <th class="py-3 px-4" data-i18n="field.risk_score">Risk Score</th>
               </tr>
             </thead>
             <tbody id="consentTableBody">
@@ -385,8 +385,8 @@ tailwind.config = {
     <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
       <svg class="w-8 h-8 text-accent-light animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
     </div>
-    <p class="text-white font-semibold text-lg">BankOffer AI</p>
-    <p class="text-dark-300 text-sm mt-1">Initializing scoring engine...</p>
+    <p class="text-white font-semibold text-lg" data-i18n="app.name">BankOffer AI</p>
+    <p class="text-dark-300 text-sm mt-1" data-i18n="common.initializing">Initializing scoring engine...</p>
   </div>
 </div>
 
@@ -485,14 +485,20 @@ let excludedProductsVisible = false;
 // ===== NAVIGATION =====
 function navigateTo(section) {
   document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-  document.getElementById(`page-${section}`).classList.remove('hidden');
+  const target = document.getElementById(`page-${section}`);
+  if (!target) return;
+  target.classList.remove('hidden');
   document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
   const link = document.querySelector(`.sidebar-link[data-section="${section}"]`);
   if (link) link.classList.add('active');
-  const titles = { dashboard:['Dashboard','AI-powered personalization engine'], products:['Product Catalog','12 financial products across 6 categories'], customers:['Customer Directory','50 profiled customers with AI scoring'], analytics:['Analytics','Aggregate insights across all customers'], compliance:['Compliance','Audit trail, suitability checks & consent management'] };
-  const t = titles[section] || titles.dashboard;
-  document.getElementById('pageTitle').textContent = t[0];
-  document.getElementById('pageSubtitle').textContent = t[1];
+  const titleKeys = { dashboard:['dashboard.title','dashboard.subtitle'], products:['products.title','products.subtitle'], customers:['customers.title','customers.subtitle'], analytics:['analytics.title','analytics.subtitle'], compliance:['compliance.title','compliance.subtitle'] };
+  const keys = titleKeys[section] || titleKeys.dashboard;
+  const pageTitle = document.getElementById('pageTitle');
+  const pageSubtitle = document.getElementById('pageSubtitle');
+  pageTitle.textContent = t(keys[0]);
+  pageTitle.setAttribute('data-i18n', keys[0]);
+  pageSubtitle.textContent = t(keys[1]);
+  pageSubtitle.setAttribute('data-i18n', keys[1]);
   if (section === 'products') renderProductsPage();
   if (section === 'customers') renderCustomersPage();
   if (section === 'analytics') renderAnalyticsPage();
