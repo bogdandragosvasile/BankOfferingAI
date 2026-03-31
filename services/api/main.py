@@ -142,6 +142,14 @@ def create_app() -> FastAPI:
             """Admin portal (administrators only)."""
             return FileResponse(static_dir / "admin.html")
 
+        @app.get("/presentation", include_in_schema=False)
+        async def presentation():
+            """Interactive HTML presentation of the platform."""
+            pres_file = Path(__file__).resolve().parent.parent.parent / "presentation.html"
+            if pres_file.is_file():
+                return FileResponse(pres_file)
+            return {"error": "presentation.html not found"}
+
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     return app
