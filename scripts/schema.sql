@@ -218,6 +218,20 @@ CREATE TABLE customer_auth (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ===== API tokens (programmatic access) =====
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    token_prefix VARCHAR(16) NOT NULL,
+    scopes VARCHAR(200) NOT NULL DEFAULT 'read',
+    created_by VARCHAR(200) NOT NULL,
+    last_used TIMESTAMP,
+    expires_at TIMESTAMP,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ===== Indexes =====
 CREATE INDEX idx_customer_features_cid ON customer_features(customer_id);
 CREATE INDEX idx_transactions_cid ON transactions(customer_id);
@@ -235,6 +249,8 @@ CREATE INDEX idx_overrides_customer ON recommendation_overrides(customer_id);
 CREATE INDEX idx_risk_register_status ON ai_act_risk_register(status);
 CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
 CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
+CREATE INDEX idx_api_tokens_hash ON api_tokens(token_hash);
+CREATE INDEX idx_api_tokens_active ON api_tokens(revoked, expires_at);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');

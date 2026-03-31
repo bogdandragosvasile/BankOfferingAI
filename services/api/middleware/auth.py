@@ -10,7 +10,7 @@ import os
 from typing import Optional
 
 import httpx
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
@@ -113,12 +113,14 @@ def decode_token(token: str) -> dict:
 
 
 async def get_current_customer_id(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ) -> str:
     """FastAPI dependency that extracts and validates the customer_id from a JWT.
 
     In DEMO_MODE, authentication is bypassed and a placeholder ID is returned.
     With Keycloak configured, validates RS256 tokens and extracts customer_id claim.
+    Also accepts long-lived API tokens (boai_* prefix) for programmatic access.
     """
     if DEMO_MODE:
         return "__demo__"
@@ -131,6 +133,20 @@ async def get_current_customer_id(
         )
 
     token = credentials.credentials
+
+    # API token check (boai_* prefix)
+    if token.startswith("boai_") and request:
+        from services.api.routers.api_tokens import validate_api_token
+
+        session_factory = request.app.state.db_session_factory
+        token_meta = await validate_api_token(token, session_factory)
+        if token_meta:
+            return "__api_token__"
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or revoked API token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     # Try Keycloak RS256 first if configured
     if KEYCLOAK_URL:
