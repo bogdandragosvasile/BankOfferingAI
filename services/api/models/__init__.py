@@ -287,6 +287,7 @@ class CustomerRegisterResponse(BaseModel):
     external_id: str = Field(..., description="Pseudonymized UUID for display (GDPR Art. 25)")
     display_name: str
     anonymize_after: datetime = Field(..., description="Auto-anonymization date (GDPR Art. 5(1)(e))")
+    onboarding_complete: bool = Field(default=False, description="Whether customer completed onboarding wizard")
     message: str
 
 
@@ -301,6 +302,7 @@ class CustomerLoginResponse(BaseModel):
     external_id: str = Field(..., description="Pseudonymized UUID for display")
     display_name: str
     anonymize_after: Optional[datetime] = Field(None, description="Auto-anonymization date")
+    onboarding_complete: bool = Field(default=False, description="Whether customer completed onboarding wizard")
 
 
 class WebhookPayload(BaseModel):

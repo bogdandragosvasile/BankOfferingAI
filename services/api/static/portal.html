@@ -617,6 +617,260 @@ tailwind.config = {
   </main>
 </div>
 
+<!-- ==================== ONBOARDING WIZARD OVERLAY ==================== -->
+<div id="onboarding-wizard" class="fixed inset-0 z-[90] hidden overflow-y-auto" style="background: #060a14;">
+  <div class="min-h-screen flex items-start justify-center p-4 pt-8 pb-16">
+    <div class="max-w-2xl w-full">
+      <!-- Header -->
+      <div class="text-center mb-8 fade-in">
+        <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
+          <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold text-white mb-2" data-i18n="onboarding.title">Complete Your Profile</h1>
+        <p class="text-dark-300 text-sm" data-i18n="onboarding.subtitle">A few steps to set up your personalized banking experience</p>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="flex items-center gap-2 mb-8 px-4">
+        <div class="flex-1 flex items-center gap-2">
+          <div id="step-dot-1" class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">1</div>
+          <div class="flex-1 h-1 rounded bg-dark-600"><div id="step-bar-1" class="h-1 rounded bg-accent transition-all duration-500" style="width:0%"></div></div>
+          <div id="step-dot-2" class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-dark-300 text-sm font-bold flex-shrink-0">2</div>
+          <div class="flex-1 h-1 rounded bg-dark-600"><div id="step-bar-2" class="h-1 rounded bg-accent transition-all duration-500" style="width:0%"></div></div>
+          <div id="step-dot-3" class="w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-dark-300 text-sm font-bold flex-shrink-0">3</div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Data Processing & Consent -->
+      <div id="onboarding-step-1" class="fade-in">
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-neon-cyan/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white" data-i18n="onboarding.step1_title">Data Processing & Consent</h3>
+              <p class="text-dark-300 text-xs" data-i18n="onboarding.step1_subtitle">Required for personalized banking services</p>
+            </div>
+          </div>
+
+          <!-- AI Act transparency notice -->
+          <div class="rounded-xl p-4 mb-5 border-l-4 border-accent bg-accent/5">
+            <p class="text-sm text-dark-200" data-i18n="onboarding.ai_notice">This platform uses AI to generate personalized product recommendations (EU AI Act Art. 13). You have the right to request explanations and contest any automated decision.</p>
+          </div>
+
+          <!-- Dynamic consent checkboxes from registry -->
+          <div id="onboarding-consent-list" class="space-y-3">
+            <!-- Filled dynamically from consent registry -->
+          </div>
+
+          <!-- Static consent toggles -->
+          <div class="mt-5 space-y-3">
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-profiling" class="mt-0.5 w-4 h-4 accent-accent" checked>
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_profiling">Financial Profiling</span>
+                <span class="text-xs text-neon-cyan ml-2">GDPR Art. 6(1)(a)</span>
+                <p class="text-xs text-dark-300 mt-1" data-i18n="onboarding.consent_profiling_desc">Allow analysis of your financial data to generate personalized offers.</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-automated" class="mt-0.5 w-4 h-4 accent-accent">
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_automated">Automated Decisions</span>
+                <span class="text-xs text-neon-cyan ml-2">GDPR Art. 22</span>
+                <p class="text-xs text-dark-300 mt-1" data-i18n="onboarding.consent_automated_desc">Allow fully automated offer generation without human review per offer.</p>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-marketing-email" class="mt-0.5 w-4 h-4 accent-accent">
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_marketing_email">Marketing via Email</span>
+                <span class="text-xs text-neon-cyan ml-2">ePrivacy</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-marketing-push" class="mt-0.5 w-4 h-4 accent-accent">
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_marketing_push">Push Notifications</span>
+                <span class="text-xs text-neon-cyan ml-2">ePrivacy</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-marketing-sms" class="mt-0.5 w-4 h-4 accent-accent">
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_marketing_sms">Marketing via SMS</span>
+                <span class="text-xs text-neon-cyan ml-2">ePrivacy</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+              <input type="checkbox" id="ob-family" class="mt-0.5 w-4 h-4 accent-accent">
+              <div>
+                <span class="text-sm font-medium text-white" data-i18n="onboarding.consent_family">Family Context Data</span>
+                <span class="text-xs text-neon-cyan ml-2">GDPR Art. 9</span>
+                <p class="text-xs text-dark-300 mt-1" data-i18n="onboarding.consent_family_desc">Allow use of family data (dependents, marital status) for insurance and family product recommendations.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button onclick="onboardingNext(2)" class="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors glow-accent" data-i18n="onboarding.next">Next</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Profile Questionnaire -->
+      <div id="onboarding-step-2" class="hidden fade-in">
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-neon-purple/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white" data-i18n="onboarding.step2_title">Profile Questionnaire</h3>
+              <p class="text-dark-300 text-xs" data-i18n="onboarding.step2_subtitle">Help us tailor offers to your financial situation</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Age -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.age">Age</label>
+              <input type="number" id="ob-age" min="18" max="100"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+                placeholder="30">
+            </div>
+
+            <!-- Annual Income -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.annual_income">Annual Income (EUR)</label>
+              <input type="number" id="ob-income" min="0" step="1000"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+                placeholder="45000">
+            </div>
+
+            <!-- Dependents -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.dependents">Number of Dependents</label>
+              <input type="number" id="ob-dependents" min="0" max="20"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+                placeholder="0">
+            </div>
+
+            <!-- Employment Status -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.employment">Employment Status</label>
+              <select id="ob-employment"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors">
+                <option value="" data-i18n="onboarding.select">Select...</option>
+                <option value="employed" data-i18n="onboarding.employed">Employed</option>
+                <option value="self_employed" data-i18n="onboarding.self_employed">Self-Employed</option>
+                <option value="student" data-i18n="onboarding.student">Student</option>
+                <option value="retired" data-i18n="onboarding.retired">Retired</option>
+                <option value="unemployed" data-i18n="onboarding.unemployed">Unemployed</option>
+              </select>
+            </div>
+
+            <!-- Risk Tolerance -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.risk_tolerance">Risk Tolerance</label>
+              <select id="ob-risk"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors">
+                <option value="" data-i18n="onboarding.select">Select...</option>
+                <option value="conservative" data-i18n="onboarding.conservative">Conservative</option>
+                <option value="moderate" data-i18n="onboarding.moderate">Moderate</option>
+                <option value="aggressive" data-i18n="onboarding.aggressive">Aggressive</option>
+              </select>
+            </div>
+
+            <!-- Homeowner Status -->
+            <div>
+              <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="onboarding.homeowner">Homeowner Status</label>
+              <select id="ob-homeowner"
+                class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors">
+                <option value="" data-i18n="onboarding.select">Select...</option>
+                <option value="owner" data-i18n="onboarding.owner">Owner</option>
+                <option value="renter" data-i18n="onboarding.renter">Renter</option>
+                <option value="with_family" data-i18n="onboarding.with_family">Living with Family</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Existing Products -->
+          <div class="mt-4">
+            <label class="block text-xs text-dark-200 mb-2 font-medium" data-i18n="onboarding.existing_products">Existing Banking Products</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="ob-existing-products">
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="savings_account" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_savings">Savings Account</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="credit_card" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_credit">Credit Card</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="mortgage" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_mortgage">Mortgage</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="personal_loan" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_loan">Personal Loan</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="investment" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_investment">Investment Account</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 rounded-lg bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
+                <input type="checkbox" value="insurance" class="w-3.5 h-3.5 accent-accent">
+                <span class="text-xs text-dark-200" data-i18n="onboarding.prod_insurance">Insurance</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between">
+          <button onclick="onboardingNext(1)" class="px-6 py-2.5 rounded-xl bg-dark-700 hover:bg-dark-600 text-dark-200 font-medium text-sm transition-colors" data-i18n="onboarding.back">Back</button>
+          <button onclick="onboardingNext(3)" class="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors glow-accent" data-i18n="onboarding.next">Next</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Summary & Confirm -->
+      <div id="onboarding-step-3" class="hidden fade-in">
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-neon-green/20 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white" data-i18n="onboarding.step3_title">Review & Confirm</h3>
+              <p class="text-dark-300 text-xs" data-i18n="onboarding.step3_subtitle">Please review your selections before completing setup</p>
+            </div>
+          </div>
+
+          <!-- Consent summary -->
+          <div class="mb-5">
+            <h4 class="text-sm font-semibold text-accent-light mb-3" data-i18n="onboarding.consent_summary">Consent Selections</h4>
+            <div id="ob-summary-consent" class="space-y-1.5"></div>
+          </div>
+
+          <!-- Profile summary -->
+          <div>
+            <h4 class="text-sm font-semibold text-accent-light mb-3" data-i18n="onboarding.profile_summary">Profile Information</h4>
+            <div id="ob-summary-profile" class="grid grid-cols-2 gap-2"></div>
+          </div>
+        </div>
+
+        <div id="ob-submit-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+
+        <div class="flex justify-between">
+          <button onclick="onboardingNext(2)" class="px-6 py-2.5 rounded-xl bg-dark-700 hover:bg-dark-600 text-dark-200 font-medium text-sm transition-colors" data-i18n="onboarding.back">Back</button>
+          <button onclick="submitOnboarding()" id="ob-submit-btn" class="px-8 py-2.5 rounded-xl bg-neon-green hover:bg-neon-green/80 text-white font-bold text-sm transition-colors" data-i18n="onboarding.complete">Complete Setup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MiFID II Suitability Confirmation Modal -->
 <div id="suitability-modal" class="fixed inset-0 z-[100] hidden items-center justify-center" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
   <div class="glass-card rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 glow-accent" style="border-color: rgba(167,139,250,0.3);">
@@ -658,6 +912,7 @@ let state = {
   feedbackData: null,
   recommendationId: null,
   currentSection: 'offers',
+  onboardingComplete: true,
   consentLocal: {
     profiling: false,
     automated_decision: false,
@@ -726,7 +981,7 @@ function init() {
   // Check for existing customer session
   const session = getCustomerSession();
   if (session) {
-    enterPortal(session.customer_id, session.display_name, session.external_id);
+    enterPortal(session.customer_id, session.display_name, session.external_id, session.onboarding_complete);
   }
 }
 
@@ -740,6 +995,7 @@ function saveCustomerSession(data) {
     external_id: data.external_id,
     display_name: data.display_name,
     anonymize_after: data.anonymize_after,
+    onboarding_complete: data.onboarding_complete !== false,
     ts: Date.now()
   }));
 }
@@ -812,7 +1068,7 @@ async function handleLogin() {
 
     const data = await resp.json();
     saveCustomerSession(data);
-    enterPortal(data.customer_id, data.display_name, data.external_id);
+    enterPortal(data.customer_id, data.display_name, data.external_id, data.onboarding_complete);
   } catch (e) {
     errorEl.textContent = e.message || t('cauth.login_error');
     errorEl.classList.remove('hidden');
@@ -863,7 +1119,7 @@ async function handleRegister() {
     if (resp.ok) {
       const data = await resp.json();
       saveCustomerSession(data);
-      enterPortal(data.customer_id, data.display_name, data.external_id);
+      enterPortal(data.customer_id, data.display_name, data.external_id, data.onboarding_complete);
       return;
     }
 
@@ -886,7 +1142,7 @@ async function handleRegister() {
 
     const data = await regResp.json();
     saveCustomerSession(data);
-    enterPortal(data.customer_id, data.display_name, data.external_id);
+    enterPortal(data.customer_id, data.display_name, data.external_id, data.onboarding_complete);
   } catch (e) {
     errorEl.textContent = e.message || t('cauth.register_error');
     errorEl.classList.remove('hidden');
@@ -897,12 +1153,27 @@ async function handleRegister() {
 }
 
 // ==================== PORTAL ENTRY ====================
-async function enterPortal(customerId, displayName, externalId) {
+async function enterPortal(customerId, displayName, externalId, onboardingComplete) {
   state.customerId = customerId;
   state.feedbackGiven = {};
 
+  // Check onboarding status
+  const obComplete = onboardingComplete !== undefined ? onboardingComplete : true;
+  state.onboardingComplete = obComplete;
+
+  if (!obComplete) {
+    // Show onboarding wizard
+    document.getElementById('screen-auth').classList.add('hidden');
+    document.getElementById('screen-portal').classList.add('hidden');
+    document.getElementById('onboarding-wizard').classList.remove('hidden');
+    onboardingNext(1);
+    loadOnboardingConsentTexts();
+    return;
+  }
+
   // Show portal, hide auth screen
   document.getElementById('screen-auth').classList.add('hidden');
+  document.getElementById('onboarding-wizard').classList.add('hidden');
   document.getElementById('screen-portal').classList.remove('hidden');
 
   // Set loading state
@@ -1647,15 +1918,15 @@ function setupAuthGate() {
           const resp = await fetch(API + '/customer-auth/sso-lookup?email=' + encodeURIComponent(user.email));
           if (resp.ok) {
             const data = await resp.json();
-            enterPortal(data.customer_id, data.display_name || user.name, data.external_id);
+            enterPortal(data.customer_id, data.display_name || user.name, data.external_id, data.onboarding_complete);
           } else {
             // No customer account linked — use SSO name with fallback customer_id
             console.warn('[Portal] No customer account for SSO email:', user.email);
-            enterPortal(user.customer_id || '1', user.name || user.email, null);
+            enterPortal(user.customer_id || '1', user.name || user.email, null, true);
           }
         } catch(e) {
           console.error('[Portal] SSO lookup failed:', e);
-          enterPortal(user.customer_id || '1', user.name || user.email, null);
+          enterPortal(user.customer_id || '1', user.name || user.email, null, true);
         }
       }
     });
@@ -1692,6 +1963,198 @@ document.getElementById('login-email').addEventListener('keydown', e => {
 document.getElementById('register-confirm').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleRegister();
 });
+
+// ==================== ONBOARDING WIZARD ====================
+let onboardingStep = 1;
+
+function onboardingNext(step) {
+  onboardingStep = step;
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById(`onboarding-step-${i}`);
+    if (el) el.classList.toggle('hidden', i !== step);
+  }
+  // Update progress dots
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById(`step-dot-${i}`);
+    if (dot) {
+      if (i < step) {
+        dot.className = 'w-8 h-8 rounded-full bg-neon-green flex items-center justify-center text-white text-sm font-bold flex-shrink-0';
+        dot.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+      } else if (i === step) {
+        dot.className = 'w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0';
+        dot.textContent = i;
+      } else {
+        dot.className = 'w-8 h-8 rounded-full bg-dark-600 flex items-center justify-center text-dark-300 text-sm font-bold flex-shrink-0';
+        dot.textContent = i;
+      }
+    }
+  }
+  // Update progress bars
+  const bar1 = document.getElementById('step-bar-1');
+  const bar2 = document.getElementById('step-bar-2');
+  if (bar1) bar1.style.width = step > 1 ? '100%' : '0%';
+  if (bar2) bar2.style.width = step > 2 ? '100%' : '0%';
+
+  // Populate summary on step 3
+  if (step === 3) renderOnboardingSummary();
+}
+
+async function loadOnboardingConsentTexts() {
+  try {
+    const resp = await fetch(API + '/consent-registry/texts');
+    if (!resp.ok) return;
+    const texts = await resp.json();
+    const container = document.getElementById('onboarding-consent-list');
+    if (!container || !texts.length) return;
+
+    container.innerHTML = '<p class="text-xs text-dark-400 font-medium mb-2">' + t('onboarding.regulatory_consents') + '</p>';
+    texts.forEach(txt => {
+      const lang = (window.BOAI_I18N?.currentLang || 'en').toUpperCase();
+      const label = (lang === 'DE' ? txt.text_de : lang === 'RO' ? txt.text_ro : null) || txt.official_text || txt.consent_type;
+      container.innerHTML += `
+        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-600/20">
+          <div class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-neon-cyan flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="text-xs font-medium text-dark-100">${escHtml(txt.consent_type || '')}</p>
+              <p class="text-xs text-dark-300 mt-1">${escHtml(label)}</p>
+              ${txt.legal_reference ? `<p class="text-[10px] text-dark-400 mt-1">${escHtml(txt.legal_reference)}</p>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  } catch (e) {
+    console.error('Failed to load consent texts:', e);
+  }
+}
+
+function getOnboardingData() {
+  const consent = {
+    profiling_consent: document.getElementById('ob-profiling')?.checked || false,
+    automated_decision_consent: document.getElementById('ob-automated')?.checked || false,
+    marketing_email: document.getElementById('ob-marketing-email')?.checked || false,
+    marketing_push: document.getElementById('ob-marketing-push')?.checked || false,
+    marketing_sms: document.getElementById('ob-marketing-sms')?.checked || false,
+    family_context_consent: document.getElementById('ob-family')?.checked || false,
+  };
+
+  const profile = {};
+  const age = document.getElementById('ob-age')?.value;
+  if (age) profile.age = parseInt(age);
+  const income = document.getElementById('ob-income')?.value;
+  if (income) profile.annual_income = parseFloat(income);
+  const deps = document.getElementById('ob-dependents')?.value;
+  if (deps !== '' && deps !== undefined) profile.dependents = parseInt(deps);
+  const employment = document.getElementById('ob-employment')?.value;
+  if (employment) profile.employment_status = employment;
+  const risk = document.getElementById('ob-risk')?.value;
+  if (risk) profile.risk_tolerance = risk;
+  const homeowner = document.getElementById('ob-homeowner')?.value;
+  if (homeowner) profile.homeowner_status = homeowner;
+
+  const existingChecked = document.querySelectorAll('#ob-existing-products input:checked');
+  if (existingChecked.length) {
+    profile.existing_products = Array.from(existingChecked).map(c => c.value).join(',');
+  }
+
+  return { consent, profile };
+}
+
+function renderOnboardingSummary() {
+  const { consent, profile } = getOnboardingData();
+
+  // Consent summary
+  const consentEl = document.getElementById('ob-summary-consent');
+  if (consentEl) {
+    const items = [
+      { key: 'profiling_consent', label: t('onboarding.consent_profiling') },
+      { key: 'automated_decision_consent', label: t('onboarding.consent_automated') },
+      { key: 'marketing_email', label: t('onboarding.consent_marketing_email') },
+      { key: 'marketing_push', label: t('onboarding.consent_marketing_push') },
+      { key: 'marketing_sms', label: t('onboarding.consent_marketing_sms') },
+      { key: 'family_context_consent', label: t('onboarding.consent_family') },
+    ];
+    consentEl.innerHTML = items.map(i => `
+      <div class="flex items-center gap-2">
+        <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs ${consent[i.key] ? 'bg-neon-green/20 text-neon-green' : 'bg-dark-600 text-dark-400'}">
+          ${consent[i.key] ? '&#10003;' : '&#10007;'}
+        </span>
+        <span class="text-sm ${consent[i.key] ? 'text-dark-100' : 'text-dark-400'}">${escHtml(i.label)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Profile summary
+  const profileEl = document.getElementById('ob-summary-profile');
+  if (profileEl) {
+    const fields = [
+      { key: 'age', label: t('onboarding.age') },
+      { key: 'annual_income', label: t('onboarding.annual_income'), fmt: v => '€' + Number(v).toLocaleString() },
+      { key: 'dependents', label: t('onboarding.dependents') },
+      { key: 'employment_status', label: t('onboarding.employment') },
+      { key: 'risk_tolerance', label: t('onboarding.risk_tolerance') },
+      { key: 'homeowner_status', label: t('onboarding.homeowner') },
+      { key: 'existing_products', label: t('onboarding.existing_products'), fmt: v => v.replace(/,/g, ', ') },
+    ];
+    profileEl.innerHTML = fields.filter(f => profile[f.key] !== undefined).map(f => `
+      <div class="p-2.5 rounded-lg bg-dark-800/50">
+        <p class="text-[10px] text-dark-400">${escHtml(f.label)}</p>
+        <p class="text-sm font-medium text-white">${escHtml(f.fmt ? f.fmt(profile[f.key]) : String(profile[f.key]))}</p>
+      </div>
+    `).join('');
+
+    if (!profileEl.innerHTML.trim()) {
+      profileEl.innerHTML = '<p class="text-sm text-dark-400 col-span-2">' + t('onboarding.no_profile_data') + '</p>';
+    }
+  }
+}
+
+async function submitOnboarding() {
+  const btn = document.getElementById('ob-submit-btn');
+  const errorEl = document.getElementById('ob-submit-error');
+  errorEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const data = getOnboardingData();
+    const resp = await fetch(API + '/customer-auth/onboarding/' + state.customerId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || 'Onboarding submission failed');
+    }
+
+    // Update session
+    state.onboardingComplete = true;
+    const session = getCustomerSession();
+    if (session) {
+      session.onboarding_complete = true;
+      localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(session));
+    }
+
+    // Transition to portal
+    document.getElementById('onboarding-wizard').classList.add('hidden');
+    document.getElementById('screen-portal').classList.remove('hidden');
+    updateBadge(session?.display_name || `#${state.customerId}`);
+    navigateTo('offers');
+
+    // Load data
+    await Promise.all([loadCustomerData(), loadProfile(), loadOffers(), loadFeedback()]);
+    renderCustomerInfo();
+    renderOffers();
+  } catch (e) {
+    errorEl.textContent = e.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span data-i18n="onboarding.complete">${t('onboarding.complete')}</span>`;
+  }
+}
 
 // ==================== START ====================
 setupAuthGate();
