@@ -7,7 +7,10 @@
  */
 (function() {
   const STORAGE_KEY = 'boai_auth';
-  const KC_CONFIG_URL = '/static/js/keycloak.json';
+  const KC_URL = 'https://auth.lupulup.com';
+  const KC_REALM = 'bankofferai';
+  const KC_CLIENT_ID = 'bankofferai-app';
+  const KC_BASE = KC_URL + '/realms/' + KC_REALM + '/protocol/openid-connect';
 
   // Demo users for when Keycloak is unavailable
   const DEMO_USERS = {
@@ -36,28 +39,36 @@
 
   let _keycloak = null;
   let _currentUser = null;
-  let _demoMode = true; // Default to demo mode; set false if Keycloak inits successfully
+  let _demoMode = true;
   let _onAuthChange = [];
+  let _kcReady = false; // true once keycloak.init() resolves
+
+  // ---- Create Keycloak adapter immediately ----
+  try {
+    if (typeof Keycloak !== 'undefined') {
+      _keycloak = new Keycloak({
+        url: KC_URL,
+        realm: KC_REALM,
+        clientId: KC_CLIENT_ID
+      });
+    }
+  } catch(e) {
+    console.log('[Auth] Keycloak constructor failed:', e.message);
+  }
 
   // ---- Keycloak integration ----
   async function initKeycloak() {
+    if (!_keycloak) {
+      console.log('[Auth] Keycloak JS not available, using demo mode');
+      return false;
+    }
+
     try {
-      // Check if keycloak-js is loaded
-      if (typeof Keycloak === 'undefined') {
-        console.log('[Auth] Keycloak JS not loaded, using demo mode');
-        return false;
-      }
-
-      _keycloak = new Keycloak({
-        url: 'https://auth.lupulup.com',
-        realm: 'bankofferai',
-        clientId: 'bankofferai-app'
-      });
-
       const authenticated = await _keycloak.init({
         pkceMethod: 'S256',
         checkLoginIframe: false
       });
+      _kcReady = true;
 
       if (authenticated) {
         _demoMode = false;
@@ -86,24 +97,19 @@
       return false;
     } catch (e) {
       console.log('[Auth] Keycloak init failed, using demo mode:', e.message);
+      _kcReady = true; // still mark ready so login() works
       return false;
     }
   }
 
-  const KC_BASE = 'https://auth.lupulup.com/realms/bankofferai/protocol/openid-connect';
-
   function keycloakLogin() {
     if (_keycloak) {
-      try {
-        _keycloak.login({ redirectUri: window.location.href });
-        return;
-      } catch(e) {
-        console.warn('[Auth] Keycloak adapter login failed, using direct redirect');
-      }
+      _keycloak.login({ redirectUri: window.location.href });
+      return;
     }
-    // Fallback: direct redirect without PKCE (works for public clients)
-    const params = new URLSearchParams({
-      client_id: 'bankofferai-app',
+    // Fallback if keycloak-js didn't load at all
+    var params = new URLSearchParams({
+      client_id: KC_CLIENT_ID,
       redirect_uri: window.location.href,
       response_type: 'code',
       scope: 'openid email profile',
@@ -113,13 +119,11 @@
 
   function keycloakRegister() {
     if (_keycloak) {
-      try {
-        _keycloak.register({ redirectUri: window.location.href });
-        return;
-      } catch(e) {}
+      _keycloak.register({ redirectUri: window.location.href });
+      return;
     }
-    const params = new URLSearchParams({
-      client_id: 'bankofferai-app',
+    var params = new URLSearchParams({
+      client_id: KC_CLIENT_ID,
       redirect_uri: window.location.href,
       response_type: 'code',
       scope: 'openid email profile',
@@ -128,14 +132,12 @@
   }
 
   function keycloakLogout() {
-    if (_keycloak) {
-      try {
-        _keycloak.logout({ redirectUri: window.location.origin });
-        return;
-      } catch(e) {}
+    if (_keycloak && _kcReady) {
+      _keycloak.logout({ redirectUri: window.location.origin });
+      return;
     }
-    const params = new URLSearchParams({
-      client_id: 'bankofferai-app',
+    var params = new URLSearchParams({
+      client_id: KC_CLIENT_ID,
       post_logout_redirect_uri: window.location.origin,
     });
     window.location.href = KC_BASE + '/logout?' + params.toString();
@@ -155,12 +157,11 @@
     _demoMode = true;
     _saveSession();
 
-    // Redirect to the correct portal for this role
     const targetPortal = ROLE_PORTALS[role];
     const currentPath = window.location.pathname;
     if (targetPortal && currentPath !== targetPortal) {
       window.location.href = targetPortal;
-      return; // skip _notifyChange — the page will reload
+      return;
     }
     _notifyChange();
   }
@@ -218,7 +219,6 @@
 
   function onAuthChange(callback) {
     _onAuthChange.push(callback);
-    // Immediately invoke with current state so late subscribers get the initial state
     try { callback(_currentUser); } catch(e) { console.error('[Auth] Callback error:', e); }
   }
 
@@ -243,7 +243,6 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return false;
       const data = JSON.parse(raw);
-      // Session expires after 8 hours
       if (Date.now() - data.ts > 8 * 60 * 60 * 1000) {
         localStorage.removeItem(STORAGE_KEY);
         return false;
@@ -256,7 +255,6 @@
     }
   }
 
-  // Render a user badge + logout button
   function renderUserBadge() {
     if (!_currentUser) return '';
     const roleColors = {
@@ -287,13 +285,11 @@
     </div>`;
   }
 
-  // Render login form (demo mode selector or Keycloak redirect)
   function renderLoginScreen(options = {}) {
     const { title, subtitle, allowedRoles } = options;
     const t = window.BOAI_I18N?.t || (k => k);
 
     if (!_demoMode && _keycloak) {
-      // Keycloak mode — show login/register buttons
       return `<div class="min-h-screen flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full text-center">
           <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/20 flex items-center justify-center">
@@ -315,7 +311,6 @@
       </div>`;
     }
 
-    // Demo mode — show user selector cards
     const roles = allowedRoles || ['admin', 'employee', 'client'];
     const roleInfo = {
       admin: { icon: '\uD83D\uDEE1\uFE0F', color: 'red', desc: t('auth.role_admin') },
@@ -357,14 +352,11 @@
   async function init() {
     const restored = _restoreSession();
     if (restored && _demoMode) {
-      // Demo session restored
       _notifyChange();
       return;
     }
-    // Try Keycloak init
     const kcOk = await initKeycloak();
     if (!kcOk && !restored) {
-      // No auth at all
       _notifyChange();
     }
   }
@@ -390,10 +382,7 @@
     renderLoginScreen
   };
 
-  // Auto-init
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  // Auto-init — start immediately, don't wait for DOMContentLoaded
+  // This ensures Keycloak processes any ?code= callback from SSO redirect
+  init();
 })();
