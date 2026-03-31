@@ -376,6 +376,59 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
 
 
 @router.get(
+    "/eligibility/all",
+    summary="Real-time eligibility counts per product across all customers",
+    description="Returns how many customers are eligible vs ineligible for each product.",
+)
+async def get_eligibility_counts(
+    request: Request,
+    authenticated_customer: str = Depends(get_current_customer_id),
+):
+    """Run suitability checks for all customers against all products. Returns per-product counts."""
+    session_factory = request.app.state.db_session_factory
+    try:
+        async with session_factory() as session:
+            result = await session.execute(
+                text("""SELECT c.customer_id, c.risk_profile, c.financial_health,
+                        c.profiling_consent
+                 FROM customers c ORDER BY c.customer_id""")
+            )
+            customers = result.mappings().fetchall()
+
+        counts = {}
+        for product in PRODUCTS:
+            pid = product["id"]
+            eligible = 0
+            ineligible = 0
+            no_consent = 0
+            for cust in customers:
+                if not cust["profiling_consent"]:
+                    no_consent += 1
+                    continue
+                risk = str(cust["risk_profile"] or "moderate").lower()
+                health = str(cust["financial_health"] or "stable")
+                suitable, _ = _check_suitability(pid, risk, health)
+                if suitable:
+                    eligible += 1
+                else:
+                    ineligible += 1
+            counts[pid] = {
+                "product_id": pid,
+                "product_name": product["name"],
+                "product_type": product["type"],
+                "eligible": eligible,
+                "ineligible": ineligible,
+                "no_consent": no_consent,
+                "total": len(customers),
+            }
+
+        return {"products": counts, "total_customers": len(customers)}
+    except Exception as e:
+        logger.error("Failed to compute eligibility: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to compute eligibility counts")
+
+
+@router.get(
     "/{customer_id}",
     response_model=OfferResponse,
     summary="Get ranked offers for a customer",
