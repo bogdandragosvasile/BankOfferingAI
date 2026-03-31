@@ -261,6 +261,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .theme-toggle .icon-sun { display: none; }
 [data-theme="light"] .theme-toggle .icon-sun { display: block; }
 [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+[data-theme="light"] svg rect[fill="var(--card)"] { fill: rgba(255,255,255,0.9); }
 </style>
 </head>
 <body>
@@ -747,8 +748,145 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   </div>
 </section>
 
-<!-- ============================== SLIDE 9: AUDIT TRAIL ============================== -->
+<!-- ============================== SLIDE 9: ARCHITECTURE ============================== -->
 <section class="slide" id="slide-8">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--accent); top: 50%; left: 50%; transform: translate(-50%,-50%); width: 700px; height: 700px;"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-40 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Infrastructure</span>
+      <h2>System <span class="gradient-text">Architecture</span></h2>
+      <p class="subtitle" style="margin: 12px auto 0;">End-to-end request flow from browser to database</p>
+    </div>
+    <div class="fade-up delay-1" style="overflow-x:auto;">
+      <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;margin:0 auto;display:block;" font-family="Inter, system-ui, sans-serif">
+        <defs>
+          <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--text3)" stroke-width="1.2"/></marker>
+          <marker id="ahG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#10b981" stroke-width="1.2"/></marker>
+          <marker id="ahC" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#06b6d4" stroke-width="1.2"/></marker>
+          <marker id="ahA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent-light)" stroke-width="1.2"/></marker>
+          <marker id="ahP" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#a78bfa" stroke-width="1.2"/></marker>
+          <filter id="glow"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+
+        <!-- ── LAYER LABELS ── -->
+        <text x="16" y="28" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em" text-transform="uppercase">CLIENT</text>
+        <text x="16" y="168" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em" text-transform="uppercase">EDGE</text>
+        <text x="16" y="298" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em" text-transform="uppercase">APPLICATION</text>
+        <text x="16" y="428" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em" text-transform="uppercase">DATA</text>
+
+        <!-- ── ROW 1: BROWSERS ── -->
+        <!-- Employee Portal -->
+        <rect x="180" y="14" width="160" height="56" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="260" y="38" fill="var(--accent-light)" font-size="11" font-weight="700" text-anchor="middle">Employee Portal</text>
+        <text x="260" y="55" fill="var(--text3)" font-size="10" text-anchor="middle">/ (index.html)</text>
+
+        <!-- Customer Portal -->
+        <rect x="380" y="14" width="160" height="56" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="460" y="38" fill="#10b981" font-size="11" font-weight="700" text-anchor="middle">Customer Portal</text>
+        <text x="460" y="55" fill="var(--text3)" font-size="10" text-anchor="middle">/portal</text>
+
+        <!-- Admin Portal -->
+        <rect x="580" y="14" width="160" height="56" rx="10" fill="var(--card)" stroke="#ef4444" stroke-width="1.2"/>
+        <text x="660" y="38" fill="#ef4444" font-size="11" font-weight="700" text-anchor="middle">Admin Portal</text>
+        <text x="660" y="55" fill="var(--text3)" font-size="10" text-anchor="middle">/admin</text>
+
+        <!-- ── ARROWS: Browsers → Cloudflare ── -->
+        <line x1="260" y1="70" x2="370" y2="140" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="460" y1="70" x2="440" y2="140" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="660" y1="70" x2="510" y2="140" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+
+        <!-- ── ROW 2: EDGE ── -->
+        <!-- Cloudflare -->
+        <rect x="340" y="140" width="200" height="50" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="440" y="162" fill="#f59e0b" font-size="11" font-weight="700" text-anchor="middle">Cloudflare DNS</text>
+        <text x="440" y="178" fill="var(--text3)" font-size="9" text-anchor="middle">bankoffer.lupulup.com</text>
+
+        <!-- Arrow: Cloudflare → Pangolin -->
+        <line x1="440" y1="190" x2="440" y2="208" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+
+        <!-- Pangolin -->
+        <rect x="340" y="210" width="200" height="50" rx="10" fill="var(--card)" stroke="#06b6d4" stroke-width="1.2"/>
+        <text x="440" y="232" fill="#06b6d4" font-size="11" font-weight="700" text-anchor="middle">Pangolin TLS Proxy</text>
+        <text x="440" y="248" fill="var(--text3)" font-size="9" text-anchor="middle">192.168.1.161 &mdash; HTTPS termination</text>
+
+        <!-- ── ROW 3: APPLICATION (Docker Compose) ── -->
+        <!-- Docker boundary box -->
+        <rect x="120" y="280" width="720" height="108" rx="14" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
+        <text x="136" y="298" fill="var(--text3)" font-size="9" font-weight="600" letter-spacing="0.05em">DOCKER COMPOSE &mdash; 192.168.1.141</text>
+
+        <!-- Arrow: Pangolin → Nginx -->
+        <line x1="440" y1="260" x2="260" y2="304" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#ahC)"/>
+
+        <!-- Nginx -->
+        <rect x="140" y="308" width="160" height="64" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="220" y="332" fill="#10b981" font-size="11" font-weight="700" text-anchor="middle">Nginx</text>
+        <text x="220" y="348" fill="var(--text3)" font-size="9" text-anchor="middle">Reverse proxy :80</text>
+        <text x="220" y="362" fill="var(--text3)" font-size="9" text-anchor="middle">Static files</text>
+
+        <!-- Arrow: Nginx → FastAPI -->
+        <line x1="300" y1="340" x2="370" y2="340" stroke="#10b981" stroke-width="1.2" marker-end="url(#ahG)"/>
+
+        <!-- FastAPI -->
+        <rect x="370" y="304" width="240" height="72" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5" filter="url(#glow)"/>
+        <text x="490" y="327" fill="var(--accent-light)" font-size="12" font-weight="800" text-anchor="middle">FastAPI API</text>
+        <text x="490" y="343" fill="var(--text3)" font-size="9" text-anchor="middle">Uvicorn :8000 &mdash; 9 routers</text>
+        <text x="490" y="357" fill="var(--text3)" font-size="9" text-anchor="middle">Offers &bull; Profiles &bull; Compliance &bull; Auth</text>
+        <text x="490" y="369" fill="var(--text3)" font-size="9" text-anchor="middle">Products &bull; Consent &bull; Tokens</text>
+
+        <!-- Background tasks -->
+        <rect x="650" y="308" width="170" height="64" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="1.2"/>
+        <text x="735" y="330" fill="#a78bfa" font-size="10" font-weight="700" text-anchor="middle">Background Tasks</text>
+        <text x="735" y="346" fill="var(--text3)" font-size="9" text-anchor="middle">Consent sync (6h)</text>
+        <text x="735" y="360" fill="var(--text3)" font-size="9" text-anchor="middle">Source monitor (24h)</text>
+
+        <!-- Arrow: FastAPI → Background -->
+        <line x1="610" y1="340" x2="648" y2="340" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ahP)"/>
+
+        <!-- ── ROW 4: DATA ── -->
+        <!-- Arrow: FastAPI → PostgreSQL -->
+        <line x1="440" y1="376" x2="300" y2="430" stroke="var(--accent-light)" stroke-width="1.2" marker-end="url(#ahA)"/>
+
+        <!-- Arrow: FastAPI → Redis -->
+        <line x1="540" y1="376" x2="600" y2="430" stroke="var(--accent-light)" stroke-width="1.2" marker-end="url(#ahA)"/>
+
+        <!-- PostgreSQL -->
+        <rect x="180" y="424" width="190" height="64" rx="10" fill="var(--card)" stroke="#06b6d4" stroke-width="1.2"/>
+        <text x="275" y="450" fill="#06b6d4" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL 16</text>
+        <text x="275" y="466" fill="var(--text3)" font-size="9" text-anchor="middle">17 tables &bull; JSONB profiles</text>
+        <text x="275" y="480" fill="var(--text3)" font-size="9" text-anchor="middle">Async pool (asyncpg)</text>
+
+        <!-- Redis -->
+        <rect x="530" y="424" width="190" height="64" rx="10" fill="var(--card)" stroke="#ef4444" stroke-width="1.2"/>
+        <text x="625" y="450" fill="#ef4444" font-size="11" font-weight="700" text-anchor="middle">Redis 7</text>
+        <text x="625" y="466" fill="var(--text3)" font-size="9" text-anchor="middle">Profile cache (15min TTL)</text>
+        <text x="625" y="480" fill="var(--text3)" font-size="9" text-anchor="middle">Session store</text>
+
+        <!-- ── EXTERNAL: Keycloak ── -->
+        <!-- Arrow: FastAPI ↔ Keycloak -->
+        <line x1="880" y1="340" x2="920" y2="340" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+
+        <!-- Keycloak -->
+        <rect x="920" y="304" width="168" height="72" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="1004" y="327" fill="#f59e0b" font-size="11" font-weight="700" text-anchor="middle">Keycloak 26.2</text>
+        <text x="1004" y="343" fill="var(--text3)" font-size="9" text-anchor="middle">auth.lupulup.com</text>
+        <text x="1004" y="357" fill="var(--text3)" font-size="9" text-anchor="middle">OIDC + PKCE S256</text>
+        <text x="1004" y="369" fill="var(--text3)" font-size="9" text-anchor="middle">192.168.1.190</text>
+
+        <!-- External label -->
+        <text x="930" y="298" fill="var(--text3)" font-size="9" font-weight="600" letter-spacing="0.05em">EXTERNAL</text>
+
+        <!-- Arrow from browsers to Keycloak (SSO) -->
+        <path d="M740,42 Q900,42 1004,100 Q1050,130 1004,302" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <text x="920" y="110" fill="#f59e0b" font-size="8" font-weight="600">SSO</text>
+
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 10: AUDIT TRAIL ============================== -->
+<section class="slide" id="slide-9">
   <div class="bg-grid"></div>
   <div class="slide-inner">
     <div class="text-center mb-48 fade-up">
@@ -794,8 +932,8 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   </div>
 </section>
 
-<!-- ============================== SLIDE 10: DEMO ============================== -->
-<section class="slide" id="slide-9">
+<!-- ============================== SLIDE 11: DEMO ============================== -->
+<section class="slide" id="slide-10">
   <div class="bg-grid"></div>
   <div class="bg-glow" style="background: var(--accent); top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;"></div>
   <div class="slide-inner text-center">
