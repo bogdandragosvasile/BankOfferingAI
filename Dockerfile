@@ -18,6 +18,7 @@ COPY services/__init__.py /app/services/__init__.py
 COPY scripts/ /app/scripts/
 COPY AI_Hackathon_Product_Offering_Engine_Dataset_v1.xlsx /app/
 COPY ["Consent_Checkbox_Texts_Audit_Ready 1.xlsx", "/app/"]
+COPY presentation.html /app/
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 EXPOSE 8000
 USER appuser
