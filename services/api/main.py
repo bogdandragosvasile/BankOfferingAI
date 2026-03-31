@@ -94,7 +94,12 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["health"])
     async def health_check():
         """Liveness probe endpoint."""
-        return {"status": "healthy", "service": "bank-offering-api"}
+        return {
+            "status": "healthy",
+            "service": "bank-offering-api",
+            "demo_mode": os.getenv("DEMO_MODE", "false").lower() == "true",
+            "keycloak_configured": bool(os.getenv("KEYCLOAK_URL")),
+        }
 
     # Serve frontend portals
     static_dir = Path(__file__).parent / "static"
@@ -108,6 +113,11 @@ def create_app() -> FastAPI:
         async def customer_portal():
             """Customer portal (client-facing)."""
             return FileResponse(static_dir / "portal.html")
+
+        @app.get("/admin", include_in_schema=False)
+        async def admin_portal():
+            """Admin portal (administrators only)."""
+            return FileResponse(static_dir / "admin.html")
 
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
