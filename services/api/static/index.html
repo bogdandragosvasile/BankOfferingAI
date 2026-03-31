@@ -679,7 +679,7 @@ function openAuditDetail(recommendationId) {
         const c = COLORS[o.product_type] || COLORS.investment;
         return `<div class="flex items-center gap-3 py-2 px-3 rounded-lg bg-dark-800/50 mb-1.5">
           <div class="w-8 h-8 rounded-lg ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${ICONS[o.product_type] || ''}</div>
-          <div class="flex-1"><p class="text-xs font-medium text-white">${o.product_name}</p><p class="text-[10px] text-dark-300">${(o.relevance_score * 100).toFixed(0)}% relevance</p></div>
+          <div class="flex-1"><p class="text-xs font-medium text-white">${tProductName(o.product_name)}</p><p class="text-[10px] text-dark-300">${(o.relevance_score * 100).toFixed(0)}% ${t('portal.relevance_label')}</p></div>
           <span class="text-[10px] px-2 py-0.5 rounded-full ${c.bg} ${c.text}">#${i + 1}</span>
         </div>`;
       }).join('');
@@ -687,7 +687,7 @@ function openAuditDetail(recommendationId) {
       const excludedHtml = (data.excluded_products || []).map(ep => {
         return `<div class="flex items-center gap-3 py-2 px-3 rounded-lg bg-neon-red/5 border border-neon-red/10 mb-1.5">
           <svg class="w-4 h-4 text-neon-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-          <div class="flex-1"><p class="text-xs font-medium text-dark-200">${ep.product_name || ep.product_id || 'Unknown'}</p><p class="text-[10px] text-neon-red/80">${ep.reason || 'Suitability check failed'}</p></div>
+          <div class="flex-1"><p class="text-xs font-medium text-dark-200">${tProductName(ep.product_name || ep.product_id || 'Unknown')}</p><p class="text-[10px] text-neon-red/80">${ep.reason || 'Suitability check failed'}</p></div>
         </div>`;
       }).join('') || '<p class="text-xs text-dark-400">No excluded products</p>';
 
@@ -1219,7 +1219,7 @@ function renderOffers(offers, responseData) {
 
     // Explanation (GDPR art.22)
     const explanation = o.explanation
-      ? `<p class="text-[11px] text-dark-400 mt-1.5 leading-relaxed italic border-l-2 border-accent/20 pl-2">${o.explanation}</p>`
+      ? `<p class="text-[11px] text-dark-400 mt-1.5 leading-relaxed italic border-l-2 border-accent/20 pl-2">${tExplanation(o.explanation)}</p>`
       : '';
 
     // Recommendation ID reference
@@ -1247,10 +1247,10 @@ function renderOffers(offers, responseData) {
         <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">${ICONS[o.product_type]||''}</div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between mb-1">
-            <h3 class="text-sm font-semibold text-white">${o.product_name}</h3>
+            <h3 class="text-sm font-semibold text-white">${tProductName(o.product_name)}</h3>
             <div class="flex items-center gap-1.5 flex-wrap justify-end">${humanReviewBadge}${mifidBadge}${suitabilityBadge}<span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div>
           </div>
-          <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${o.personalization_reason}</p>
+          <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${tExplanation(o.personalization_reason)}</p>
           ${explanation}
           <div class="flex items-center gap-3 mt-2"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span><span class="ml-1">${overrideBtn}</span></div>
           ${recRef}

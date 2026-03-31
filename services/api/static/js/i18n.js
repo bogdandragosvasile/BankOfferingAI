@@ -196,6 +196,38 @@ en: {
   'offers.excluded_products': 'Products excluded by suitability check',
   'offers.recommendation_id': 'Recommendation ID',
 
+  // Product names (for offer card translation)
+  'pn.ETF Starter': 'ETF Starter',
+  'pn.ETF Growth': 'ETF Growth',
+  'pn.Mutual Funds': 'Mutual Funds',
+  'pn.Managed Portfolio': 'Managed Portfolio',
+  'pn.State Bonds': 'State Bonds',
+  'pn.Savings Deposit': 'Savings Deposit',
+  'pn.Private Pension': 'Private Pension',
+  'pn.Personal Loan': 'Personal Loan',
+  'pn.Mortgage': 'Mortgage',
+  'pn.Credit Card': 'Credit Card',
+  'pn.Life Insurance': 'Life Insurance',
+  'pn.Travel Insurance': 'Travel Insurance',
+  // Product types
+  'pt.investment': 'Investment',
+  'pt.bond': 'Bond',
+  'pt.savings': 'Savings',
+  'pt.retirement': 'Retirement',
+  'pt.personal_loan': 'Personal Loan',
+  'pt.mortgage': 'Mortgage',
+  'pt.credit_card': 'Credit Card',
+  'pt.insurance': 'Insurance',
+  // Explanation fragments
+  'ex.recommend': 'We recommend {product} for you',
+  'ex.idle_cash': 'you have {amount} in idle cash available for deployment',
+  'ex.risk_profile': 'your risk profile is {level}',
+  'ex.dependents': 'you have {count} dependents who need financial protection',
+  'ex.dti': 'your debt-to-income ratio ({ratio}x) suggests consolidation would help',
+  'ex.life_stage': 'your life stage is {stage}',
+  'ex.because': 'because',
+  'ex.key_signals': 'Key signals',
+
   // Customers
   'customers.title': 'Customer Directory',
   'customers.subtitle': '50 profiled customers with AI scoring',
@@ -734,6 +766,38 @@ de: {
   'offers.consent_required': 'Profiling-Einwilligung erforderlich. Aktivieren Sie die Einwilligung, um personalisierte Angebote zu erhalten.',
   'offers.excluded_products': 'Durch Eignungsprüfung ausgeschlossene Produkte',
   'offers.recommendation_id': 'Empfehlungs-ID',
+
+  // Product names
+  'pn.ETF Starter': 'ETF Starter',
+  'pn.ETF Growth': 'ETF Wachstum',
+  'pn.Mutual Funds': 'Investmentfonds',
+  'pn.Managed Portfolio': 'Verwaltetes Portfolio',
+  'pn.State Bonds': 'Staatsanleihen',
+  'pn.Savings Deposit': 'Spareinlage',
+  'pn.Private Pension': 'Private Altersvorsorge',
+  'pn.Personal Loan': 'Privatkredit',
+  'pn.Mortgage': 'Hypothek',
+  'pn.Credit Card': 'Kreditkarte',
+  'pn.Life Insurance': 'Lebensversicherung',
+  'pn.Travel Insurance': 'Reiseversicherung',
+  // Product types
+  'pt.investment': 'Investition',
+  'pt.bond': 'Anleihe',
+  'pt.savings': 'Sparen',
+  'pt.retirement': 'Altersvorsorge',
+  'pt.personal_loan': 'Privatkredit',
+  'pt.mortgage': 'Hypothek',
+  'pt.credit_card': 'Kreditkarte',
+  'pt.insurance': 'Versicherung',
+  // Explanation fragments
+  'ex.recommend': 'Wir empfehlen {product} für Sie',
+  'ex.idle_cash': 'Sie haben {amount} an ungenutztem Kapital zur Verfügung',
+  'ex.risk_profile': 'Ihr Risikoprofil ist {level}',
+  'ex.dependents': 'Sie haben {count} Angehörige, die finanziellen Schutz benötigen',
+  'ex.dti': 'Ihr Schulden-Einkommens-Verhältnis ({ratio}x) deutet darauf hin, dass eine Konsolidierung helfen würde',
+  'ex.life_stage': 'Ihre Lebensphase ist {stage}',
+  'ex.because': 'weil',
+  'ex.key_signals': 'Schlüsselsignale',
 
   // Customers
   'customers.title': 'Kundenverzeichnis',
@@ -1274,6 +1338,38 @@ ro: {
   'offers.excluded_products': 'Produse excluse prin verificarea adecvării',
   'offers.recommendation_id': 'ID Recomandare',
 
+  // Product names
+  'pn.ETF Starter': 'ETF Starter',
+  'pn.ETF Growth': 'ETF Creștere',
+  'pn.Mutual Funds': 'Fonduri mutuale',
+  'pn.Managed Portfolio': 'Portofoliu administrat',
+  'pn.State Bonds': 'Titluri de stat',
+  'pn.Savings Deposit': 'Depozit de economii',
+  'pn.Private Pension': 'Pensie privată',
+  'pn.Personal Loan': 'Credit de nevoi personale',
+  'pn.Mortgage': 'Credit ipotecar',
+  'pn.Credit Card': 'Card de credit',
+  'pn.Life Insurance': 'Asigurare de viață',
+  'pn.Travel Insurance': 'Asigurare de călătorie',
+  // Product types
+  'pt.investment': 'Investiție',
+  'pt.bond': 'Obligațiune',
+  'pt.savings': 'Economii',
+  'pt.retirement': 'Pensie',
+  'pt.personal_loan': 'Credit personal',
+  'pt.mortgage': 'Ipotecar',
+  'pt.credit_card': 'Card de credit',
+  'pt.insurance': 'Asigurare',
+  // Explanation fragments
+  'ex.recommend': 'Vă recomandăm {product}',
+  'ex.idle_cash': 'aveți {amount} în numerar disponibil pentru investiții',
+  'ex.risk_profile': 'profilul dumneavoastră de risc este {level}',
+  'ex.dependents': 'aveți {count} persoane în întreținere care au nevoie de protecție financiară',
+  'ex.dti': 'raportul datorii/venituri ({ratio}x) sugerează că o consolidare ar fi utilă',
+  'ex.life_stage': 'etapa dumneavoastră de viață este {stage}',
+  'ex.because': 'deoarece',
+  'ex.key_signals': 'Semnale cheie',
+
   // Customers
   'customers.title': 'Director clienți',
   'customers.subtitle': '50 de clienți profilați cu scoring IA',
@@ -1667,5 +1763,43 @@ function renderLanguageSelector() {
   ).join('');
 }
 
+function tProductName(name) {
+  const key = 'pn.' + name;
+  const val = t(key);
+  return val !== key ? val : name;
+}
+
+function tProductType(type) {
+  const key = 'pt.' + type;
+  const val = t(key);
+  return val !== key ? val : type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function tExplanation(text) {
+  if (!text) return '';
+  let s = text;
+  s = s.replace(/We recommend (.+?) for you/, function(m, name) {
+    return t('ex.recommend', { product: tProductName(name) });
+  });
+  s = s.replace(/ because /, ' ' + t('ex.because') + ' ');
+  s = s.replace(/you have ([\d,]+) in idle cash available for deployment/, function(m, amt) {
+    return t('ex.idle_cash', { amount: amt });
+  });
+  s = s.replace(/your risk profile is (\w+)/, function(m, level) {
+    return t('ex.risk_profile', { level: level });
+  });
+  s = s.replace(/you have (\d+) dependents who need financial protection/, function(m, cnt) {
+    return t('ex.dependents', { count: cnt });
+  });
+  s = s.replace(/your debt-to-income ratio \(([\d.]+)x\) suggests consolidation would help/, function(m, ratio) {
+    return t('ex.dti', { ratio: ratio });
+  });
+  s = s.replace(/your life stage is ([\w\s]+?)([.,])/, function(m, stage, punct) {
+    return t('ex.life_stage', { stage: stage.trim() }) + punct;
+  });
+  s = s.replace(/Key signals:/, t('ex.key_signals') + ':');
+  return s;
+}
+
 // Expose as namespaced API for use by other modules
-window.BOAI_I18N = { t, setLanguage, renderLanguageSelector };
+window.BOAI_I18N = { t, setLanguage, renderLanguageSelector, tProductName, tProductType, tExplanation };
