@@ -33,7 +33,7 @@ securityContext:
 
 service:
   type: ClusterIP
-  port: 80
+  port: 8000
   targetPort: 8000
 
 ingress:
@@ -90,6 +90,16 @@ env:
       secretKeyRef:
         name: bankoffer-db-credentials
         key: url
+  - name: REDIS_URL
+    valueFrom:
+      secretKeyRef:
+        name: bankoffer-redis-credentials
+        key: url
+  - name: JWT_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: bankoffer-jwt-secret
+        key: secret-key
   - name: KAFKA_BOOTSTRAP_SERVERS
     valueFrom:
       configMapKeyRef:

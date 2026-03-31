@@ -1,107 +1,138 @@
-groups:
-  - name: bankoffer.latency
-    rules:
-      - alert: OfferScoringLatencyHigh
-        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{handler="/offers/{customer_id}"}[5m])) by (le)) > 0.5
-        for: 2m
-        labels:
-          severity: warning
-          team: bankoffer
-        annotations:
-          summary: "Offer scoring p99 latency > 500ms"
-          description: "p99 latency for GET /offers is {{ $value | humanizeDuration }}"
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: bankoffer-rules
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: bankoffer
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    - name: bankoffer.recording
+      rules:
+        - record: offer_scoring_latency_p99
+          expr: >
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket{handler=~"/offers.*"}[5m]))
+              by (le)
+            )
 
-      - alert: APILatencyCritical
-        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
-        for: 1m
-        labels:
-          severity: critical
-          team: bankoffer
-        annotations:
-          summary: "API p99 latency > 1s"
-          description: "p99 latency is {{ $value | humanizeDuration }}"
+    - name: bankoffer.latency
+      rules:
+        - alert: OfferScoringLatencyHigh
+          expr: offer_scoring_latency_p99 > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            team: bankoffer
+          annotations:
+            summary: "Offer scoring p99 latency > 500ms"
+            description: "p99 latency for offer scoring is {{ $value | humanizeDuration }} (threshold: 500ms)"
 
-  - name: bankoffer.notifications
-    rules:
-      - alert: NotificationDeliveryFailureHigh
-        expr: sum(rate(notification_delivery_failures_total[5m])) / sum(rate(notification_delivery_attempts_total[5m])) > 0.01
-        for: 5m
-        labels:
-          severity: warning
-          team: bankoffer
-        annotations:
-          summary: "Notification delivery failure rate > 1%"
-          description: "Failure rate is {{ $value | humanizePercentage }}"
+        - alert: APILatencyCritical
+          expr: >
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+            ) > 1.0
+          for: 1m
+          labels:
+            severity: critical
+            team: bankoffer
+          annotations:
+            summary: "API p99 latency > 1s"
+            description: "p99 latency is {{ $value | humanizeDuration }}"
 
-      - alert: NotificationDeliveryDown
-        expr: sum(rate(notification_delivery_attempts_total[5m])) == 0
-        for: 5m
-        labels:
-          severity: critical
-          team: bankoffer
-        annotations:
-          summary: "Notification delivery completely stopped"
+    - name: bankoffer.notifications
+      rules:
+        - alert: NotificationDeliveryFailureHigh
+          expr: >
+            sum(rate(notification_delivery_failures_total[5m]))
+            / sum(rate(notification_delivery_attempts_total[5m])) > 0.01
+          for: 5m
+          labels:
+            severity: warning
+            team: bankoffer
+          annotations:
+            summary: "Notification delivery failure rate > 1%"
+            description: "Failure rate is {{ $value | humanizePercentage }}"
 
-  - name: bankoffer.api
-    rules:
-      - alert: APIErrorRateHigh
-        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
-        for: 2m
-        labels:
-          severity: critical
-          team: bankoffer
-        annotations:
-          summary: "API error rate > 5%"
-          description: "Error rate is {{ $value | humanizePercentage }}"
+        - alert: NotificationDeliveryDown
+          expr: sum(rate(notification_delivery_attempts_total[5m])) == 0
+          for: 5m
+          labels:
+            severity: critical
+            team: bankoffer
+          annotations:
+            summary: "Notification delivery completely stopped"
+            description: "No notification delivery attempts detected in the last 5 minutes"
 
-      - alert: APIDown
-        expr: up{job="bankoffer-api"} == 0
-        for: 1m
-        labels:
-          severity: critical
-          team: bankoffer
-        annotations:
-          summary: "BankOffer API is down"
+    - name: bankoffer.api
+      rules:
+        - alert: APIErrorRateHigh
+          expr: >
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(http_requests_total[5m])) > 0.01
+          for: 5m
+          labels:
+            severity: critical
+            team: bankoffer
+          annotations:
+            summary: "API 5xx error rate > 1%"
+            description: "Error rate is {{ $value | humanizePercentage }}"
 
-  - name: bankoffer.kafka
-    rules:
-      - alert: KafkaConsumerLagHigh
-        expr: kafka_consumer_group_lag{topic="bank.transactions"} > 10000
-        for: 5m
-        labels:
-          severity: warning
-          team: bankoffer
-        annotations:
-          summary: "Kafka consumer lag > 10000 messages"
-          description: "Lag is {{ $value }} for topic {{ $labels.topic }}"
+        - alert: APIDown
+          expr: up{job="bankoffer-api"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            team: bankoffer
+          annotations:
+            summary: "BankOffer API is down"
+            description: "The bankoffer-api job has been unreachable for more than 1 minute"
 
-      - alert: KafkaConsumerLagCritical
-        expr: kafka_consumer_group_lag{topic="bank.transactions"} > 100000
-        for: 2m
-        labels:
-          severity: critical
-          team: bankoffer
-        annotations:
-          summary: "Kafka consumer lag critically high (>100k)"
+    - name: bankoffer.kafka
+      rules:
+        - alert: KafkaConsumerLagHigh
+          expr: kafka_consumer_group_lag{topic="bank.transactions"} > 10000
+          for: 5m
+          labels:
+            severity: warning
+            team: bankoffer
+          annotations:
+            summary: "Kafka consumer lag > 10000 messages"
+            description: "Lag is {{ $value }} for topic {{ $labels.topic }}"
 
-  - name: bankoffer.ml
-    rules:
-      - alert: MLModelScoringFailure
-        expr: sum(rate(ml_scoring_errors_total[5m])) > 0
-        for: 5m
-        labels:
-          severity: warning
-          team: bankoffer
-        annotations:
-          summary: "ML model scoring errors detected"
-          description: "{{ $value }} scoring errors/sec in the last 5 minutes"
+        - alert: KafkaConsumerLagCritical
+          expr: kafka_consumer_group_lag{topic="bank.transactions"} > 100000
+          for: 2m
+          labels:
+            severity: critical
+            team: bankoffer
+          annotations:
+            summary: "Kafka consumer lag critically high (>100k)"
+            description: "Consumer group lag {{ $value }} on topic {{ $labels.topic }} exceeds critical threshold"
 
-      - alert: OfferAcceptanceRateLow
-        expr: sum(rate(offer_accepted_total[1h])) / sum(rate(offer_displayed_total[1h])) < 0.02
-        for: 30m
-        labels:
-          severity: warning
-          team: bankoffer
-        annotations:
-          summary: "Offer acceptance rate < 2%"
-          description: "Current acceptance rate: {{ $value | humanizePercentage }}"
+    - name: bankoffer.ml
+      rules:
+        - alert: MLModelScoringFailure
+          expr: sum(rate(ml_scoring_errors_total[5m])) > 0
+          for: 5m
+          labels:
+            severity: warning
+            team: bankoffer
+          annotations:
+            summary: "ML model scoring errors detected"
+            description: "{{ $value }} scoring errors/sec in the last 5 minutes"
+
+        - alert: OfferAcceptanceRateLow
+          expr: >
+            sum(rate(offer_accepted_total[1h]))
+            / sum(rate(offer_displayed_total[1h])) < 0.02
+          for: 30m
+          labels:
+            severity: warning
+            team: bankoffer
+          annotations:
+            summary: "Offer acceptance rate < 2%"
+            description: "Current acceptance rate: {{ $value | humanizePercentage }}"

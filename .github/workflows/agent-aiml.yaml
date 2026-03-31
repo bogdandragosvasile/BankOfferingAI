@@ -2,7 +2,7 @@ name: Agent — AI/ML
 
 on:
   repository_dispatch:
-    types: [agent_aiml]
+    types: [dispatch_aiml_agent]
 
 permissions:
   contents: write

@@ -4,7 +4,7 @@ metadata:
   name: bankoffer-worker
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: worker=ghcr.io/ptx37/bankoffer-worker
+    argocd-image-updater.argoproj.io/image-list: worker=ghcr.io/your-org/bankoffer-worker
     argocd-image-updater.argoproj.io/worker.update-strategy: semver
     argocd-image-updater.argoproj.io/worker.helm.image-name: image.repository
     argocd-image-updater.argoproj.io/worker.helm.image-tag: image.tag
@@ -15,7 +15,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/ptx37/BankOfferingAI.git
+    repoURL: https://github.com/your-org/BankOfferingAI.git
     targetRevision: main
     path: infra/helm/bankoffer-worker
     helm:
@@ -23,7 +23,7 @@ spec:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: bankoffer-staging
+    namespace: bankoffer-prod
   syncPolicy:
     automated:
       prune: true

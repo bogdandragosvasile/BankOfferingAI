@@ -2,7 +2,7 @@ name: Agent — Infrastructure
 
 on:
   repository_dispatch:
-    types: [agent_infra]
+    types: [dispatch_infra_agent]
 
 permissions:
   contents: write

@@ -2,7 +2,7 @@ name: Agent — API
 
 on:
   repository_dispatch:
-    types: [agent_api]
+    types: [dispatch_api_agent]
 
 permissions:
   contents: write

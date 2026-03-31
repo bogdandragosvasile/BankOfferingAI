@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.40"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.27"
+    }
   }
 
   backend "s3" {
@@ -17,12 +21,16 @@ terraform {
   }
 }
 
+locals {
+  project_name = "bankoffer-ai"
+}
+
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 
   default_tags {
     tags = {
-      Project     = "BankOfferingAI"
+      Project     = local.project_name
       Environment = var.environment
       ManagedBy   = "Terraform"
     }
@@ -69,15 +77,15 @@ module "vpc" {
 module "eks" {
   source = "./modules/eks"
 
-  cluster_name       = var.cluster_name
-  cluster_version    = var.cluster_version
-  environment        = var.environment
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnets
+  cluster_name        = var.cluster_name
+  cluster_version     = var.eks_cluster_version
+  environment         = var.environment
+  vpc_id              = module.vpc.vpc_id
+  private_subnet_ids  = module.vpc.private_subnets
   node_instance_types = var.node_instance_types
-  node_desired_size  = var.node_desired_size
-  node_min_size      = var.node_min_size
-  node_max_size      = var.node_max_size
+  node_desired_size   = var.node_desired_size
+  node_min_size       = var.node_min_size
+  node_max_size       = var.node_max_size
 }
 
 # ---------------------------------------------------------------------------
@@ -86,15 +94,15 @@ module "eks" {
 module "rds" {
   source = "./modules/rds"
 
-  environment        = var.environment
-  cluster_name       = var.cluster_name
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnets
-  db_instance_class  = var.db_instance_class
-  db_name            = var.db_name
-  db_username        = var.db_username
-  db_engine_version  = var.db_engine_version
-  multi_az           = var.environment == "prod"
+  environment           = var.environment
+  cluster_name          = var.cluster_name
+  vpc_id                = module.vpc.vpc_id
+  private_subnet_ids    = module.vpc.private_subnets
+  db_instance_class     = var.rds_instance_class
+  db_name               = var.db_name
+  db_username           = var.db_username
+  db_engine_version     = var.db_engine_version
+  multi_az              = var.environment == "prod"
   eks_security_group_id = module.eks.cluster_security_group_id
 }
 
@@ -104,13 +112,13 @@ module "rds" {
 module "kafka" {
   source = "./modules/kafka"
 
-  environment        = var.environment
-  cluster_name       = var.cluster_name
-  vpc_id             = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.private_subnets
-  kafka_version      = var.kafka_version
-  broker_instance_type = var.kafka_broker_instance_type
-  number_of_brokers  = var.kafka_number_of_brokers
-  ebs_volume_size    = var.kafka_ebs_volume_size
+  environment           = var.environment
+  cluster_name          = var.cluster_name
+  vpc_id                = module.vpc.vpc_id
+  private_subnet_ids    = module.vpc.private_subnets
+  kafka_version         = var.kafka_version
+  broker_instance_type  = var.kafka_instance_type
+  number_of_brokers     = var.kafka_number_of_brokers
+  ebs_volume_size       = var.kafka_ebs_volume_size
   eks_security_group_id = module.eks.cluster_security_group_id
 }

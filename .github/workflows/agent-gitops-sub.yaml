@@ -2,7 +2,7 @@ name: Sub-Agent — GitOps
 
 on:
   repository_dispatch:
-    types: [gitops_sub]
+    types: [dispatch_gitops_sub]
 
 permissions:
   contents: write

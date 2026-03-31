@@ -1,10 +1,16 @@
-"""Pydantic models for the Bank Offering AI API."""
+"""Pydantic v2 models for the Bank Offering AI API."""
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
+
+
+class RiskBucket(str, Enum):
+    CONSERVATIVE = "conservative"
+    MODERATE = "moderate"
+    AGGRESSIVE = "aggressive"
 
 
 class LifeStage(str, Enum):
@@ -15,61 +21,60 @@ class LifeStage(str, Enum):
     RETIRED = "retired"
 
 
-class IncomeBracket(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    VERY_HIGH = "very_high"
-
-
 class Channel(str, Enum):
     PUSH = "push"
     EMAIL = "email"
-    SMS = "sms"
     IN_APP = "in_app"
 
 
-class SpendingPattern(BaseModel):
-    category: str = Field(..., description="Spending category (e.g., groceries, travel)")
-    monthly_average: float = Field(..., ge=0, description="Average monthly spend in this category")
-    trend: str = Field(..., description="Trend direction: increasing, stable, decreasing")
+class ProductType(str, Enum):
+    CREDIT_CARD = "credit_card"
+    PERSONAL_LOAN = "personal_loan"
+    MORTGAGE = "mortgage"
+    SAVINGS_ACCOUNT = "savings_account"
+    INVESTMENT = "investment"
+    INSURANCE = "insurance"
+    OVERDRAFT = "overdraft"
 
 
 class CustomerProfile(BaseModel):
     customer_id: str = Field(..., description="Unique customer identifier")
+    age: int = Field(..., ge=18, le=120, description="Customer age in years")
+    city: str = Field(..., description="Customer's city of residence")
+    income: float = Field(..., ge=0, description="Annual income in USD")
+    savings: float = Field(..., ge=0, description="Total savings balance in USD")
+    debt: float = Field(..., ge=0, description="Total outstanding debt in USD")
+    risk_profile: str = Field(..., description="Raw risk profile label from core banking")
+    marital_status: str = Field(..., description="Marital status: single, married, divorced, widowed")
+    dependents_count: int = Field(default=0, ge=0, description="Number of financial dependents")
+    homeowner_status: str = Field(..., description="own, rent, or mortgage")
+    existing_products: list[str] = Field(default_factory=list, description="List of product IDs already held")
     life_stage: LifeStage = Field(..., description="Classified life stage of the customer")
-    risk_score: float = Field(..., ge=1.0, le=10.0, description="Risk tolerance score 1-10")
-    segments: list[str] = Field(default_factory=list, description="Customer segments")
-    income_bracket: IncomeBracket = Field(..., description="Income bracket classification")
-    spending_patterns: list[SpendingPattern] = Field(
-        default_factory=list, description="Categorized spending patterns"
+    financial_health: str = Field(..., description="Overall financial health score label")
+    lifestyle_segment: str = Field(..., description="Behavioural lifestyle segment label")
+    investor_readiness: float = Field(..., ge=0.0, le=1.0, description="Propensity score for investment products")
+    risk_bucket: RiskBucket = Field(..., description="Discretised risk bucket")
+    context_signals: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Real-time contextual signals (location, device, session data)",
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class Transaction(BaseModel):
-    transaction_id: str = Field(..., description="Unique transaction identifier")
-    customer_id: str = Field(..., description="Customer who made the transaction")
-    amount: float = Field(..., description="Transaction amount")
-    currency: str = Field(default="USD", description="ISO 4217 currency code")
-    category: str = Field(..., description="Transaction category")
-    merchant: str = Field(..., description="Merchant name")
-    timestamp: datetime = Field(..., description="When the transaction occurred")
-    description: Optional[str] = Field(None, description="Transaction description")
+    family_context: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Family composition and life-event signals",
+    )
 
 
 class Offer(BaseModel):
     offer_id: str = Field(..., description="Unique offer identifier")
-    product_name: str = Field(..., description="Bank product name")
-    product_type: str = Field(..., description="Product type (e.g., credit_card, loan, savings)")
+    product_id: str = Field(..., description="Underlying product identifier")
+    product_name: str = Field(..., description="Bank product display name")
+    product_type: ProductType = Field(..., description="Product category")
     relevance_score: float = Field(..., ge=0.0, le=1.0, description="AI relevance score")
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Model confidence")
-    personalization_reason: str = Field(
-        ..., description="One-sentence explanation of why this offer fits"
-    )
-    terms_summary: Optional[str] = Field(None, description="Brief terms summary")
-    cta_url: str = Field(..., description="Call-to-action URL")
+    personalization_reason: str = Field(..., description="One-sentence explanation of why this offer fits")
+    rank: int = Field(..., ge=1, description="Rank position in the ordered offer list")
+    channel: Channel = Field(..., description="Recommended delivery channel")
+    cta_url: str = Field(..., description="Call-to-action deep link URL")
 
 
 class OfferResponse(BaseModel):
@@ -79,19 +84,17 @@ class OfferResponse(BaseModel):
     model_version: str = Field(default="1.0.0", description="Scoring model version")
 
 
-class WebhookPayload(BaseModel):
-    event_type: str = Field(..., description="Type of webhook event")
-    timestamp: datetime = Field(..., description="Event timestamp")
-    transactions: list[Transaction] = Field(..., description="Batch of transactions")
-    signature: str = Field(..., description="HMAC signature for verification")
-
-
 class NotificationPayload(BaseModel):
     offer_id: str = Field(..., description="Offer identifier")
     product_name: str = Field(..., description="Product name for the notification")
-    personalization_reason: str = Field(
-        ..., description="Why this offer is relevant to the customer"
-    )
+    personalization_reason: str = Field(..., description="Why this offer is relevant to the customer")
     cta_url: str = Field(..., description="Call-to-action deep link URL")
     channel: Channel = Field(..., description="Delivery channel for the notification")
     customer_id: str = Field(..., description="Target customer identifier")
+
+
+class WebhookEvent(BaseModel):
+    event_type: str = Field(..., description="Type of webhook event")
+    customer_id: str = Field(..., description="Customer the event relates to")
+    timestamp: datetime = Field(..., description="Event timestamp (UTC)")
+    payload: dict[str, Any] = Field(..., description="Arbitrary event payload data")

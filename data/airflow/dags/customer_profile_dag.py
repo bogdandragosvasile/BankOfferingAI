@@ -1,9 +1,15 @@
 """Airflow DAG: daily customer profile pipeline.
 
-1. Extract transactions from PostgreSQL.
-2. Normalise and validate with TransactionNormalizer.
-3. Compute and load features into the Feast feature store.
-4. Check for data drift and trigger model retraining if detected.
+Task sequence:
+    extract_features -> compute_profiles -> load_to_feature_store -> trigger_scoring
+
+1. extract_features: Pull transactions and raw customer data from PostgreSQL.
+2. compute_profiles: Normalise, validate, and aggregate into customer profiles.
+3. load_to_feature_store: Materialise feature vectors into Feast online store.
+4. trigger_scoring: Kick off the offer scoring pipeline via BashOperator.
+
+Drift detection runs as a branch after load_to_feature_store; model retraining
+is triggered when drift exceeds the configured threshold.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow import DAG
+from airflow.operators.bash import BashOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils.trigger_rule import TriggerRule
@@ -39,8 +46,12 @@ default_args = {
 # ---------------------------------------------------------------------------
 
 
-def extract_transactions(**context: Any) -> str:
-    """Pull the previous day's transactions from PostgreSQL."""
+def extract_features(**context: Any) -> str:
+    """Pull the previous day's transactions and customer records from PostgreSQL.
+
+    Returns a JSON string of transaction records serialised through XCom.
+    For large volumes, switch the transport layer to S3/GCS.
+    """
     execution_date = context["ds"]
     hook = PostgresHook(postgres_conn_id="bank_postgres")
 
@@ -62,15 +73,18 @@ def extract_transactions(**context: Any) -> str:
     rows = [dict(zip(columns, r)) for r in records]
     logger.info("Extracted %d transactions for %s", len(rows), execution_date)
 
-    # Serialise through XCom (for moderate volumes; use S3/GCS for large)
     return json.dumps(rows, default=str)
 
 
-def normalize_transactions(**context: Any) -> str:
-    """Run the TransactionNormalizer over extracted records."""
+def compute_profiles(**context: Any) -> str:
+    """Normalise raw transactions and compute per-customer profile aggregates.
+
+    Runs the TransactionNormalizer and produces the feature DataFrame that
+    will be loaded into Feast.
+    """
     from data.kafka.consumers.normalizer import TransactionNormalizer
 
-    raw_json = context["ti"].xcom_pull(task_ids="extract_transactions")
+    raw_json = context["ti"].xcom_pull(task_ids="extract_features")
     raw_records = json.loads(raw_json)
 
     normalizer = TransactionNormalizer()
@@ -82,22 +96,25 @@ def normalize_transactions(**context: Any) -> str:
     )
 
 
-def compute_and_load_features(**context: Any) -> dict[str, Any]:
+def load_to_feature_store(**context: Any) -> dict[str, Any]:
     """Aggregate normalised transactions into feature vectors and
-    materialise them into the Feast online store."""
+    materialise them into the Feast online store.
+
+    Falls back to writing a Parquet file if Feast is unavailable.
+    """
     import pandas as pd
 
-    raw = context["ti"].xcom_pull(task_ids="normalize_transactions")
+    raw = context["ti"].xcom_pull(task_ids="compute_profiles")
     records = json.loads(raw)
     if not records:
-        logger.warning("No normalised records — skipping feature computation")
+        logger.warning("No normalised records — skipping feature store load")
         return {"customers_processed": 0}
 
     df = pd.DataFrame(records)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df["amount_usd"] = pd.to_numeric(df["amount_usd"])
 
-    # --- per-customer aggregation ---
+    # Per-customer aggregation
     features = (
         df.groupby("customer_id")
         .agg(
@@ -119,9 +136,12 @@ def compute_and_load_features(**context: Any) -> dict[str, Any]:
         .unstack(fill_value=0)
     )
     category_totals = category_pivot.sum(axis=1)
-    category_pct = category_pivot.div(category_totals, axis=0).add_prefix("category_").add_suffix("_pct")
-    category_pct = category_pct.reset_index()
-
+    category_pct = (
+        category_pivot.div(category_totals, axis=0)
+        .add_prefix("category_")
+        .add_suffix("_pct")
+        .reset_index()
+    )
     features = features.merge(category_pct, on="customer_id", how="left")
 
     # Materialise to Feast
@@ -130,9 +150,7 @@ def compute_and_load_features(**context: Any) -> dict[str, Any]:
 
         store = FeatureStore(repo_path="data/feature_store")
         store.push("transaction_push", features)
-        logger.info(
-            "Pushed features for %d customers to Feast", len(features)
-        )
+        logger.info("Pushed features for %d customers to Feast", len(features))
     except Exception:
         logger.exception("Failed to push features to Feast — falling back to parquet")
         features.to_parquet(
@@ -149,7 +167,6 @@ def check_data_drift(**context: Any) -> str:
     Returns the task_id to follow: ``trigger_retraining`` if drift is
     detected, ``skip_retraining`` otherwise.
     """
-    import numpy as np
     import pandas as pd
 
     try:
@@ -160,15 +177,12 @@ def check_data_drift(**context: Any) -> str:
         logger.info("No historical features found — skipping drift check")
         return "skip_retraining"
 
-    # Simple drift heuristic: compare mean and std of key features against
-    # thresholds.  In production, use Evidently / Great Expectations.
     drift_detected = False
     for col in ["avg_txn_amount_30d", "total_spend_30d", "txn_count_30d"]:
         if col not in current.columns:
             continue
         mean = current[col].mean()
         std = current[col].std()
-        # Flag if the coefficient of variation exceeds a threshold
         if std > 0 and abs(mean) > 0:
             cv = std / abs(mean)
             if cv > 1.5:
@@ -203,7 +217,10 @@ def skip_retraining(**context: Any) -> None:
 with DAG(
     dag_id="customer_profile_pipeline",
     default_args=default_args,
-    description="Daily pipeline: extract txns -> normalise -> features -> drift check",
+    description=(
+        "Daily pipeline: extract_features -> compute_profiles -> "
+        "load_to_feature_store -> trigger_scoring"
+    ),
     schedule_interval="@daily",
     start_date=datetime(2024, 1, 1),
     catchup=False,
@@ -211,24 +228,42 @@ with DAG(
     max_active_runs=1,
 ) as dag:
 
-    t_extract = PythonOperator(
-        task_id="extract_transactions",
-        python_callable=extract_transactions,
+    # 1. Extract raw transaction and customer feature data
+    t_extract_features = PythonOperator(
+        task_id="extract_features",
+        python_callable=extract_features,
     )
 
-    t_normalize = PythonOperator(
-        task_id="normalize_transactions",
-        python_callable=normalize_transactions,
+    # 2. Normalise and compute customer profiles
+    t_compute_profiles = PythonOperator(
+        task_id="compute_profiles",
+        python_callable=compute_profiles,
     )
 
-    t_features = PythonOperator(
-        task_id="compute_and_load_features",
-        python_callable=compute_and_load_features,
+    # 3. Materialise feature vectors into Feast feature store
+    t_load_to_feature_store = PythonOperator(
+        task_id="load_to_feature_store",
+        python_callable=load_to_feature_store,
     )
 
+    # 4. Trigger the downstream offer scoring pipeline
+    t_trigger_scoring = BashOperator(
+        task_id="trigger_scoring",
+        bash_command=(
+            "curl -s -X POST "
+            "http://bankoffer-api.bankoffer-prod.svc.cluster.local:8000/internal/scoring/trigger "
+            "-H 'Content-Type: application/json' "
+            "-d '{\"execution_date\": \"{{ ds }}\", \"source\": \"airflow\"}' "
+            "&& echo 'Scoring pipeline triggered successfully'"
+        ),
+        trigger_rule=TriggerRule.ALL_SUCCESS,
+    )
+
+    # 4b. Check for feature drift and conditionally retrain
     t_drift = BranchPythonOperator(
         task_id="check_data_drift",
         python_callable=check_data_drift,
+        trigger_rule=TriggerRule.ALL_SUCCESS,
     )
 
     t_retrain = PythonOperator(
@@ -241,6 +276,9 @@ with DAG(
         python_callable=skip_retraining,
     )
 
-    # DAG wiring
-    t_extract >> t_normalize >> t_features >> t_drift
+    # DAG wiring: main path
+    t_extract_features >> t_compute_profiles >> t_load_to_feature_store
+    # Parallel branches after feature store load
+    t_load_to_feature_store >> [t_trigger_scoring, t_drift]
+    # Drift branch
     t_drift >> [t_retrain, t_skip]

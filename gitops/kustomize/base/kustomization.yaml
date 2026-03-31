@@ -9,6 +9,28 @@ resources:
 commonLabels:
   app.kubernetes.io/part-of: bankoffer
 
+helmCharts:
+  - name: bankoffer-api
+    repo: oci://ghcr.io/your-org/charts
+    version: 0.1.0
+    releaseName: bankoffer-api
+    namespace: bankoffer
+    valuesFile: ../../../infra/helm/bankoffer-api/values.yaml
+
+  - name: bankoffer-worker
+    repo: oci://ghcr.io/your-org/charts
+    version: 0.1.0
+    releaseName: bankoffer-worker
+    namespace: bankoffer
+    valuesFile: ../../../infra/helm/bankoffer-worker/values.yaml
+
+  - name: bankoffer-frontend
+    repo: oci://ghcr.io/your-org/charts
+    version: 0.1.0
+    releaseName: bankoffer-frontend
+    namespace: bankoffer
+    valuesFile: ../../../infra/helm/bankoffer-frontend/values.yaml
+
 configMapGenerator:
   - name: bankoffer-kafka-config
     literals:

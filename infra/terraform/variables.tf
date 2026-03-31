@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # General
 # ---------------------------------------------------------------------------
-variable "region" {
+variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
   default     = "eu-west-1"
@@ -36,7 +36,7 @@ variable "vpc_cidr" {
 # ---------------------------------------------------------------------------
 # EKS
 # ---------------------------------------------------------------------------
-variable "cluster_version" {
+variable "eks_cluster_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
   default     = "1.29"
@@ -69,10 +69,10 @@ variable "node_max_size" {
 # ---------------------------------------------------------------------------
 # RDS
 # ---------------------------------------------------------------------------
-variable "db_instance_class" {
+variable "rds_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.r6g.large"
+  default     = "db.t3.medium"
 }
 
 variable "db_name" {
@@ -103,10 +103,10 @@ variable "kafka_version" {
   default     = "3.6.0"
 }
 
-variable "kafka_broker_instance_type" {
+variable "kafka_instance_type" {
   description = "MSK broker instance type"
   type        = string
-  default     = "kafka.m5.large"
+  default     = "kafka.t3.small"
 }
 
 variable "kafka_number_of_brokers" {

@@ -1,0 +1,697 @@
+openapi: "3.1.0"
+
+info:
+  title: BankOffer AI — Offer Personalisation API
+  version: "1.0.0"
+  description: |
+    Real-time personalised financial product offer API for BankOffer AI.
+    Ingests transaction events, builds customer profiles, scores and ranks
+    eligible financial products, and delivers hyper-personalised offers.
+  contact:
+    name: BankOffer AI Platform Team
+    email: platform@bankoffer.example.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.bankoffer.example.com/v1
+    description: Production
+  - url: https://api-staging.bankoffer.example.com/v1
+    description: Staging
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: health
+    description: Service health and readiness
+  - name: offers
+    description: Personalised product offer retrieval
+  - name: profiles
+    description: Customer profile access
+  - name: webhooks
+    description: Inbound event ingestion from core banking
+
+# ---------------------------------------------------------------------------
+# Security schemes
+# ---------------------------------------------------------------------------
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT issued by the bank's identity provider.
+        Pass the token in the `Authorization: Bearer <token>` header.
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+
+  schemas:
+
+    # --- Offer ---------------------------------------------------------------
+
+    RankedOffer:
+      type: object
+      required:
+        - offer_id
+        - product_id
+        - product_name
+        - product_type
+        - relevance_score
+        - rank
+        - personalization_reason
+        - cta_url
+      properties:
+        offer_id:
+          type: string
+          description: Unique identifier for this offer instance.
+          example: "offer_f3a2b1c9"
+        product_id:
+          type: string
+          description: Stable identifier for the underlying financial product.
+          example: "prod_ins_001"
+        product_name:
+          type: string
+          description: Human-readable product name.
+          example: "Family Life Insurance"
+        product_type:
+          type: string
+          description: Product category.
+          enum:
+            - ETF
+            - mutual_fund
+            - insurance
+            - credit
+            - loan
+            - savings
+            - pension
+            - bond
+          example: "insurance"
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: LLM-computed relevance score in [0, 1].
+          example: 0.91
+        rank:
+          type: integer
+          minimum: 1
+          description: Position in the ranked list (1 = most relevant).
+          example: 1
+        personalization_reason:
+          type: string
+          description: |
+            Human-readable sentence explaining why this offer is relevant to
+            the customer.
+          example: >
+            As a parent with dependents, life insurance ensures your
+            family's financial security.
+        cta_url:
+          type: string
+          format: uri
+          description: Deep-link URL for the call-to-action button.
+          example: "https://bank.example.com/offers/offer_f3a2b1c9"
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Alias for relevance_score, exposed for UI convenience.
+          example: 0.91
+
+    # --- Customer profile ----------------------------------------------------
+
+    CustomerProfile:
+      type: object
+      required:
+        - customer_id
+        - life_stage
+        - financial_health
+        - investor_readiness
+        - risk_bucket
+        - risk_score
+        - lifestyle_segment
+        - context_signals
+        - family_context
+      properties:
+        customer_id:
+          type: string
+          example: "cust_001"
+        life_stage:
+          type: string
+          enum:
+            - new_graduate
+            - young_family
+            - mid_career
+            - pre_retirement
+            - retired
+          example: "young_family"
+        financial_health:
+          type: string
+          enum:
+            - healthy
+            - watchlist
+            - fragile
+          description: |
+            healthy   – debt-to-income < 0.5 AND monthly savings > 500
+            watchlist – 0.5 ≤ DTI < 1.2
+            fragile   – DTI ≥ 1.2
+          example: "healthy"
+        investor_readiness:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+          description: |
+            high   – idle_cash > 10 000 AND monthly_savings > 500 AND life event present
+            medium – 5 000 < idle_cash ≤ 10 000
+            low    – idle_cash ≤ 5 000
+          example: "medium"
+        risk_bucket:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          example: "medium"
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          example: 5.5
+        lifestyle_segment:
+          type: string
+          example: "urban_professional"
+        context_signals:
+          type: array
+          items:
+            type: string
+          description: Active signals influencing offer selection (e.g. travel_spike, idle_cash_high).
+          example: ["idle_cash_high", "travel_spike"]
+        family_context:
+          type: boolean
+          description: True when the customer is married or has dependents.
+          example: true
+
+    # --- Webhook transaction event -------------------------------------------
+
+    TransactionEvent:
+      type: object
+      required:
+        - event_type
+        - customer_id
+        - transaction
+      properties:
+        event_type:
+          type: string
+          enum:
+            - transaction.created
+            - transaction.updated
+            - transaction.reversed
+          example: "transaction.created"
+        customer_id:
+          type: string
+          example: "cust_001"
+        transaction:
+          type: object
+          required:
+            - id
+            - amount
+            - category
+            - merchant
+            - timestamp
+            - currency
+          properties:
+            id:
+              type: string
+              example: "txn_abc123"
+            amount:
+              type: number
+              format: float
+              minimum: 0
+              example: 250.0
+            category:
+              type: string
+              example: "groceries"
+            merchant:
+              type: string
+              example: "SuperStore"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2026-03-31T10:00:00Z"
+            currency:
+              type: string
+              pattern: "^[A-Z]{3}$"
+              example: "USD"
+
+    # --- Health response -----------------------------------------------------
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime_seconds:
+          type: integer
+          example: 3600
+        dependencies:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            postgres: "healthy"
+            redis: "healthy"
+            kafka: "healthy"
+
+    # --- Offers list response ------------------------------------------------
+
+    OffersResponse:
+      type: object
+      required:
+        - customer_id
+        - offers
+      properties:
+        customer_id:
+          type: string
+          example: "cust_001"
+        offers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankedOffer"
+        generated_at:
+          type: string
+          format: date-time
+          example: "2026-03-31T12:00:00Z"
+        total:
+          type: integer
+          example: 3
+
+    # --- Webhook accepted response -------------------------------------------
+
+    WebhookAcceptedResponse:
+      type: object
+      required:
+        - status
+        - event_id
+      properties:
+        status:
+          type: string
+          example: "accepted"
+        event_id:
+          type: string
+          description: Kafka message key assigned to the ingested event.
+          example: "evt_7f3a2b1c"
+        message:
+          type: string
+          example: "Transaction event queued for processing"
+
+    # --- Error response ------------------------------------------------------
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "UNAUTHORIZED"
+        message:
+          type: string
+          example: "Missing or invalid authorization token"
+        request_id:
+          type: string
+          example: "req_9a8b7c6d"
+
+# ---------------------------------------------------------------------------
+# Global security (overridden per-endpoint where not required)
+# ---------------------------------------------------------------------------
+
+security:
+  - BearerAuth: []
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+
+paths:
+
+  # --------------------------------------------------------------------------
+  # GET /health
+  # --------------------------------------------------------------------------
+
+  /health:
+    get:
+      operationId: getHealth
+      tags:
+        - health
+      summary: Service health check
+      description: |
+        Returns the current health status of the API and its upstream
+        dependencies (PostgreSQL, Redis, Kafka).  This endpoint is
+        unauthenticated and is used by Kubernetes liveness / readiness probes
+        and the ArgoCD health check.
+      security: []   # public — no auth required
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: healthy
+                version: "1.0.0"
+                uptime_seconds: 7200
+                dependencies:
+                  postgres: healthy
+                  redis: healthy
+                  kafka: healthy
+        "503":
+          description: One or more dependencies are unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: degraded
+                dependencies:
+                  postgres: healthy
+                  redis: unhealthy
+                  kafka: healthy
+
+  # --------------------------------------------------------------------------
+  # GET /offers/{customer_id}
+  # --------------------------------------------------------------------------
+
+  /offers/{customer_id}:
+    get:
+      operationId: getOffers
+      tags:
+        - offers
+      summary: Get personalised offers for a customer
+      description: |
+        Returns a ranked list of personalised financial product offers for the
+        specified customer.  The response is generated in real-time by the
+        AI/ML pipeline (customer profiler → product scorer → offer ranker).
+
+        **Authorization rules**
+        - A customer may only fetch their own offers (JWT `sub` must match
+          `customer_id`).
+        - Staff with role `advisor` may fetch offers for any customer.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique customer identifier.
+          example: "cust_001"
+        - name: max_offers
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+          description: Maximum number of offers to return.
+        - name: channel
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - push
+              - email
+              - in_app
+          description: Filter offers by delivery channel preference.
+      responses:
+        "200":
+          description: Ranked offers list returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OffersResponse"
+              example:
+                customer_id: "cust_001"
+                generated_at: "2026-03-31T12:00:00Z"
+                total: 2
+                offers:
+                  - offer_id: "offer_f3a2b1c9"
+                    product_id: "prod_ins_001"
+                    product_name: "Family Life Insurance"
+                    product_type: "insurance"
+                    relevance_score: 0.91
+                    rank: 1
+                    personalization_reason: >
+                      As a parent with dependents, life insurance ensures
+                      your family's financial security.
+                    cta_url: "https://bank.example.com/offers/offer_f3a2b1c9"
+                    confidence: 0.91
+                  - offer_id: "offer_a1b2c3d4"
+                    product_id: "prod_etf_001"
+                    product_name: "Global Equity ETF"
+                    product_type: "ETF"
+                    relevance_score: 0.82
+                    rank: 2
+                    personalization_reason: >
+                      Your savings behaviour and risk profile align well
+                      with long-term equity exposure.
+                    cta_url: "https://bank.example.com/offers/offer_a1b2c3d4"
+                    confidence: 0.82
+        "401":
+          description: Missing or invalid authorization token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: UNAUTHORIZED
+                message: "Missing or invalid authorization token"
+        "403":
+          description: Caller is not authorised to view this customer's offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: FORBIDDEN
+                message: "You may only retrieve your own offers"
+        "404":
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the rate limit resets.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --------------------------------------------------------------------------
+  # GET /profiles/{customer_id}
+  # --------------------------------------------------------------------------
+
+  /profiles/{customer_id}:
+    get:
+      operationId: getProfile
+      tags:
+        - profiles
+      summary: Get the AI-computed profile for a customer
+      description: |
+        Returns the latest AI-computed customer profile including life stage,
+        financial health classification, investor readiness, risk bucket, and
+        active context signals.  Useful for advisor tooling and debugging.
+
+        **Authorization rules**
+        - A customer may only fetch their own profile.
+        - Staff with role `advisor` may fetch any profile.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The unique customer identifier.
+          example: "cust_001"
+      responses:
+        "200":
+          description: Customer profile returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerProfile"
+              example:
+                customer_id: "cust_001"
+                life_stage: "young_family"
+                financial_health: "healthy"
+                investor_readiness: "medium"
+                risk_bucket: "medium"
+                risk_score: 5.5
+                lifestyle_segment: "urban_professional"
+                context_signals:
+                  - "idle_cash_high"
+                family_context: true
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --------------------------------------------------------------------------
+  # POST /webhooks/transaction
+  # --------------------------------------------------------------------------
+
+  /webhooks/transaction:
+    post:
+      operationId: receiveTransactionWebhook
+      tags:
+        - webhooks
+      summary: Ingest a transaction event from core banking
+      description: |
+        Accepts a transaction event from the core banking system, validates the
+        HMAC-SHA256 signature in the `X-Webhook-Signature` header, and publishes
+        the event to the Kafka `raw-transactions` topic for downstream processing.
+
+        The response is **202 Accepted** — the event is queued but not yet
+        processed.  The caller should not retry on 202.
+
+        **Signature verification**
+        ```
+        X-Webhook-Signature: sha256=<HMAC-SHA256 of the raw request body>
+        ```
+        The secret is configured via AWS Secrets Manager (`bankoffer/webhook-secret`).
+      security: []   # Authenticated via HMAC signature, not JWT
+      parameters:
+        - name: X-Webhook-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^sha256=[a-f0-9]{64}$"
+          description: HMAC-SHA256 signature of the request body prefixed with `sha256=`.
+          example: "sha256=3d4a5b6c7d8e9f..."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionEvent"
+            examples:
+              grocery_purchase:
+                summary: Grocery store purchase
+                value:
+                  event_type: "transaction.created"
+                  customer_id: "cust_001"
+                  transaction:
+                    id: "txn_abc123"
+                    amount: 87.50
+                    category: "groceries"
+                    merchant: "FreshMart"
+                    timestamp: "2026-03-31T10:00:00Z"
+                    currency: "USD"
+              large_travel_spend:
+                summary: Large travel purchase (triggers travel_spike signal)
+                value:
+                  event_type: "transaction.created"
+                  customer_id: "cust_042"
+                  transaction:
+                    id: "txn_xyz789"
+                    amount: 3200.00
+                    category: "travel"
+                    merchant: "AirlineX"
+                    timestamp: "2026-03-31T14:30:00Z"
+                    currency: "USD"
+      responses:
+        "202":
+          description: Transaction event accepted and queued for processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookAcceptedResponse"
+              example:
+                status: "accepted"
+                event_id: "evt_7f3a2b1c"
+                message: "Transaction event queued for processing"
+        "400":
+          description: Invalid request payload (schema validation failed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: BAD_REQUEST
+                message: "Field 'transaction.amount' must be a positive number"
+        "401":
+          description: Missing or invalid HMAC signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: UNAUTHORIZED
+                message: "Webhook signature verification failed"
+        "422":
+          description: Unprocessable entity (business rule violation)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Kafka unavailable — caller should retry with back-off
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

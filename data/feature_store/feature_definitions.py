@@ -1,30 +1,14 @@
-"""Feast feature store definitions for the BankOfferingAI platform.
-
-Defines three feature views that power the ML recommendation models:
-
-1. **customer_transaction_features** — aggregated spending patterns.
-2. **customer_demographic_features** — static/slow-changing profile data.
-3. **customer_behavior_features** — digital engagement signals.
-"""
+"""Feast feature store definitions for the BankOfferingAI platform."""
 
 from __future__ import annotations
 
 from datetime import timedelta
 
-from feast import (
-    Entity,
-    Feature,
-    FeatureService,
-    FeatureView,
-    Field,
-    FileSource,
-    PushSource,
-    ValueType,
-)
-from feast.types import Float32, Float64, Int64, String
+from feast import Entity, FeatureService, FeatureView, Field, FileSource
+from feast.types import Bool, Float32, Float64, Int64, String
 
 # ---------------------------------------------------------------------------
-# Entities
+# Entity
 # ---------------------------------------------------------------------------
 
 customer = Entity(
@@ -36,9 +20,6 @@ customer = Entity(
 # ---------------------------------------------------------------------------
 # Data sources
 # ---------------------------------------------------------------------------
-
-# In production these would point at a data-warehouse (BigQuery / Redshift)
-# or a streaming source.  File paths are placeholders for local dev.
 
 transaction_features_source = FileSource(
     path="data/feature_store/data/customer_transaction_features.parquet",
@@ -54,113 +35,81 @@ demographic_features_source = FileSource(
     description="Customer demographic data refreshed weekly from the core banking system.",
 )
 
-behavior_features_source = FileSource(
-    path="data/feature_store/data/customer_behavior_features.parquet",
-    timestamp_field="feature_timestamp",
-    created_timestamp_column="created_at",
-    description="Digital-channel engagement metrics computed daily.",
-)
-
-transaction_push_source = PushSource(
-    name="transaction_push",
-    batch_source=transaction_features_source,
-)
-
 # ---------------------------------------------------------------------------
-# Feature views
+# Feature view: customer_features (behavioural / financial aggregates)
 # ---------------------------------------------------------------------------
 
-customer_transaction_features = FeatureView(
-    name="customer_transaction_features",
+customer_features = FeatureView(
+    name="customer_features",
     entities=[customer],
     ttl=timedelta(days=7),
     schema=[
-        Field(name="avg_txn_amount_7d", dtype=Float64),
-        Field(name="avg_txn_amount_30d", dtype=Float64),
-        Field(name="avg_txn_amount_90d", dtype=Float64),
-        Field(name="txn_count_7d", dtype=Int64),
-        Field(name="txn_count_30d", dtype=Int64),
-        Field(name="txn_count_90d", dtype=Int64),
-        Field(name="txn_frequency_daily", dtype=Float32),
-        Field(name="txn_frequency_weekly", dtype=Float32),
-        Field(name="total_spend_30d", dtype=Float64),
-        Field(name="total_spend_90d", dtype=Float64),
-        Field(name="category_groceries_pct", dtype=Float32),
-        Field(name="category_dining_pct", dtype=Float32),
-        Field(name="category_travel_pct", dtype=Float32),
-        Field(name="category_fuel_pct", dtype=Float32),
-        Field(name="category_retail_pct", dtype=Float32),
-        Field(name="category_entertainment_pct", dtype=Float32),
-        Field(name="category_healthcare_pct", dtype=Float32),
-        Field(name="category_utilities_pct", dtype=Float32),
-        Field(name="category_education_pct", dtype=Float32),
-        Field(name="category_other_pct", dtype=Float32),
-        Field(name="max_single_txn_30d", dtype=Float64),
-        Field(name="std_txn_amount_30d", dtype=Float64),
+        Field(name="monthly_savings", dtype=Float64,
+              description="Average monthly net savings over the last 3 months"),
+        Field(name="avg_expenses", dtype=Float64,
+              description="Average monthly total expenditure over the last 3 months"),
+        Field(name="idle_cash", dtype=Float64,
+              description="Estimated cash sitting in low-yield current accounts"),
+        Field(name="balance_trend", dtype=Float32,
+              description="Month-over-month balance change rate (positive = growing)"),
+        Field(name="debt_to_income", dtype=Float32,
+              description="Total outstanding debt divided by annual income"),
+        Field(name="savings_rate", dtype=Float32,
+              description="Monthly savings as a fraction of monthly income"),
+        Field(name="dominant_spend_category", dtype=String,
+              description="Top spending category by volume in the last 30 days"),
+        Field(name="investment_gap_flag", dtype=Bool,
+              description="True when idle_cash exceeds the customer's investment threshold"),
     ],
     source=transaction_features_source,
     online=True,
-    description="Aggregated transaction statistics and category distribution.",
+    description="Behavioural and financial aggregate features derived from transaction history.",
 )
 
-customer_demographic_features = FeatureView(
-    name="customer_demographic_features",
+# ---------------------------------------------------------------------------
+# Feature view: customer_demographics (slowly-changing profile data)
+# ---------------------------------------------------------------------------
+
+customer_demographics = FeatureView(
+    name="customer_demographics",
     entities=[customer],
     ttl=timedelta(days=30),
     schema=[
-        Field(name="age_bucket", dtype=String),
-        Field(name="income_bucket", dtype=String),
-        Field(name="life_stage", dtype=String),
-        Field(name="tenure_months", dtype=Int64),
-        Field(name="region", dtype=String),
-        Field(name="num_products_held", dtype=Int64),
-        Field(name="credit_score_bucket", dtype=String),
-        Field(name="has_mortgage", dtype=Int64),
-        Field(name="has_credit_card", dtype=Int64),
-        Field(name="has_savings_account", dtype=Int64),
-        Field(name="has_investment_account", dtype=Int64),
+        Field(name="age", dtype=Int64,
+              description="Customer age in years"),
+        Field(name="income", dtype=Float64,
+              description="Annual income in USD"),
+        Field(name="savings", dtype=Float64,
+              description="Total savings balance in USD"),
+        Field(name="debt", dtype=Float64,
+              description="Total outstanding debt in USD"),
+        Field(name="risk_profile", dtype=String,
+              description="Raw risk profile label from core banking"),
+        Field(name="marital_status", dtype=String,
+              description="Marital status: single, married, divorced, widowed"),
+        Field(name="dependents_count", dtype=Int64,
+              description="Number of financial dependents"),
+        Field(name="homeowner_status", dtype=String,
+              description="own, rent, or mortgage"),
     ],
     source=demographic_features_source,
     online=True,
-    description="Slowly-changing demographic and product-holding features.",
-)
-
-customer_behavior_features = FeatureView(
-    name="customer_behavior_features",
-    entities=[customer],
-    ttl=timedelta(days=7),
-    schema=[
-        Field(name="login_count_7d", dtype=Int64),
-        Field(name="login_count_30d", dtype=Int64),
-        Field(name="login_frequency_daily", dtype=Float32),
-        Field(name="mobile_sessions_7d", dtype=Int64),
-        Field(name="web_sessions_7d", dtype=Int64),
-        Field(name="product_page_views_7d", dtype=Int64),
-        Field(name="product_page_views_30d", dtype=Int64),
-        Field(name="offer_clicks_30d", dtype=Int64),
-        Field(name="offer_dismissals_30d", dtype=Int64),
-        Field(name="offer_ctr_30d", dtype=Float32),
-        Field(name="avg_session_duration_sec", dtype=Float32),
-        Field(name="days_since_last_login", dtype=Int64),
-    ],
-    source=behavior_features_source,
-    online=True,
-    description="Digital engagement and offer-interaction features.",
+    description="Slowly-changing demographic features sourced from the core banking system.",
 )
 
 # ---------------------------------------------------------------------------
-# Feature service (bundles all views for the recommendation model)
+# Feature service: customer_full_profile
 # ---------------------------------------------------------------------------
 
-bank_offering_feature_service = FeatureService(
-    name="bank_offering_feature_service",
+customer_full_profile = FeatureService(
+    name="customer_full_profile",
     features=[
-        customer_transaction_features,
-        customer_demographic_features,
-        customer_behavior_features,
+        customer_features,
+        customer_demographics,
     ],
     description=(
         "Combined feature service used by the offer-recommendation model "
-        "at inference time."
+        "at inference time. Bundles behavioural aggregates with demographic "
+        "data to construct a complete customer representation."
     ),
 )

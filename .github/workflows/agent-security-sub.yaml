@@ -2,7 +2,7 @@ name: Sub-Agent — Security
 
 on:
   repository_dispatch:
-    types: [security_sub]
+    types: [dispatch_security_sub]
 
 permissions:
   contents: write

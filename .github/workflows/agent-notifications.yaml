@@ -2,7 +2,7 @@ name: Agent — Notifications
 
 on:
   repository_dispatch:
-    types: [agent_notifications]
+    types: [dispatch_notification_agent]
 
 permissions:
   contents: write

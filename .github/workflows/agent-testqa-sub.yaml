@@ -2,7 +2,7 @@ name: Sub-Agent — Test/QA
 
 on:
   repository_dispatch:
-    types: [testqa_sub]
+    types: [dispatch_testqa_sub]
 
 permissions:
   contents: write

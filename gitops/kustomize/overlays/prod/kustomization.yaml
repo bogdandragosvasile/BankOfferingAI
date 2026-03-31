@@ -12,16 +12,17 @@ commonLabels:
   environment: prod
 
 images:
-  - name: ghcr.io/ptx37/bankoffer-api
+  - name: ghcr.io/your-org/bankoffer-api
     newTag: v1.0.0
-  - name: ghcr.io/ptx37/bankoffer-worker
+  - name: ghcr.io/your-org/bankoffer-worker
     newTag: v1.0.0
-  - name: ghcr.io/ptx37/bankoffer-frontend
+  - name: ghcr.io/your-org/bankoffer-frontend
     newTag: v1.0.0
 
 patches:
   - target:
       kind: Deployment
+      labelSelector: "app.kubernetes.io/name=bankoffer-api"
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -32,14 +33,47 @@ patches:
         template:
           spec:
             containers:
-              - name: "*"
+              - name: bankoffer-api
                 resources:
                   limits:
                     cpu: "2"
-                    memory: 4Gi
+                    memory: 2Gi
                   requests:
                     cpu: 500m
-                    memory: 2Gi
+                    memory: 1Gi
+
+  - target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/name=bankoffer-worker"
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: not-important
+      spec:
+        replicas: 4
+        template:
+          spec:
+            containers:
+              - name: bankoffer-worker
+                resources:
+                  limits:
+                    cpu: "4"
+                    memory: 8Gi
+                  requests:
+                    cpu: "1"
+                    memory: 4Gi
+
+  - target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/name=bankoffer-frontend"
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: not-important
+      spec:
+        replicas: 3
 
 configMapGenerator:
   - name: bankoffer-kafka-config

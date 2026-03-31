@@ -12,12 +12,64 @@ on:
 
 permissions:
   contents: read
+  packages: write   # needed to push to ghcr.io
 
 jobs:
+
+  # --------------------------------------------------------------------------
+  # Build and push Docker images to ghcr.io
+  # --------------------------------------------------------------------------
+
+  docker-build-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    if: ${{ vars.ARGOCD_ENABLED == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - services/api
+          - services/worker
+          - services/notification
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/bankoffer-${{ matrix.service }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=staging-latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service }}
+          file: ${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # --------------------------------------------------------------------------
+  # ArgoCD sync to staging
+  # --------------------------------------------------------------------------
+
   deploy-staging:
     name: ArgoCD Sync to Staging
     runs-on: ubuntu-latest
     environment: staging
+    needs: [docker-build-push]
     # Skip if ArgoCD server secret is not configured (infrastructure not provisioned yet)
     if: ${{ vars.ARGOCD_ENABLED == 'true' && secrets.ARGOCD_SERVER != '' }}
     steps:

@@ -2,7 +2,7 @@ name: Sub-Agent — Observability
 
 on:
   repository_dispatch:
-    types: [observability_sub]
+    types: [dispatch_observability_sub]
 
 permissions:
   contents: write

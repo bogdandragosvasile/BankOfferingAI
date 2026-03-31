@@ -162,6 +162,30 @@ resource "kubernetes_namespace" "prod" {
   depends_on = [module.eks]
 }
 
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = "argocd"
+
+    labels = {
+      "app.kubernetes.io/managed-by" = "terraform"
+    }
+  }
+
+  depends_on = [module.eks]
+}
+
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+
+    labels = {
+      "app.kubernetes.io/managed-by" = "terraform"
+    }
+  }
+
+  depends_on = [module.eks]
+}
+
 # ---------------------------------------------------------------------------
 # Kubernetes provider configuration
 # ---------------------------------------------------------------------------

@@ -1,17 +1,15 @@
-"""Worker entry point - consumes Kafka events and runs the ML pipeline."""
+from __future__ import annotations
 
-import json
 import logging
 import os
-import signal
-import sys
 from typing import Any
 
-from kafka import KafkaConsumer, KafkaProducer
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
-from services.worker.profiler import CustomerProfiler
-from services.worker.scorer import ProductScorer
-from services.worker.ranker import OfferRanker
+from services.worker.profiler import ProfileResult, build_profile
+from services.worker.ranker import RankedOffer, RankingConfig, rank_offers
+from services.worker.scorer import AnthropicLLMClient, score_products
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,157 +17,129 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
-CONSUME_TOPIC = "offer.events"
-PRODUCE_TOPIC = "notification.events"
-CONSUMER_GROUP = "offer-worker-group"
-
-# Graceful shutdown
-_running = True
+app = FastAPI(
+    title="BankOffer AI Worker",
+    description="Customer profiling, product scoring, and offer ranking service.",
+    version="1.0.0",
+)
 
 
-def _handle_shutdown(signum, frame):
-    global _running
-    logger.info("Received signal %s, initiating graceful shutdown...", signum)
-    _running = False
+def _get_llm_client() -> AnthropicLLMClient:
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
+    return AnthropicLLMClient(api_key=api_key)
 
 
-signal.signal(signal.SIGTERM, _handle_shutdown)
-signal.signal(signal.SIGINT, _handle_shutdown)
+class ScoreAndRankRequest(BaseModel):
+    customer_id: str = Field(..., description="Unique customer identifier")
+    features: dict[str, Any] = Field(..., description="Customer feature dictionary")
 
 
-def _create_consumer() -> KafkaConsumer:
-    return KafkaConsumer(
-        CONSUME_TOPIC,
-        bootstrap_servers=KAFKA_BOOTSTRAP.split(","),
-        group_id=CONSUMER_GROUP,
-        auto_offset_reset="earliest",
-        enable_auto_commit=False,
-        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
-        max_poll_interval_ms=300000,
-        session_timeout_ms=30000,
-    )
+class RankedOfferResponse(BaseModel):
+    offer_id: str
+    product_id: str
+    product_name: str
+    category: str
+    relevance_score: float
+    confidence_score: float
+    personalization_reason: str
+    recommended_channel: str
+    rank: int
+    boosted: bool
 
 
-def _create_producer() -> KafkaProducer:
-    return KafkaProducer(
-        bootstrap_servers=KAFKA_BOOTSTRAP.split(","),
-        value_serializer=lambda v: json.dumps(v, default=str).encode("utf-8"),
-        acks="all",
-        retries=3,
-    )
+class ProfileResponse(BaseModel):
+    customer_id: str
+    life_stage: str
+    risk_score: float
+    financial_health: str
+    lifestyle_segment: str
+    investor_readiness: str
+    risk_bucket: str
+    context_signals: list[str]
+    family_context: bool
+    housing_context: str | None
 
 
-def _process_event(
-    event: dict[str, Any],
-    profiler: CustomerProfiler,
-    scorer: ProductScorer,
-    ranker: OfferRanker,
-    producer: KafkaProducer,
-) -> None:
-    """Run the full profiler -> scorer -> ranker pipeline for one event."""
-    customer_id = event.get("customer_id")
-    if not customer_id:
-        logger.warning("Event missing customer_id, skipping: %s", event)
-        return
-
-    transactions = event.get("transactions", [])
-    demographics = event.get("demographics", {})
-
-    logger.info(
-        "Processing event for customer %s with %d transactions",
-        customer_id,
-        len(transactions),
-    )
-
-    # Step 1: Profile the customer
-    profile = profiler.build_profile(
-        customer_id=customer_id,
-        transactions=transactions,
-        demographics=demographics,
-    )
-    logger.info(
-        "Profile built for %s: life_stage=%s, risk_score=%.1f",
-        customer_id,
-        profile.life_stage,
-        profile.risk_score,
-    )
-
-    # Step 2: Score products against the profile
-    scored_products = scorer.score(profile)
-    logger.info(
-        "Scored %d products for customer %s",
-        len(scored_products),
-        customer_id,
-    )
-
-    # Step 3: Rank and filter offers
-    ranked_offers = ranker.rank(scored_products, profile)
-    logger.info(
-        "Ranked %d offers for customer %s",
-        len(ranked_offers),
-        customer_id,
-    )
-
-    # Publish notification events for each top offer
-    for offer in ranked_offers:
-        notification = {
-            "offer_id": offer["offer_id"],
-            "product_name": offer["product_name"],
-            "personalization_reason": offer["personalization_reason"],
-            "cta_url": offer["cta_url"],
-            "channel": offer.get("channel", "push"),
-            "customer_id": customer_id,
-        }
-        producer.send(
-            PRODUCE_TOPIC,
-            key=customer_id.encode("utf-8"),
-            value=notification,
-        )
-
-    producer.flush(timeout=10)
-    logger.info("Published %d notifications for customer %s", len(ranked_offers), customer_id)
+class ScoreAndRankResponse(BaseModel):
+    profile: ProfileResponse
+    offers: list[RankedOfferResponse]
 
 
-def run():
-    """Main consumer loop."""
-    logger.info("Starting worker, consuming from topic '%s'...", CONSUME_TOPIC)
-
-    profiler = CustomerProfiler()
-    scorer = ProductScorer()
-    ranker = OfferRanker()
-
-    consumer = _create_consumer()
-    producer = _create_producer()
+@app.post("/score-and-rank", response_model=ScoreAndRankResponse)
+async def score_and_rank(request: ScoreAndRankRequest) -> ScoreAndRankResponse:
+    logger.info("Processing score-and-rank request for customer %s", request.customer_id)
 
     try:
-        while _running:
-            records = consumer.poll(timeout_ms=1000, max_records=10)
+        profile: ProfileResult = build_profile(request.customer_id, request.features)
+    except Exception as exc:
+        logger.exception("Profiling failed for customer %s", request.customer_id)
+        raise HTTPException(status_code=422, detail=f"Profiling error: {exc}") from exc
 
-            for topic_partition, messages in records.items():
-                for message in messages:
-                    try:
-                        _process_event(message.value, profiler, scorer, ranker, producer)
-                    except Exception:
-                        logger.exception(
-                            "Failed to process event at offset %d on %s",
-                            message.offset,
-                            topic_partition,
-                        )
-                        # Continue processing other messages; dead-letter in production
+    try:
+        llm_client = _get_llm_client()
+        scored = score_products(profile, llm_client)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Scoring failed for customer %s", request.customer_id)
+        raise HTTPException(status_code=500, detail=f"Scoring error: {exc}") from exc
 
-                # Commit after processing the batch for this partition
-                consumer.commit()
+    try:
+        ranked: list[RankedOffer] = rank_offers(
+            scored_products=scored,
+            profile=profile,
+            config=RankingConfig(),
+        )
+    except Exception as exc:
+        logger.exception("Ranking failed for customer %s", request.customer_id)
+        raise HTTPException(status_code=500, detail=f"Ranking error: {exc}") from exc
 
-    except Exception:
-        logger.exception("Fatal error in consumer loop")
-        sys.exit(1)
-    finally:
-        logger.info("Closing consumer and producer...")
-        consumer.close()
-        producer.close()
-        logger.info("Worker shut down cleanly.")
+    profile_resp = ProfileResponse(
+        customer_id=profile.customer_id,
+        life_stage=profile.life_stage,
+        risk_score=profile.risk_score,
+        financial_health=profile.financial_health,
+        lifestyle_segment=profile.lifestyle_segment,
+        investor_readiness=profile.investor_readiness,
+        risk_bucket=profile.risk_bucket,
+        context_signals=profile.context_signals,
+        family_context=profile.family_context,
+        housing_context=profile.housing_context,
+    )
+
+    offers_resp = [
+        RankedOfferResponse(
+            offer_id=o.offer_id,
+            product_id=o.product_id,
+            product_name=o.product_name,
+            category=o.category,
+            relevance_score=o.relevance_score,
+            confidence_score=o.confidence_score,
+            personalization_reason=o.personalization_reason,
+            recommended_channel=o.recommended_channel,
+            rank=o.rank,
+            boosted=o.boosted,
+        )
+        for o in ranked
+    ]
+
+    logger.info(
+        "Completed score-and-rank for customer %s: %d offers returned",
+        request.customer_id,
+        len(offers_resp),
+    )
+
+    return ScoreAndRankResponse(profile=profile_resp, offers=offers_resp)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":
-    run()
+    import uvicorn
+
+    uvicorn.run("services.worker.main:app", host="0.0.0.0", port=8001, reload=False)

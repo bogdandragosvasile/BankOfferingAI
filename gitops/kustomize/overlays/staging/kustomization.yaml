@@ -12,11 +12,11 @@ commonLabels:
   environment: staging
 
 images:
-  - name: ghcr.io/ptx37/bankoffer-api
+  - name: ghcr.io/your-org/bankoffer-api
     newTag: staging-latest
-  - name: ghcr.io/ptx37/bankoffer-worker
+  - name: ghcr.io/your-org/bankoffer-worker
     newTag: staging-latest
-  - name: ghcr.io/ptx37/bankoffer-frontend
+  - name: ghcr.io/your-org/bankoffer-frontend
     newTag: staging-latest
 
 patches:

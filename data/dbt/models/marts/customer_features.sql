@@ -1,6 +1,9 @@
 -- customer_features.sql
 -- Mart model: final customer feature table consumed by ML models.
 -- One row per customer with all features needed for offer recommendation.
+-- Includes profiler-required fields: monthly_savings, avg_expenses, idle_cash,
+-- balance_trend, debt_to_income, savings_rate, dominant_spend_category,
+-- investment_gap_flag.
 
 with base as (
 
@@ -50,6 +53,104 @@ risk_signals as (
     where timestamp >= current_date - interval '90 days'
     group by customer_id
 
+),
+
+-- Financial balance snapshot (savings vs. expenses)
+financial_snapshot as (
+
+    select
+        customer_id,
+        -- Monthly savings: inflow credited to savings accounts last 30 days
+        sum(case
+            when transaction_type = 'credit'
+             and merchant_category_code = 'savings_transfer'
+             and transaction_timestamp >= current_date - interval '30 days'
+            then amount else 0
+        end)                                                as monthly_savings,
+
+        -- Average monthly expenses: debits over the last 90 days averaged
+        round(
+            sum(case
+                when transaction_type = 'debit'
+                 and transaction_timestamp >= current_date - interval '90 days'
+                then amount else 0
+            end) / 3.0
+        , 2)                                                as avg_expenses,
+
+        -- Idle cash heuristic: large credits with no corresponding investment
+        -- or savings activity in the same month (proxy for uninvested cash)
+        greatest(0, sum(case
+            when transaction_type = 'credit'
+             and transaction_timestamp >= current_date - interval '30 days'
+            then amount else 0
+        end) - sum(case
+            when transaction_type = 'debit'
+             and merchant_category_code not in ('housing', 'groceries', 'utilities')
+             and transaction_timestamp >= current_date - interval '30 days'
+            then amount else 0
+        end))                                               as idle_cash,
+
+        -- Balance trend: difference between avg spend 30d vs 90d (positive = spending up)
+        round(
+            avg(case
+                when transaction_timestamp >= current_date - interval '30 days'
+                 and transaction_type = 'debit'
+                then amount end)
+            -
+            avg(case
+                when transaction_timestamp >= current_date - interval '90 days'
+                 and transaction_type = 'debit'
+                then amount end)
+        , 2)                                                as balance_trend,
+
+        -- Dominant spend category by total amount in last 30 days
+        first_value(merchant_category_code) over (
+            partition by customer_id
+            order by sum(case
+                when transaction_timestamp >= current_date - interval '30 days'
+                 and transaction_type = 'debit'
+                then amount else 0
+            end) desc
+        )                                                   as dominant_spend_category
+
+    from {{ ref('stg_transactions') }}
+    group by customer_id, merchant_category_code
+
+),
+
+-- Deduplicate financial_snapshot to one row per customer
+financial_deduped as (
+
+    select distinct on (customer_id)
+        customer_id,
+        monthly_savings,
+        avg_expenses,
+        idle_cash,
+        balance_trend,
+        dominant_spend_category
+    from financial_snapshot
+    order by customer_id, monthly_savings desc
+
+),
+
+-- Debt and income signals from customer profile
+debt_income_signals as (
+
+    select
+        c.customer_id,
+        c.annual_income,
+        -- Approximate total debt from loan/credit product balances
+        -- (In production, join to a balance table; here we use a heuristic.)
+        coalesce(
+            sum(case when cp.product_type in ('mortgage', 'personal_loan', 'credit_card')
+                then cp.outstanding_balance else 0 end),
+            0
+        )                                                   as total_debt
+    from {{ source('bank', 'raw_customers') }} c
+    left join {{ source('bank', 'customer_products') }} cp
+        on c.customer_id = cp.customer_id
+    group by c.customer_id, c.annual_income
+
 )
 
 select
@@ -68,7 +169,7 @@ select
     round(b.total_spend_30d / nullif(
         extract(month from age(current_date, current_date - interval '30 days')),
         0
-    ), 2) as avg_monthly_spend,
+    ), 2)                                                   as avg_monthly_spend,
     b.total_spend_30d,
     b.total_spend_90d,
     b.avg_txn_amount_7d,
@@ -128,10 +229,58 @@ select
                                                              as days_since_last_offer,
     current_date - b.last_txn_at::date                       as days_since_last_txn,
 
+    -- -----------------------------------------------------------------------
+    -- Profiler-required financial features
+    -- -----------------------------------------------------------------------
+
+    -- Monthly savings: net amount moved into savings accounts last 30 days
+    coalesce(f.monthly_savings, 0)                           as monthly_savings,
+
+    -- Average monthly expenses over last 90 days
+    coalesce(f.avg_expenses, 0)                              as avg_expenses,
+
+    -- Idle cash: uninvested liquid balance proxy
+    coalesce(f.idle_cash, 0)                                 as idle_cash,
+
+    -- Balance trend: positive = spending accelerating, negative = decelerating
+    coalesce(f.balance_trend, 0)                             as balance_trend,
+
+    -- Debt-to-income ratio (annual debt burden / annual income)
+    case
+        when coalesce(di.annual_income, 0) > 0
+        then round(coalesce(di.total_debt, 0)::numeric / di.annual_income, 4)
+        else null
+    end                                                      as debt_to_income,
+
+    -- Savings rate: monthly_savings / (monthly_income proxy)
+    case
+        when coalesce(di.annual_income, 0) > 0
+        then round(
+            coalesce(f.monthly_savings, 0)::numeric
+            / (di.annual_income / 12.0),
+        4)
+        else null
+    end                                                      as savings_rate,
+
+    -- Dominant spend category last 30 days
+    coalesce(f.dominant_spend_category, 'unknown')           as dominant_spend_category,
+
+    -- Investment gap flag: customer has income suggesting investment capacity
+    -- but no investment product and meaningful idle cash
+    case
+        when coalesce(p.has_investment_account, false) = false
+         and coalesce(di.annual_income, 0) >= 50000
+         and coalesce(f.idle_cash, 0) >= 1000
+        then true
+        else false
+    end                                                      as investment_gap_flag,
+
     -- Metadata
     current_timestamp                                        as feature_computed_at
 
 from base b
-left join product_holdings p  on b.customer_id = p.customer_id
-left join offer_history o     on b.customer_id = o.customer_id
-left join risk_signals r      on b.customer_id = r.customer_id
+left join product_holdings p   on b.customer_id = p.customer_id
+left join offer_history o      on b.customer_id = o.customer_id
+left join risk_signals r       on b.customer_id = r.customer_id
+left join financial_deduped f  on b.customer_id = f.customer_id
+left join debt_income_signals di on b.customer_id = di.customer_id

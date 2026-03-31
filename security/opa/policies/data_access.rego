@@ -3,8 +3,18 @@ package bankoffer.data_access
 import future.keywords.if
 import future.keywords.in
 
-# PII fields that must be masked for non-admin roles
+# PII fields that must be masked for non-admin roles.
+# Includes financial PII: income, savings, debt and personal PII.
 pii_fields := {
+  "income",
+  "annual_income",
+  "monthly_income",
+  "savings",
+  "savings_balance",
+  "debt",
+  "total_debt",
+  "outstanding_debt",
+  "marital_status",
   "full_name",
   "date_of_birth",
   "national_id",
@@ -14,7 +24,7 @@ pii_fields := {
   "address"
 }
 
-# Fields allowed in aggregated analytics (non-PII)
+# Fields allowed in aggregated analytics output (safe for analyst role)
 analytics_fields := {
   "customer_id",
   "life_stage",
@@ -23,48 +33,53 @@ analytics_fields := {
   "spending_category",
   "offer_accepted",
   "product_type",
-  "created_at"
+  "created_at",
+  "age_bucket",
+  "credit_score_bucket",
+  "region",
+  "tenure_months"
 }
 
 # Default deny data access
 default allow_data_access := false
 
-# Admins can access all data
+# Admins can access all data including PII
 allow_data_access if {
   input.principal.role == "admin"
 }
 
-# Service accounts can access non-PII customer data
+# Service accounts can access non-PII customer data for ML pipeline use
 allow_data_access if {
   input.principal.role == "service_account"
   not contains_pii_request(input.requested_fields)
 }
 
-# Analysts can access aggregated analytics only
+# Analysts can access aggregated analytics fields only
 allow_data_access if {
   input.principal.role == "analyst"
   all_fields_analytics(input.requested_fields)
 }
 
-# Customers can access their own full data
+# Customers can access their own full record (including PII)
 allow_data_access if {
   input.principal.role == "customer"
   input.principal.customer_id == input.resource_owner_id
 }
 
-# Helper: check if requested fields contain PII
+# Helper: true if any requested field is a PII field
 contains_pii_request(fields) if {
   field := fields[_]
   field in pii_fields
 }
 
-# Helper: check if all fields are analytics-safe
+# Helper: true only when ALL requested fields are analytics-safe
 all_fields_analytics(fields) if {
   field := fields[_]
   field in analytics_fields
 }
 
-# Masking rules: return masked version of customer record for non-admin
+# Masking rule: return a version of the customer record with PII redacted
+# for any principal that is not an admin.
 masked_response(record) := result if {
   input.principal.role != "admin"
   result := {field: mask_value(record[field], field) | field := object.keys(record)[_]}
@@ -76,4 +91,14 @@ mask_value(_, field) := "***MASKED***" if {
 
 mask_value(value, field) := value if {
   not field in pii_fields
+}
+
+# Deny rule: explicitly block direct access to PII fields for analyst and
+# service_account roles. Used by enforcement middleware.
+default deny_pii_access := false
+
+deny_pii_access if {
+  input.principal.role in ["analyst", "service_account"]
+  field := input.requested_fields[_]
+  field in pii_fields
 }

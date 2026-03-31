@@ -2,7 +2,7 @@ name: Agent — Data Pipeline
 
 on:
   repository_dispatch:
-    types: [agent_data]
+    types: [dispatch_data_pipeline_agent]
 
 permissions:
   contents: write

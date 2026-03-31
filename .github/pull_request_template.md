@@ -15,14 +15,15 @@ agent-result:
   agent: ""            # e.g. infra_agent, api_agent, aiml_agent
   depth: 1             # 0 = orchestrator, 1 = domain agent, 2 = sub-agent
   parent: ""           # parent agent name (empty for depth 0/1)
-  status: completed    # completed | blocked
   tasks_completed:
-    - task_name: ""
-      description: ""
-      files_changed: []
+    - ""
+  audit_entry:
+    timestamp: ""
+    sha: ""
+    status: complete   # complete | blocked
   tasks_blocked: []    # list any tasks that could not be completed
   follow_up:
-    - ""               # any follow-up actions needed from other agents
+    - ""               # follow-up actions needed from other agents
   audit_yaml_updated: true   # must be true before merging
   tests_passed: true         # must be true before merging
   security_scan: passed      # passed | failed | skipped
