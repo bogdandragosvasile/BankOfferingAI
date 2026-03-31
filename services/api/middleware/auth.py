@@ -11,8 +11,9 @@ JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "bank-offering-api")
 JWT_ISSUER = os.getenv("JWT_ISSUER", "bank-auth-service")
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
-bearer_scheme = HTTPBearer(auto_error=True)
+bearer_scheme = HTTPBearer(auto_error=not DEMO_MODE)
 
 
 def decode_token(token: str) -> dict:
@@ -48,14 +49,13 @@ def decode_token(token: str) -> dict:
 
 
 async def get_current_customer_id(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ) -> str:
     """FastAPI dependency that extracts and validates the customer_id from a JWT.
 
-    Usage:
-        @router.get("/resource")
-        async def endpoint(customer_id: str = Depends(get_current_customer_id)):
-            ...
+    In DEMO_MODE, authentication is bypassed and a placeholder ID is returned.
     """
+    if DEMO_MODE:
+        return "__demo__"
     payload = decode_token(credentials.credentials)
     return payload["customer_id"]
