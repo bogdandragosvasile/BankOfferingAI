@@ -349,7 +349,7 @@ async def submit_onboarding(customer_id: str, request: Request):
                 consent_params,
             )
 
-        # --- Save profile questionnaire to customer_features ---
+        # --- Save profile questionnaire to customer_features AND customers ---
         profile = body.get("profile", {})
         if profile:
             # Ensure needed columns exist on customer_features
@@ -391,6 +391,76 @@ async def submit_onboarding(customer_id: str, request: Request):
                         ),
                         feat_params,
                     )
+
+            # --- Also update the customers table (needed by compliance/portal endpoints) ---
+            cust_updates = []
+            cust_params = {"cid": customer_id}
+            if "age" in profile:
+                cust_updates.append("age = :age")
+                cust_params["age"] = int(profile["age"])
+            if "annual_income" in profile:
+                cust_updates.append("income = :income")
+                cust_params["income"] = float(profile["annual_income"])
+            if "dependents" in profile:
+                cust_updates.append("dependents_count = :deps")
+                cust_params["deps"] = int(profile["dependents"])
+            if "homeowner_status" in profile:
+                cust_updates.append("homeowner_status = :ho")
+                cust_params["ho"] = profile["homeowner_status"]
+            if "existing_products" in profile:
+                cust_updates.append("existing_products = :ep")
+                cust_params["ep"] = profile["existing_products"]
+            # Map risk_tolerance to risk_profile
+            if "risk_tolerance" in profile:
+                cust_updates.append("risk_profile = :rp")
+                cust_params["rp"] = profile["risk_tolerance"]
+            if cust_updates:
+                await session.execute(
+                    text(f"UPDATE customers SET {', '.join(cust_updates)} WHERE customer_id = :cid"),
+                    cust_params,
+                )
+
+        # --- Generate customer_profiles entry using build_profile ---
+        age_val = profile.get("age")
+        income_val = profile.get("annual_income")
+        if age_val and income_val:
+            try:
+                from services.worker.profiler import build_profile
+                import json
+
+                features = {
+                    "age": int(age_val),
+                    "annual_income": float(income_val),
+                    "dependents": int(profile.get("dependents", 0)),
+                    "account_tenure_years": 0,
+                    "investment_balance": 0,
+                    "savings_ratio": 0.1,
+                    "loan_to_income": 0,
+                }
+                result = build_profile(customer_id, features)
+                profile_data = {
+                    "customer_id": customer_id,
+                    "life_stage": result.life_stage,
+                    "risk_score": result.risk_score,
+                    "segments": result.segments,
+                    "income_bracket": (
+                        "low" if float(income_val) < 30000
+                        else "medium" if float(income_val) < 70000
+                        else "high" if float(income_val) < 150000
+                        else "very_high"
+                    ),
+                    "spending_patterns": [],
+                }
+                await session.execute(
+                    text(
+                        "INSERT INTO customer_profiles (customer_id, data) "
+                        "VALUES (:cid, :data) "
+                        "ON CONFLICT (customer_id) DO UPDATE SET data = :data"
+                    ),
+                    {"cid": customer_id, "data": json.dumps(profile_data)},
+                )
+            except Exception as e:
+                logger.warning("Failed to generate profile for %s: %s", customer_id, e)
 
         # --- Mark onboarding complete ---
         await session.execute(
