@@ -222,12 +222,6 @@ tailwind.config = {
         <div class="flex items-center gap-3">
           <div id="lang-selector-portal"></div>
           <div id="theme-toggle-portal"></div>
-          <div id="customer-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-600/50">
-            <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
-              <span class="text-accent-light text-xs font-bold" id="badge-initials">--</span>
-            </div>
-            <span class="text-sm text-dark-100 hidden sm:inline" id="badge-name">Customer</span>
-          </div>
           <div id="user-badge-portal"></div>
           <button onclick="switchCustomer()" class="text-xs text-dark-300 hover:text-accent-light transition-colors" title="Switch Customer" data-i18n-title="nav.switch_customer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -1063,9 +1057,7 @@ function navigateTo(section) {
 
 // ==================== BADGE ====================
 function updateBadge(label) {
-  const initials = label.substring(0, 2).toUpperCase();
-  document.getElementById('badge-initials').textContent = initials;
-  document.getElementById('badge-name').textContent = label;
+  // Badge is now rendered by enterPortal() in user-badge-portal
 }
 
 // ==================== RENDER: CUSTOMER INFO ====================
