@@ -1500,6 +1500,11 @@ function setLanguage(lang) {
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.dataset.i18nTitle);
   });
+  // Re-render all language selectors to update active highlight
+  document.querySelectorAll('.lang-btn[data-lang]').forEach(btn => {
+    const isActive = btn.dataset.lang === lang;
+    btn.className = `lang-btn px-2 py-1 rounded text-xs font-medium transition-all ${isActive ? 'bg-accent/20 text-accent-light' : 'text-dark-300 hover:text-dark-100'}`;
+  });
   // Dispatch event for custom handlers
   document.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
 }
