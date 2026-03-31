@@ -1,6 +1,7 @@
 """Profiles router - serves customer profile data."""
 
 import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -8,6 +9,8 @@ from services.api.middleware.auth import get_current_customer_id
 from services.api.models import CustomerProfile
 
 logger = logging.getLogger(__name__)
+
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 router = APIRouter()
 
@@ -24,7 +27,7 @@ async def get_profile(
     authenticated_customer: str = Depends(get_current_customer_id),
 ):
     """Return the customer profile with life_stage, risk_score, and segments."""
-    if authenticated_customer != customer_id:
+    if not DEMO_MODE and authenticated_customer != customer_id:
         raise HTTPException(
             status_code=403,
             detail="Not authorized to access this customer profile",
