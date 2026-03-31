@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BankOffer AI - Product Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060a14;
+  --bg2: #0b1120;
+  --card: rgba(17,24,39,0.8);
+  --border: rgba(99,102,241,0.12);
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+  --green: #10b981;
+  --cyan: #06b6d4;
+  --amber: #f59e0b;
+  --purple: #a78bfa;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+/* ===== SLIDE SYSTEM ===== */
+.slide {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.slide-inner {
+  max-width: 1200px;
+  width: 100%;
+  z-index: 1;
+}
+
+/* ===== BACKGROUNDS ===== */
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.bg-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
+h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+h3 { font-size: 1.25rem; font-weight: 700; }
+.gradient-text { background: linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text-green { background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text-purple { background: linear-gradient(135deg, var(--purple), var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text-amber { background: linear-gradient(135deg, var(--amber), var(--red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.subtitle { font-size: clamp(1rem, 2vw, 1.35rem); color: var(--text2); line-height: 1.6; max-width: 700px; }
+.label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s;
+}
+.card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
+.card-sm { padding: 20px; border-radius: 12px; }
+.card-glow { box-shadow: 0 0 30px rgba(99,102,241,0.08); }
+
+/* ===== GRID ===== */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .slide { padding: 40px 20px; }
+}
+@media (min-width: 901px) and (max-width: 1100px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600;
+}
+.badge-accent { background: rgba(99,102,241,0.15); color: var(--accent-light); }
+.badge-green { background: rgba(16,185,129,0.15); color: var(--green); }
+.badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+.badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+
+/* ===== STAT BOX ===== */
+.stat { text-align: center; }
+.stat-value { font-size: 2.5rem; font-weight: 900; line-height: 1; }
+.stat-label { font-size: 0.8rem; color: var(--text3); margin-top: 6px; }
+
+/* ===== ICON CIRCLE ===== */
+.icon-circle {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ===== FEATURE LIST ===== */
+.feature-item { display: flex; gap: 16px; align-items: flex-start; }
+.feature-item + .feature-item { margin-top: 20px; }
+
+/* ===== FLOW STEP ===== */
+.flow-step {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  position: relative;
+}
+.flow-num {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 800; margin-bottom: 16px;
+}
+
+/* ===== TABLE ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { text-align: left; padding: 12px 16px; color: var(--text3); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid rgba(99,102,241,0.15); }
+.data-table td { padding: 12px 16px; border-bottom: 1px solid rgba(99,102,241,0.06); }
+.data-table tr:hover td { background: rgba(99,102,241,0.04); }
+.data-table code { background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--accent-light); }
+
+/* ===== PILL NAV ===== */
+.pill-nav {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px; padding: 8px 16px;
+  background: rgba(17,24,39,0.9); backdrop-filter: blur(16px);
+  border: 1px solid var(--border); border-radius: 999px;
+  z-index: 100;
+}
+.pill-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--text3); cursor: pointer;
+  transition: all 0.3s; border: none; padding: 0;
+}
+.pill-dot:hover { background: var(--accent-light); }
+.pill-dot.active { background: var(--accent); width: 28px; border-radius: 5px; }
+
+/* ===== ANIMATIONS ===== */
+.fade-up {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.4s; }
+.delay-5 { transition-delay: 0.5s; }
+
+/* ===== PULSE RING ===== */
+@keyframes pulseRing { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1.8); opacity: 0; } }
+.pulse-ring {
+  position: absolute; width: 100%; height: 100%;
+  border: 2px solid var(--accent); border-radius: 50%;
+  animation: pulseRing 2s infinite;
+}
+
+/* ===== CTA ===== */
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 32px; border-radius: 12px;
+  font-size: 0.95rem; font-weight: 600;
+  text-decoration: none; transition: all 0.3s;
+  border: none; cursor: pointer;
+}
+.cta-primary { background: var(--accent); color: white; }
+.cta-primary:hover { background: #4f46e5; box-shadow: 0 0 30px rgba(99,102,241,0.3); }
+.cta-outline { background: transparent; color: var(--accent-light); border: 1px solid rgba(99,102,241,0.3); }
+.cta-outline:hover { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+
+/* ===== MISC ===== */
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 40px 0; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.gap-16 { gap: 16px; }
+.gap-24 { gap: 24px; }
+.gap-40 { gap: 40px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mb-32 { margin-bottom: 32px; }
+.mb-40 { margin-bottom: 40px; }
+.mb-48 { margin-bottom: 48px; }
+.mt-24 { margin-top: 24px; }
+.mt-32 { margin-top: 32px; }
+.text-center { text-align: center; }
+.text-sm { font-size: 0.85rem; }
+.text-xs { font-size: 0.75rem; }
+.text-muted { color: var(--text2); }
+.text-dim { color: var(--text3); }
+.inline-flex { display: inline-flex; align-items: center; }
+.fw-600 { font-weight: 600; }
+.border-l { border-left: 3px solid var(--accent); padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<!-- NAV DOTS -->
+<nav class="pill-nav" id="navDots"></nav>
+
+<!-- ============================== SLIDE 1: HERO ============================== -->
+<section class="slide" id="slide-0">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--accent); top: -200px; right: -200px;"></div>
+  <div class="bg-glow" style="background: var(--cyan); bottom: -200px; left: -200px;"></div>
+  <div class="slide-inner text-center">
+    <div class="fade-up">
+      <div class="flex-center mb-32">
+        <div style="position:relative; width:80px; height:80px;">
+          <div class="pulse-ring"></div>
+          <div style="width:80px;height:80px;border-radius:20px;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;">
+            <svg width="44" height="44" fill="none" stroke="#818cf8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="mb-16">
+        <span class="badge badge-accent">v1.1.0 &mdash; April 2026</span>
+      </div>
+      <h1 class="mb-24">BankOffer <span class="gradient-text">AI</span></h1>
+      <p class="subtitle" style="margin: 0 auto 40px;">
+        AI-powered real-time personalization engine for banking.<br>
+        Hyper-personalized product offers. Full EU regulatory compliance.
+      </p>
+      <div class="flex-center gap-16" style="flex-wrap: wrap;">
+        <a href="https://bankoffer.lupulup.com" target="_blank" class="cta-btn cta-primary">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Live Demo
+        </a>
+        <a href="https://bankoffer.lupulup.com/docs" target="_blank" class="cta-btn cta-outline">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          API Docs
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 2: STATS ============================== -->
+<section class="slide" id="slide-1">
+  <div class="bg-grid"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Platform at a Glance</span>
+      <h2>Built for Scale,<br>Designed for <span class="gradient-text">Compliance</span></h2>
+    </div>
+    <div class="grid-4 fade-up delay-1">
+      <div class="card card-glow text-center">
+        <div class="stat-value gradient-text">3</div>
+        <div class="stat-label">Portals</div>
+        <div class="text-xs text-dim mt-24">Employee, Customer, Admin</div>
+      </div>
+      <div class="card card-glow text-center">
+        <div class="stat-value gradient-text-green">50+</div>
+        <div class="stat-label">API Endpoints</div>
+        <div class="text-xs text-dim mt-24">9 router modules</div>
+      </div>
+      <div class="card card-glow text-center">
+        <div class="stat-value gradient-text-purple">17</div>
+        <div class="stat-label">Database Tables</div>
+        <div class="text-xs text-dim mt-24">Core + compliance + auth</div>
+      </div>
+      <div class="card card-glow text-center">
+        <div class="stat-value gradient-text-amber">5</div>
+        <div class="stat-label">EU Regulations</div>
+        <div class="text-xs text-dim mt-24">GDPR, AI Act, MiFID II, EBA, ePrivacy</div>
+      </div>
+    </div>
+    <div class="grid-4 mt-24 fade-up delay-2">
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">14</div>
+        <div class="text-xs text-dim">Financial Products</div>
+      </div>
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--cyan);">3</div>
+        <div class="text-xs text-dim">Languages (EN/DE/RO)</div>
+      </div>
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--purple);">10</div>
+        <div class="text-xs text-dim">AI Risk Register Entries</div>
+      </div>
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--amber);">50</div>
+        <div class="text-xs text-dim">Seeded Customer Profiles</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 3: THREE PORTALS ============================== -->
+<section class="slide" id="slide-2">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--purple); top: 50%; left: -100px; transform: translateY(-50%);"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Architecture</span>
+      <h2>Three Portals,<br>One <span class="gradient-text-purple">Platform</span></h2>
+    </div>
+    <div class="grid-3 fade-up delay-1">
+      <!-- Employee -->
+      <div class="card">
+        <div class="icon-circle mb-16" style="background:rgba(99,102,241,0.15);">
+          <svg width="24" height="24" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <h3 class="mb-8">Employee Portal</h3>
+        <p class="text-sm text-muted mb-16">Bank staff dashboard with customer overview, offer generation, compliance monitoring, and human-in-the-loop overrides.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="badge badge-accent">Dashboard</span>
+          <span class="badge badge-accent">Customers</span>
+          <span class="badge badge-accent">Analytics</span>
+          <span class="badge badge-accent">Compliance</span>
+        </div>
+        <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--accent-light);font-weight:600;"> /</span></div>
+      </div>
+      <!-- Customer -->
+      <div class="card" style="border-color: rgba(16,185,129,0.2);">
+        <div class="icon-circle mb-16" style="background:rgba(16,185,129,0.15);">
+          <svg width="24" height="24" fill="none" stroke="var(--green)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <h3 class="mb-8">Customer Portal</h3>
+        <p class="text-sm text-muted mb-16">Client-facing portal with personalized offers, consent management, data transparency report, and feedback collection.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="badge badge-green">My Offers</span>
+          <span class="badge badge-green">My Data</span>
+          <span class="badge badge-green">Consent</span>
+          <span class="badge badge-green">History</span>
+        </div>
+        <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--green);font-weight:600;"> /portal</span></div>
+      </div>
+      <!-- Admin -->
+      <div class="card" style="border-color: rgba(239,68,68,0.15);">
+        <div class="icon-circle mb-16" style="background:rgba(239,68,68,0.12);">
+          <svg width="24" height="24" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <h3 class="mb-8">Admin Portal</h3>
+        <p class="text-sm text-muted mb-16">System configuration, user management, product catalog, consent registry, regulatory monitoring, and API tokens.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="badge badge-red">Products</span>
+          <span class="badge badge-red">Consent Registry</span>
+          <span class="badge badge-red">Users</span>
+          <span class="badge badge-red">Tokens</span>
+        </div>
+        <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--red);font-weight:600;"> /admin</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 4: AI ENGINE ============================== -->
+<section class="slide" id="slide-3">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--green); bottom: -100px; right: -100px;"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Core Engine</span>
+      <h2>AI-Powered <span class="gradient-text-green">Personalization</span></h2>
+      <p class="subtitle" style="margin: 16px auto 0;">From raw transactions to hyper-personalized offers in milliseconds</p>
+    </div>
+    <div class="grid-4 mb-40 fade-up delay-1">
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(6,182,212,0.15);color:var(--cyan);">1</div>
+        <h3 class="mb-8" style="font-size:0.95rem;">Ingest</h3>
+        <p class="text-xs text-muted">Transaction streams, events, and customer data flow into the feature store</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(99,102,241,0.15);color:var(--accent-light);">2</div>
+        <h3 class="mb-8" style="font-size:0.95rem;">Profile</h3>
+        <p class="text-xs text-muted">Customer profiler classifies life stage, risk tolerance, and segments</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(167,139,250,0.15);color:var(--purple);">3</div>
+        <h3 class="mb-8" style="font-size:0.95rem;">Score</h3>
+        <p class="text-xs text-muted">Products scored by relevance using profiling rules and suitability checks</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(16,185,129,0.15);color:var(--green);">4</div>
+        <h3 class="mb-8" style="font-size:0.95rem;">Deliver</h3>
+        <p class="text-xs text-muted">Ranked offers with GDPR explanations served via API, push, email, or SMS</p>
+      </div>
+    </div>
+    <div class="grid-2 fade-up delay-2">
+      <div class="card">
+        <h3 class="mb-12" style="color: var(--cyan);">Customer Profiler</h3>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">Life Stage Classification</p>
+            <p class="text-xs text-muted">Rule-based classification: new_graduate, young_family, mid_career, pre_retirement, retired</p>
+          </div>
+        </div>
+        <div class="feature-item" style="margin-top:16px;">
+          <div>
+            <p class="text-sm fw-600 mb-8">Risk Tolerance Scoring</p>
+            <p class="text-xs text-muted">Weighted multi-factor score (1-10) from age, income, investments, savings ratio, and leverage</p>
+          </div>
+        </div>
+        <div class="feature-item" style="margin-top:16px;">
+          <div>
+            <p class="text-sm fw-600 mb-8">Segment Derivation</p>
+            <p class="text-xs text-muted">Auto-segments: high_net_worth, strong_saver, leveraged based on feature thresholds</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="mb-12" style="color: var(--purple);">Offer Ranker</h3>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">MiFID II Suitability Filter</p>
+            <p class="text-xs text-muted">Hard filter blocks mismatched risk levels before scoring. Credit products blocked for fragile customers.</p>
+          </div>
+        </div>
+        <div class="feature-item" style="margin-top:16px;">
+          <div>
+            <p class="text-sm fw-600 mb-8">Business Rules Engine</p>
+            <p class="text-xs text-muted">20 profiling rules from regulatory workbook. Context detection rules match products to customer signals.</p>
+          </div>
+        </div>
+        <div class="feature-item" style="margin-top:16px;">
+          <div>
+            <p class="text-sm fw-600 mb-8">Diversity Constraints</p>
+            <p class="text-xs text-muted">Product type diversity ensures balanced recommendations across savings, investments, insurance, and credit.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 5: COMPLIANCE ============================== -->
+<section class="slide" id="slide-4">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--amber); top: -200px; left: 50%; transform: translateX(-50%);"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Regulatory Framework</span>
+      <h2>Five EU Regulations,<br><span class="gradient-text-amber">One Platform</span></h2>
+    </div>
+    <div class="grid-3 fade-up delay-1">
+      <!-- GDPR -->
+      <div class="card">
+        <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(6,182,212,0.15);">
+            <svg width="22" height="22" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3>GDPR</h3>
+        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#10003; 5-tier granular consent system</li>
+          <li class="mb-8">&#10003; SHA-256 email pseudonymization</li>
+          <li class="mb-8">&#10003; Auto-anonymization (2yr limit)</li>
+          <li class="mb-8">&#10003; Art. 22 automated decision rights</li>
+          <li>&#10003; Full data transparency report</li>
+        </ul>
+      </div>
+      <!-- AI Act -->
+      <div class="card">
+        <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(167,139,250,0.15);">
+            <svg width="22" height="22" fill="none" stroke="var(--purple)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h3>EU AI Act</h3>
+        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#10003; Art. 13 transparency disclosures</li>
+          <li class="mb-8">&#10003; Art. 14 human override (kill switch)</li>
+          <li class="mb-8">&#10003; Art. 9 risk register (10 entries)</li>
+          <li class="mb-8">&#10003; Algorithmic explanation panels</li>
+          <li>&#10003; Bias monitoring dashboard</li>
+        </ul>
+      </div>
+      <!-- MiFID II -->
+      <div class="card">
+        <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(245,158,11,0.15);">
+            <svg width="22" height="22" fill="none" stroke="var(--amber)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3>MiFID II</h3>
+        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#10003; Product suitability assessment</li>
+          <li class="mb-8">&#10003; Risk profile matching</li>
+          <li class="mb-8">&#10003; Per-product confirmation flow</li>
+          <li>&#10003; Excluded products disclosure</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-2 mt-24 fade-up delay-2">
+      <div class="card card-sm">
+        <div class="flex-center gap-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(16,185,129,0.15);width:40px;height:40px;border-radius:10px;">
+            <svg width="20" height="20" fill="none" stroke="var(--green)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size:1rem;">EBA Guidelines</h3>
+            <p class="text-xs text-muted mt-24">Fair treatment, product governance, distribution controls</p>
+          </div>
+        </div>
+      </div>
+      <div class="card card-sm">
+        <div class="flex-center gap-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(99,102,241,0.15);width:40px;height:40px;border-radius:10px;">
+            <svg width="20" height="20" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size:1rem;">ePrivacy Directive</h3>
+            <p class="text-xs text-muted mt-24">Per-channel marketing consent: push, email, SMS</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 6: ONBOARDING ============================== -->
+<section class="slide" id="slide-5">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--accent); bottom: 0; left: 50%; transform: translateX(-50%);"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Customer Journey</span>
+      <h2>Onboarding <span class="gradient-text">Wizard</span></h2>
+      <p class="subtitle" style="margin: 16px auto 0;">Three steps from registration to personalized offers</p>
+    </div>
+    <div class="grid-3 fade-up delay-1">
+      <div class="card text-center">
+        <div class="flex-center mb-16">
+          <div class="flow-num" style="background:rgba(6,182,212,0.15);color:var(--cyan);margin-bottom:0;">1</div>
+        </div>
+        <h3 class="mb-12">Consent &amp; Compliance</h3>
+        <p class="text-sm text-muted mb-16">AI Act transparency notice, GDPR consent toggles (profiling, automated decisions, marketing channels, family data), and regulatory disclosures from the consent registry.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+          <span class="badge badge-cyan">GDPR Art. 6</span>
+          <span class="badge badge-cyan">GDPR Art. 22</span>
+          <span class="badge badge-cyan">AI Act Art. 13</span>
+        </div>
+      </div>
+      <div class="card text-center">
+        <div class="flex-center mb-16">
+          <div class="flow-num" style="background:rgba(167,139,250,0.15);color:var(--purple);margin-bottom:0;">2</div>
+        </div>
+        <h3 class="mb-12">Profile Questionnaire</h3>
+        <p class="text-sm text-muted mb-16">Age, annual income, dependents, employment status, risk tolerance, homeowner status, and existing banking products. Used by the profiler to classify life stage and risk score.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+          <span class="badge badge-purple">Life Stage</span>
+          <span class="badge badge-purple">Risk Score</span>
+          <span class="badge badge-purple">Segments</span>
+        </div>
+      </div>
+      <div class="card text-center">
+        <div class="flex-center mb-16">
+          <div class="flow-num" style="background:rgba(16,185,129,0.15);color:var(--green);margin-bottom:0;">3</div>
+        </div>
+        <h3 class="mb-12">Review &amp; Confirm</h3>
+        <p class="text-sm text-muted mb-16">Full summary of consent selections and profile data. On confirmation, the system generates a computed profile and the customer immediately receives personalized offers.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+          <span class="badge badge-green">Auto Profile</span>
+          <span class="badge badge-green">Instant Offers</span>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-32 fade-up delay-2" style="border-left: 3px solid var(--accent);">
+      <p class="text-sm text-muted"><strong style="color:var(--accent-light);">Privacy by design:</strong> New customers receive auto-increment IDs (51, 52, ...). Email is never stored &mdash; only an irreversible SHA-256 hash. Internal IDs are replaced with pseudonymized UUIDs for external use. Data is automatically anonymized after 2 years.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 7: CONSENT REGISTRY ============================== -->
+<section class="slide" id="slide-6">
+  <div class="bg-grid"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Admin Tools</span>
+      <h2>Consent Registry &amp;<br><span class="gradient-text-amber">Regulatory Monitoring</span></h2>
+    </div>
+    <div class="grid-2 fade-up delay-1">
+      <div class="card">
+        <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(245,158,11,0.15);">
+            <svg width="24" height="24" fill="none" stroke="var(--amber)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <h3>Consent Registry</h3>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">Excel Workbook Sync</p>
+            <p class="text-xs text-muted">Reads 5 sheets (Official Texts, Product Checkboxes, AI Rules, Implementation Map, Sources) with SHA-256 change detection.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">Background Sync (6h)</p>
+            <p class="text-xs text-muted">Auto-increments version only on actual changes. Tracks sync history with timestamps and record counts.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">9 Consent Types, 65 Product Mappings</p>
+            <p class="text-xs text-muted">Covers 12 products across GDPR, MiFID II, IDD, and AI Act requirements.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
+          <div class="icon-circle" style="background:rgba(239,68,68,0.12);">
+            <svg width="24" height="24" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          </div>
+          <h3>Regulatory Monitoring</h3>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">EUR-Lex URL Monitoring</p>
+            <p class="text-xs text-muted">Fetches 6 EU regulation URLs every 24 hours and computes SHA-256 content hashes to detect legislative changes.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">Admin Alert System</p>
+            <p class="text-xs text-muted">Red animated banner in admin portal when regulatory source changes detected. Dismissible "Mark as Reviewed" flow.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div>
+            <p class="text-sm fw-600 mb-8">6 Tracked Regulations</p>
+            <p class="text-xs text-muted">GDPR, MiFID II, IDD, ePrivacy Directive, EU AI Act, EBA Guidelines &mdash; each with direct EUR-Lex links.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 8: TECH STACK ============================== -->
+<section class="slide" id="slide-7">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--cyan); top: 50%; right: -200px; transform: translateY(-50%);"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Technology</span>
+      <h2>Modern <span class="gradient-text">Stack</span></h2>
+    </div>
+    <div class="grid-3 fade-up delay-1">
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--accent-light);">Backend</p>
+        <p class="text-sm fw-600 mb-8">Python 3.12 + FastAPI</p>
+        <p class="text-xs text-muted">Async API with Uvicorn, SQLAlchemy 2.0, Pydantic v2 validation, Prometheus metrics</p>
+      </div>
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--green);">Database</p>
+        <p class="text-sm fw-600 mb-8">PostgreSQL 16 + Redis 7</p>
+        <p class="text-xs text-muted">Async connection pooling (asyncpg), JSONB profiles, Redis cache with 15min TTL</p>
+      </div>
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--cyan);">Identity</p>
+        <p class="text-sm fw-600 mb-8">Keycloak 26.2</p>
+        <p class="text-xs text-muted">OIDC + PKCE S256, role-based access, social providers (Google, Facebook, Microsoft)</p>
+      </div>
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--purple);">Frontend</p>
+        <p class="text-sm fw-600 mb-8">Vanilla JS + Tailwind CSS</p>
+        <p class="text-xs text-muted">Glass-morphism dark UI, Chart.js visualizations, responsive layout, i18n framework</p>
+      </div>
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--amber);">Infrastructure</p>
+        <p class="text-sm fw-600 mb-8">Docker Compose + Nginx</p>
+        <p class="text-xs text-muted">Multi-service stack on OpenStack VM, Pangolin TLS termination, Cloudflare DNS</p>
+      </div>
+      <div class="card card-sm">
+        <p class="label mb-12" style="color:var(--red);">Security</p>
+        <p class="text-sm fw-600 mb-8">PBKDF2 + SHA-256 + JWT</p>
+        <p class="text-xs text-muted">100k-iteration password hashing, email pseudonymization, signed session tokens</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 9: AUDIT TRAIL ============================== -->
+<section class="slide" id="slide-8">
+  <div class="bg-grid"></div>
+  <div class="slide-inner">
+    <div class="text-center mb-48 fade-up">
+      <span class="label text-dim mb-8" style="display:block;">Transparency</span>
+      <h2>Immutable <span class="gradient-text-purple">Audit Trail</span></h2>
+      <p class="subtitle" style="margin: 16px auto 0;">Every recommendation is fully traceable end-to-end</p>
+    </div>
+    <div class="card fade-up delay-1" style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Description</th>
+            <th>Regulation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>recommendation_id</code></td><td class="text-muted">Unique UUID for every offer generation event</td><td><span class="badge badge-cyan">GDPR Art. 22</span></td></tr>
+          <tr><td><code>input_features</code></td><td class="text-muted">Complete feature snapshot used for scoring</td><td><span class="badge badge-purple">AI Act Art. 13</span></td></tr>
+          <tr><td><code>profile_result</code></td><td class="text-muted">Life stage, risk score, segments at time of scoring</td><td><span class="badge badge-purple">AI Act Art. 13</span></td></tr>
+          <tr><td><code>suitability_checks</code></td><td class="text-muted">Which products passed/failed suitability filters</td><td><span class="badge badge-amber">MiFID II Art. 25</span></td></tr>
+          <tr><td><code>scored_products</code></td><td class="text-muted">All products with raw relevance scores</td><td><span class="badge badge-purple">AI Act Art. 13</span></td></tr>
+          <tr><td><code>excluded_products</code></td><td class="text-muted">Products excluded with specific exclusion reasons</td><td><span class="badge badge-amber">MiFID II Art. 25</span></td></tr>
+          <tr><td><code>consent_snapshot</code></td><td class="text-muted">Customer's consent state at time of recommendation</td><td><span class="badge badge-cyan">GDPR Art. 7</span></td></tr>
+          <tr><td><code>model_version</code></td><td class="text-muted">Exact model version that generated the offers</td><td><span class="badge badge-purple">AI Act Art. 12</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid-3 mt-32 fade-up delay-2">
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">&#8734;</div>
+        <div class="text-xs text-dim mt-24">Append-only, never deleted</div>
+      </div>
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--cyan);">UUID</div>
+        <div class="text-xs text-dim mt-24">Every event uniquely identified</div>
+      </div>
+      <div class="card card-sm text-center">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--purple);">JSONB</div>
+        <div class="text-xs text-dim mt-24">Full state snapshots in PostgreSQL</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SLIDE 10: DEMO ============================== -->
+<section class="slide" id="slide-9">
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="background: var(--accent); top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;"></div>
+  <div class="slide-inner text-center">
+    <div class="fade-up">
+      <div class="mb-16">
+        <span class="badge badge-green">Live at bankoffer.lupulup.com</span>
+      </div>
+      <h2 class="mb-24">Try It <span class="gradient-text">Now</span></h2>
+      <p class="subtitle" style="margin: 0 auto 48px;">Use the demo credentials below to explore all three portals</p>
+    </div>
+    <div class="card fade-up delay-1" style="display:inline-block; text-align:left; overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Portal</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-red">Admin</span></td>
+            <td><code>admin@bankofferai.com</code></td>
+            <td class="text-muted">Admin1234!</td>
+            <td><a href="https://bankoffer.lupulup.com/admin" target="_blank" style="color:var(--accent-light);text-decoration:none;">/admin</a></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-accent">Employee</span></td>
+            <td><code>manager@bankofferai.com</code></td>
+            <td class="text-muted">Employee1234!</td>
+            <td><a href="https://bankoffer.lupulup.com/" target="_blank" style="color:var(--accent-light);text-decoration:none;">/</a></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">Customer</span></td>
+            <td><code>demo@bankofferai.com</code></td>
+            <td class="text-muted">Demo1234!</td>
+            <td><a href="https://bankoffer.lupulup.com/portal" target="_blank" style="color:var(--accent-light);text-decoration:none;">/portal</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-32 flex-center gap-16 fade-up delay-2" style="flex-wrap:wrap;">
+      <a href="https://bankoffer.lupulup.com" target="_blank" class="cta-btn cta-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Open Live Demo
+      </a>
+      <a href="https://bankoffer.lupulup.com/docs" target="_blank" class="cta-btn cta-outline">
+        Swagger API Docs
+      </a>
+      <a href="https://github.com/bogdandragosvasile/BankOfferingAI" target="_blank" class="cta-btn cta-outline">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+    <p class="text-xs text-dim mt-32 fade-up delay-3">BankOffer AI v1.1.0 &bull; Built with FastAPI, PostgreSQL, Redis, Keycloak &bull; Deployed on OpenStack</p>
+  </div>
+</section>
+
+<script>
+// ===== NAV DOTS =====
+const slides = document.querySelectorAll('.slide');
+const navDots = document.getElementById('navDots');
+slides.forEach((_, i) => {
+  const dot = document.createElement('button');
+  dot.className = 'pill-dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth' });
+  navDots.appendChild(dot);
+});
+
+// ===== SCROLL ANIMATIONS =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.fade-up').forEach(el => el.classList.add('visible'));
+      // Update nav dots
+      const idx = Array.from(slides).indexOf(entry.target);
+      document.querySelectorAll('.pill-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    }
+  });
+}, { threshold: 0.3 });
+slides.forEach(s => observer.observe(s));
+
+// ===== KEYBOARD NAVIGATION =====
+let currentSlide = 0;
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    currentSlide = Math.min(currentSlide + 1, slides.length - 1);
+    slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    currentSlide = Math.max(currentSlide - 1, 0);
+    slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+// Track current slide from scroll
+window.addEventListener('scroll', () => {
+  slides.forEach((s, i) => {
+    const rect = s.getBoundingClientRect();
+    if (rect.top < window.innerHeight / 2 && rect.bottom > window.innerHeight / 2) {
+      currentSlide = i;
+    }
+  });
+});
+</script>
+</body>
+</html>
