@@ -123,6 +123,28 @@ def _check_suitability(product_id: str, customer_risk_profile: str,
     return True, None
 
 
+def _check_suitability_dynamic(product_id: str, customer_risk_profile: str,
+                               financial_health: str, product_risk: str,
+                               credit_products: set) -> tuple[bool, str | None]:
+    """Suitability filter using dynamic product catalog data."""
+    customer_level = RISK_HIERARCHY.get(customer_risk_profile.lower(), 2)
+    product_level = RISK_HIERARCHY.get(product_risk, 2)
+
+    if product_level > customer_level:
+        return False, (
+            f"Product risk level ({product_risk}) exceeds client risk profile "
+            f"({customer_risk_profile}) — MiFID II suitability filter"
+        )
+
+    if financial_health == "fragile" and product_id in credit_products:
+        return False, (
+            "Client financial health is fragile — credit products excluded "
+            "per responsible lending policy"
+        )
+
+    return True, None
+
+
 # ===== Requirement 1: Explainability (GDPR art.22 + AI Act) =====
 
 def _build_explanation(product: dict, reasons: list[str], f: dict,
@@ -395,8 +417,28 @@ async def get_eligibility_counts(
             )
             customers = result.mappings().fetchall()
 
+        # Load products from DB with fallback
+        products_list = PRODUCTS
+        p_risk_map = PRODUCT_RISK_LEVEL
+        p_credit_set = CREDIT_PRODUCTS
+        try:
+            async with session_factory() as session:
+                db_result = await session.execute(
+                    text("SELECT product_id, product_name, type, risk_level, is_credit_product FROM products WHERE active = TRUE")
+                )
+                db_rows = db_result.mappings().fetchall()
+                if db_rows:
+                    products_list = [
+                        {"id": r["product_id"], "name": r["product_name"] or r["product_id"], "type": r["type"] or "investment"}
+                        for r in db_rows if r.get("product_id")
+                    ]
+                    p_risk_map = {r["product_id"]: (r["risk_level"] or "moderate") for r in db_rows if r.get("product_id")}
+                    p_credit_set = {r["product_id"] for r in db_rows if r.get("product_id") and r.get("is_credit_product")}
+        except Exception:
+            pass
+
         counts = {}
-        for product in PRODUCTS:
+        for product in products_list:
             pid = product["id"]
             eligible = 0
             ineligible = 0
@@ -407,7 +449,7 @@ async def get_eligibility_counts(
                     continue
                 risk = str(cust["risk_profile"] or "moderate").lower()
                 health = str(cust["financial_health"] or "stable")
-                suitable, _ = _check_suitability(pid, risk, health)
+                suitable, _ = _check_suitability_dynamic(pid, risk, health, p_risk_map.get(pid, "moderate"), p_credit_set)
                 if suitable:
                     eligible += 1
                 else:
@@ -566,20 +608,41 @@ async def get_offers(
         "segments": profile.segments,
     }
 
+    # ===== Load product catalog from DB (fallback to hardcoded) =====
+    active_products = PRODUCTS
+    product_risk_map = PRODUCT_RISK_LEVEL
+    credit_set = CREDIT_PRODUCTS
+    try:
+        async with session_factory() as session:
+            result = await session.execute(
+                text("SELECT product_id, product_name, type, risk_level, is_credit_product FROM products WHERE active = TRUE")
+            )
+            db_rows = result.mappings().fetchall()
+            if db_rows:
+                active_products = [
+                    {"id": r["product_id"], "name": r["product_name"] or r["product_id"], "type": r["type"] or "investment"}
+                    for r in db_rows if r.get("product_id")
+                ]
+                product_risk_map = {r["product_id"]: (r["risk_level"] or "moderate") for r in db_rows if r.get("product_id")}
+                credit_set = {r["product_id"] for r in db_rows if r.get("product_id") and r.get("is_credit_product")}
+    except Exception as e:
+        logger.warning("Failed to load products from DB, using defaults: %s", e)
+
     # ===== Requirement 2: Suitability filter (hard) =====
     risk_profile = str(features.get("risk_profile") or "moderate").lower()
     suitable_products = []
     excluded_products = []
     suitability_checks = {}
 
-    for product in PRODUCTS:
-        suitable, reason = _check_suitability(
-            product["id"], risk_profile, financial_health
+    for product in active_products:
+        product_risk = product_risk_map.get(product["id"], "moderate")
+        suitable, reason = _check_suitability_dynamic(
+            product["id"], risk_profile, financial_health, product_risk, credit_set
         )
         suitability_checks[product["id"]] = {
             "suitable": suitable,
             "reason": reason,
-            "product_risk": PRODUCT_RISK_LEVEL.get(product["id"], "moderate"),
+            "product_risk": product_risk,
             "customer_risk": risk_profile,
         }
         if suitable:
