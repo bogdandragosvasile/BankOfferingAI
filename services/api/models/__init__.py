@@ -104,6 +104,7 @@ class FeedbackRequest(BaseModel):
     recommendation_id: str = Field(..., description="Audit trail recommendation ID")
     offer_id: str = Field(..., description="Offer being acted upon")
     product_id: Optional[str] = Field(None, description="Product ID if known")
+    customer_id: Optional[str] = Field(None, description="Customer ID")
     actor_type: str = Field(..., description="'customer' or 'employee'")
     actor_id: Optional[str] = Field(None, description="Actor identifier")
     action: str = Field(..., description="'accepted', 'rejected', 'flagged', or 'overridden'")
