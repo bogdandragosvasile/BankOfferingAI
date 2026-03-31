@@ -86,7 +86,7 @@ def create_app() -> FastAPI:
     app.include_router(offers.router, prefix="/offers", tags=["offers"])
     app.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
     app.include_router(compliance.router, prefix="/compliance", tags=["compliance"])
-    app.include_router(customer_auth.router, prefix="/auth/customer", tags=["customer-auth"])
+    app.include_router(customer_auth.router, prefix="/customer-auth", tags=["customer-auth"])
 
     if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
         from services.api.routers import webhooks

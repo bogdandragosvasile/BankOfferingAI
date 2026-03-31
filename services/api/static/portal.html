@@ -777,7 +777,7 @@ async function handleLogin() {
   errorEl.classList.add('hidden');
 
   try {
-    const resp = await fetch(API + '/auth/customer/login', {
+    const resp = await fetch(API + '/customer-auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -831,7 +831,7 @@ async function handleRegister() {
   btn.textContent = '...';
 
   try {
-    const resp = await fetch(API + '/auth/customer/login', {
+    const resp = await fetch(API + '/customer-auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -846,7 +846,7 @@ async function handleRegister() {
     }
 
     // Otherwise, try to register
-    const regResp = await fetch(API + '/auth/customer/register', {
+    const regResp = await fetch(API + '/customer-auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
