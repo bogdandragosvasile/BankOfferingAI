@@ -193,6 +193,8 @@
 
   function onAuthChange(callback) {
     _onAuthChange.push(callback);
+    // Immediately invoke with current state so late subscribers get the initial state
+    try { callback(_currentUser); } catch(e) { console.error('[Auth] Callback error:', e); }
   }
 
   function _notifyChange() {
