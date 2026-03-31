@@ -77,9 +77,9 @@ tailwind.config = {
         <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       </div>
       <h1 class="text-3xl font-bold text-white mb-2">BankOffer <span class="text-accent-light">AI</span></h1>
-      <p class="text-dark-200 text-base">Customer Portal</p>
-      <p class="text-dark-300 text-sm mt-2">Select your customer ID to view personalized offers</p>
-      <p class="text-dark-400 text-xs mt-1">(Demo mode -- in production this would be a secure login)</p>
+      <p class="text-dark-200 text-base" data-i18n="portal.title">Customer Portal</p>
+      <p class="text-dark-300 text-sm mt-2" data-i18n="portal.select_customer_id">Select your customer ID to view personalized offers</p>
+      <p class="text-dark-400 text-xs mt-1" data-i18n="portal.demo_note">(Demo mode -- in production this would be a secure login)</p>
     </div>
     <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s">
       <div class="grid grid-cols-5 sm:grid-cols-10 gap-2" id="customer-grid"></div>
@@ -102,10 +102,10 @@ tailwind.config = {
         </div>
         <!-- Nav links (desktop) -->
         <div class="hidden md:flex items-center gap-1" id="nav-desktop">
-          <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">My Offers</button>
-          <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">My Data</button>
-          <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">Consent</button>
-          <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">History</button>
+          <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.my_offers">My Offers</button>
+          <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.my_data">My Data</button>
+          <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.consent">Consent</button>
+          <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.history">History</button>
         </div>
         <!-- Controls: language, theme, customer badge, switch -->
         <div class="flex items-center gap-3">
@@ -118,17 +118,17 @@ tailwind.config = {
             <span class="text-sm text-dark-100 hidden sm:inline" id="badge-name">Customer</span>
           </div>
           <div id="user-badge-portal"></div>
-          <button onclick="switchCustomer()" class="text-xs text-dark-300 hover:text-accent-light transition-colors" title="Switch Customer">
+          <button onclick="switchCustomer()" class="text-xs text-dark-300 hover:text-accent-light transition-colors" title="Switch Customer" data-i18n-title="nav.switch_customer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           </button>
         </div>
       </div>
       <!-- Mobile nav -->
       <div class="md:hidden flex items-center gap-1 pb-2 overflow-x-auto" id="nav-mobile">
-        <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">Offers</button>
-        <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">My Data</button>
-        <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">Consent</button>
-        <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">History</button>
+        <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.my_offers">Offers</button>
+        <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.my_data">My Data</button>
+        <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.consent">Consent</button>
+        <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.history">History</button>
       </div>
     </div>
   </nav>
@@ -140,8 +140,8 @@ tailwind.config = {
       <div class="flex items-start gap-3">
         <svg class="w-6 h-6 text-neon-amber flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
         <div>
-          <p class="text-neon-amber font-semibold text-sm">Profiling consent required</p>
-          <p class="text-dark-200 text-xs mt-1">Enable profiling consent to receive personalized product recommendations. You can manage your consent in the <button onclick="navigateTo('consent')" class="text-accent-light underline">Consent settings</button>.</p>
+          <p class="text-neon-amber font-semibold text-sm" data-i18n="portal.profiling_required">Profiling consent required</p>
+          <p class="text-dark-200 text-xs mt-1"><span data-i18n="portal.profiling_required_desc">Enable profiling consent to receive personalized product recommendations. You can manage your consent in the</span> <button onclick="navigateTo('consent')" class="text-accent-light underline" data-i18n="portal.consent_settings">Consent settings</button>.</p>
         </div>
       </div>
     </div>
@@ -160,19 +160,19 @@ tailwind.config = {
           </div>
           <div class="flex flex-wrap gap-3">
             <div class="text-center px-3">
-              <p class="text-xs text-dark-300">Age</p>
+              <p class="text-xs text-dark-300" data-i18n="portal.age">Age</p>
               <p class="text-lg font-semibold text-white" id="info-age">--</p>
             </div>
             <div class="text-center px-3">
-              <p class="text-xs text-dark-300">Income Tier</p>
+              <p class="text-xs text-dark-300" data-i18n="portal.income_tier">Income Tier</p>
               <p class="text-lg font-semibold text-neon-green" id="info-income">--</p>
             </div>
             <div class="text-center px-3">
-              <p class="text-xs text-dark-300">Risk Profile</p>
+              <p class="text-xs text-dark-300" data-i18n="portal.risk_profile">Risk Profile</p>
               <p class="text-lg font-semibold text-neon-cyan" id="info-risk">--</p>
             </div>
             <div class="text-center px-3">
-              <p class="text-xs text-dark-300">Life Stage</p>
+              <p class="text-xs text-dark-300" data-i18n="portal.life_stage_label">Life Stage</p>
               <p class="text-lg font-semibold text-neon-purple" id="info-lifestage">--</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ tailwind.config = {
       <!-- Offers grid -->
       <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
         <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Your Personalized Offers
+        <span data-i18n="portal.personalized_offers">Your Personalized Offers</span>
       </h3>
       <div id="offers-list" class="space-y-4 mb-8">
         <div class="glass-card rounded-xl p-6 shimmer h-32"></div>
@@ -193,9 +193,9 @@ tailwind.config = {
       <div id="excluded-section" class="hidden">
         <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <svg class="w-5 h-5 text-dark-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-          Products Not Shown (Suitability Filter)
+          <span data-i18n="portal.excluded_title">Products Not Shown (Suitability Filter)</span>
         </h3>
-        <p class="text-dark-300 text-xs mb-3">These products were filtered out based on regulatory suitability requirements (MiFID II / IDD). This transparency is required by GDPR Art. 22.</p>
+        <p class="text-dark-300 text-xs mb-3" data-i18n="portal.excluded_desc">These products were filtered out based on regulatory suitability requirements (MiFID II / IDD). This transparency is required by GDPR Art. 22.</p>
         <div id="excluded-list" class="space-y-2 mb-6"></div>
       </div>
     </section>
@@ -205,36 +205,36 @@ tailwind.config = {
       <div class="fade-in">
         <h3 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
           <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Your Data Transparency Report
+          <span data-i18n="portal.data_report">Your Data Transparency Report</span>
         </h3>
-        <p class="text-dark-300 text-sm mb-6">Below is all the data the system holds about you and uses for personalization.</p>
+        <p class="text-dark-300 text-sm mb-6" data-i18n="portal.data_report_desc">Below is all the data the system holds about you and uses for personalization.</p>
 
         <!-- Privacy notice -->
         <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-accent">
           <div class="flex items-start gap-3">
             <svg class="w-5 h-5 text-accent-light flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-dark-200 text-sm">This data is used to personalize your product recommendations. No personally identifiable information (name, ID number) enters the scoring pipeline. All scoring is performed on pseudonymized feature vectors.</p>
+            <p class="text-dark-200 text-sm" data-i18n="portal.data_notice_full">This data is used to personalize your product recommendations. No personally identifiable information (name, ID number) enters the scoring pipeline. All scoring is performed on pseudonymized feature vectors.</p>
           </div>
         </div>
 
         <!-- Profile card -->
         <div class="glass-card rounded-2xl p-6 mb-6">
-          <h4 class="text-base font-semibold text-white mb-4">Profile Summary</h4>
+          <h4 class="text-base font-semibold text-white mb-4" data-i18n="portal.profile_summary">Profile Summary</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="profile-grid">
             <div class="text-center p-3 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-dark-300 mb-1">Life Stage</p>
+              <p class="text-xs text-dark-300 mb-1" data-i18n="portal.life_stage_label">Life Stage</p>
               <p class="text-sm font-semibold text-neon-purple" id="data-lifestage">--</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-dark-300 mb-1">Risk Score</p>
+              <p class="text-xs text-dark-300 mb-1" data-i18n="portal.risk_score">Risk Score</p>
               <p class="text-sm font-semibold text-neon-cyan" id="data-riskscore">--</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-dark-300 mb-1">Income Bracket</p>
+              <p class="text-xs text-dark-300 mb-1" data-i18n="portal.income_bracket">Income Bracket</p>
               <p class="text-sm font-semibold text-neon-green" id="data-income-bracket">--</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-dark-800/50">
-              <p class="text-xs text-dark-300 mb-1">Segments</p>
+              <p class="text-xs text-dark-300 mb-1" data-i18n="portal.segments">Segments</p>
               <p class="text-sm font-semibold text-accent-light" id="data-segments">--</p>
             </div>
           </div>
@@ -242,7 +242,7 @@ tailwind.config = {
 
         <!-- Financial health -->
         <div class="glass-card rounded-2xl p-6 mb-6">
-          <h4 class="text-base font-semibold text-white mb-4">Financial Health Indicator</h4>
+          <h4 class="text-base font-semibold text-white mb-4" data-i18n="portal.financial_health_indicator">Financial Health Indicator</h4>
           <div class="flex items-center gap-4 mb-3">
             <span class="text-sm font-medium text-dark-200" id="health-label">--</span>
             <div class="flex-1 bg-dark-800 rounded-full h-3">
@@ -255,14 +255,14 @@ tailwind.config = {
 
         <!-- Features table -->
         <div class="glass-card rounded-2xl p-6">
-          <h4 class="text-base font-semibold text-white mb-4">Feature Data Used for Scoring</h4>
+          <h4 class="text-base font-semibold text-white mb-4" data-i18n="portal.feature_data">Feature Data Used for Scoring</h4>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-dark-600/50">
-                  <th class="text-left text-dark-300 font-medium py-3 px-4">Feature</th>
-                  <th class="text-left text-dark-300 font-medium py-3 px-4">Value</th>
-                  <th class="text-left text-dark-300 font-medium py-3 px-4">Description</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4" data-i18n="portal.feature">Feature</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4" data-i18n="portal.value">Value</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4" data-i18n="portal.description">Description</th>
                 </tr>
               </thead>
               <tbody id="features-table"></tbody>

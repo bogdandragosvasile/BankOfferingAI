@@ -65,7 +65,7 @@ tailwind.config = {
         <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       </div>
       <div>
-        <div class="text-lg font-bold text-white">Admin</div>
+        <div class="text-lg font-bold text-white" data-i18n="admin.title_short">Admin</div>
         <div class="text-[10px] text-dark-300 uppercase tracking-wider" data-i18n="nav.admin">Administration</div>
       </div>
     </div>
@@ -129,7 +129,7 @@ tailwind.config = {
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="stat-users">53</p>
-          <p class="text-xs text-neon-green mt-1">3 staff + 50 customers</p>
+          <p class="text-xs text-neon-green mt-1" data-i18n="admin.users_breakdown">3 staff + 50 customers</p>
         </div>
         <div class="glass-card rounded-2xl p-5 stat-glow-purple fade-in" style="animation-delay:0.1s">
           <div class="flex items-center justify-between mb-3">
@@ -139,7 +139,7 @@ tailwind.config = {
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="stat-health">--</p>
-          <p class="text-xs text-accent-light mt-1" id="stat-health-detail">Checking...</p>
+          <p class="text-xs text-accent-light mt-1" id="stat-health-detail" data-i18n="admin.checking">Checking...</p>
         </div>
         <div class="glass-card rounded-2xl p-5 stat-glow-cyan fade-in" style="animation-delay:0.2s">
           <div class="flex items-center justify-between mb-3">
@@ -149,7 +149,7 @@ tailwind.config = {
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="stat-kc">--</p>
-          <p class="text-xs text-neon-cyan mt-1" id="stat-kc-detail">Checking...</p>
+          <p class="text-xs text-neon-cyan mt-1" id="stat-kc-detail" data-i18n="admin.checking">Checking...</p>
         </div>
         <div class="glass-card rounded-2xl p-5 stat-glow-amber fade-in" style="animation-delay:0.3s">
           <div class="flex items-center justify-between mb-3">
@@ -159,7 +159,7 @@ tailwind.config = {
             </div>
           </div>
           <p class="text-3xl font-bold text-white" id="stat-demo">--</p>
-          <p class="text-xs text-neon-amber mt-1" id="stat-demo-detail">Checking...</p>
+          <p class="text-xs text-neon-amber mt-1" id="stat-demo-detail" data-i18n="admin.checking">Checking...</p>
         </div>
       </div>
 
@@ -201,7 +201,7 @@ tailwind.config = {
       <div class="glass-card rounded-2xl p-6">
         <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.system_info">System Information</h3>
         <div class="grid grid-cols-2 gap-4" id="system-info">
-          <div class="text-sm text-dark-300">Loading...</div>
+          <div class="text-sm text-dark-300" data-i18n="common.loading">Loading...</div>
         </div>
       </div>
     </section>
@@ -213,46 +213,46 @@ tailwind.config = {
           <h3 class="text-lg font-semibold text-white" data-i18n="admin.registered_users">Registered Users</h3>
           <a href="/auth/admin/bankofferai/console/#/bankofferai/users" target="_blank"
             class="text-xs text-accent-light hover:text-white transition flex items-center gap-1">
-            Manage in Keycloak <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <span data-i18n="admin.manage_in_keycloak">Manage in Keycloak</span> <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left text-xs text-dark-300 uppercase tracking-wider border-b border-dark-600/30">
-                <th class="pb-3 pr-4">Email</th>
-                <th class="pb-3 pr-4">Name</th>
-                <th class="pb-3 pr-4">Roles</th>
-                <th class="pb-3 pr-4">MFA</th>
-                <th class="pb-3">Customer ID</th>
+                <th class="pb-3 pr-4" data-i18n="admin.th_email">Email</th>
+                <th class="pb-3 pr-4" data-i18n="admin.th_name">Name</th>
+                <th class="pb-3 pr-4" data-i18n="admin.th_roles">Roles</th>
+                <th class="pb-3 pr-4" data-i18n="admin.th_mfa">MFA</th>
+                <th class="pb-3" data-i18n="admin.th_customer_id">Customer ID</th>
               </tr>
             </thead>
             <tbody id="users-table">
               <tr class="table-row border-b border-dark-700/30">
                 <td class="py-3 pr-4 text-white">admin@bankofferai.com</td>
-                <td class="py-3 pr-4 text-dark-200">System Administrator</td>
+                <td class="py-3 pr-4 text-dark-200" data-i18n="admin.user_sysadmin">System Administrator</td>
                 <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400">admin</span> <span class="px-2 py-0.5 rounded text-xs bg-cyan-500/10 text-cyan-400">employee</span></td>
-                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400">Required</span></td>
+                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400" data-i18n="admin.mfa_required">Required</span></td>
                 <td class="py-3 text-dark-300">0</td>
               </tr>
               <tr class="table-row border-b border-dark-700/30">
                 <td class="py-3 pr-4 text-white">manager@bankofferai.com</td>
-                <td class="py-3 pr-4 text-dark-200">Relationship Manager</td>
+                <td class="py-3 pr-4 text-dark-200" data-i18n="admin.user_manager">Relationship Manager</td>
                 <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-cyan-500/10 text-cyan-400">employee</span></td>
-                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300">Optional</span></td>
+                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300" data-i18n="admin.mfa_optional_label">Optional</span></td>
                 <td class="py-3 text-dark-300">0</td>
               </tr>
               <tr class="table-row border-b border-dark-700/30">
                 <td class="py-3 pr-4 text-white">client1@bankofferai.com</td>
-                <td class="py-3 pr-4 text-dark-200">Demo Client</td>
+                <td class="py-3 pr-4 text-dark-200" data-i18n="admin.user_demo_client">Demo Client</td>
                 <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400">client</span></td>
-                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300">Optional</span></td>
+                <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300" data-i18n="admin.mfa_optional_label">Optional</span></td>
                 <td class="py-3 text-dark-300">1</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class="text-xs text-dark-400 mt-4">50 additional customers are provisioned as data (IDs 1-50). Social login registration (Google, Facebook, Microsoft) creates new Keycloak users automatically.</p>
+        <p class="text-xs text-dark-400 mt-4" data-i18n="admin.users_note">50 additional customers are provisioned as data (IDs 1-50). Social login registration (Google, Facebook, Microsoft) creates new Keycloak users automatically.</p>
       </div>
 
       <!-- Roles -->
@@ -264,11 +264,11 @@ tailwind.config = {
               <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400 font-medium">admin</span>
             </div>
             <ul class="text-xs text-dark-200 space-y-1.5">
-              <li>Full system access</li>
-              <li>User management</li>
-              <li>System configuration</li>
-              <li>All employee capabilities</li>
-              <li>MFA required</li>
+              <li data-i18n="admin.role_admin_full_access">Full system access</li>
+              <li data-i18n="admin.role_admin_user_mgmt">User management</li>
+              <li data-i18n="admin.role_admin_sys_config">System configuration</li>
+              <li data-i18n="admin.role_admin_all_employee">All employee capabilities</li>
+              <li data-i18n="admin.role_admin_mfa">MFA required</li>
             </ul>
           </div>
           <div class="p-4 rounded-xl bg-dark-800/50 border border-cyan-500/20">
@@ -276,11 +276,11 @@ tailwind.config = {
               <span class="px-2 py-0.5 rounded text-xs bg-cyan-500/10 text-cyan-400 font-medium">employee</span>
             </div>
             <ul class="text-xs text-dark-200 space-y-1.5">
-              <li>View all customers</li>
-              <li>Generate offers</li>
-              <li>Override recommendations</li>
-              <li>View audit trail</li>
-              <li>Manage feedback</li>
+              <li data-i18n="admin.role_emp_view_customers">View all customers</li>
+              <li data-i18n="admin.role_emp_gen_offers">Generate offers</li>
+              <li data-i18n="admin.role_emp_override">Override recommendations</li>
+              <li data-i18n="admin.role_emp_audit">View audit trail</li>
+              <li data-i18n="admin.role_emp_feedback">Manage feedback</li>
             </ul>
           </div>
           <div class="p-4 rounded-xl bg-dark-800/50 border border-green-500/20">
@@ -288,11 +288,11 @@ tailwind.config = {
               <span class="px-2 py-0.5 rounded text-xs bg-green-500/10 text-green-400 font-medium">client</span>
             </div>
             <ul class="text-xs text-dark-200 space-y-1.5">
-              <li>View own offers</li>
-              <li>Accept/reject offers</li>
-              <li>Manage consent</li>
-              <li>View own data (GDPR)</li>
-              <li>Submit feedback</li>
+              <li data-i18n="admin.role_client_view_offers">View own offers</li>
+              <li data-i18n="admin.role_client_accept_reject">Accept/reject offers</li>
+              <li data-i18n="admin.role_client_consent">Manage consent</li>
+              <li data-i18n="admin.role_client_gdpr">View own data (GDPR)</li>
+              <li data-i18n="admin.role_client_feedback">Submit feedback</li>
             </ul>
           </div>
         </div>
@@ -305,14 +305,14 @@ tailwind.config = {
         <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.auth_config">Authentication Configuration</h3>
         <div class="grid grid-cols-2 gap-6">
           <div>
-            <h4 class="text-sm font-medium text-white mb-3">OIDC / Keycloak</h4>
+            <h4 class="text-sm font-medium text-white mb-3" data-i18n="admin.oidc_keycloak">OIDC / Keycloak</h4>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between py-2 border-b border-dark-700/30">
-                <span class="text-dark-300">Realm</span>
+                <span class="text-dark-300" data-i18n="admin.oidc_realm">Realm</span>
                 <span class="text-white font-mono text-xs">bankofferai</span>
               </div>
               <div class="flex justify-between py-2 border-b border-dark-700/30">
-                <span class="text-dark-300">Client ID</span>
+                <span class="text-dark-300" data-i18n="admin.oidc_client_id">Client ID</span>
                 <span class="text-white font-mono text-xs">bankofferai-app</span>
               </div>
               <div class="flex justify-between py-2 border-b border-dark-700/30">
@@ -320,21 +320,21 @@ tailwind.config = {
                 <span class="text-neon-green font-mono text-xs">S256</span>
               </div>
               <div class="flex justify-between py-2 border-b border-dark-700/30">
-                <span class="text-dark-300">Token Signature</span>
+                <span class="text-dark-300" data-i18n="admin.oidc_token_sig">Token Signature</span>
                 <span class="text-white font-mono text-xs">RS256</span>
               </div>
               <div class="flex justify-between py-2 border-b border-dark-700/30">
-                <span class="text-dark-300">Access Token TTL</span>
+                <span class="text-dark-300" data-i18n="admin.oidc_token_ttl">Access Token TTL</span>
                 <span class="text-white font-mono text-xs">300s</span>
               </div>
               <div class="flex justify-between py-2">
-                <span class="text-dark-300">SSO Session</span>
+                <span class="text-dark-300" data-i18n="admin.oidc_sso_session">SSO Session</span>
                 <span class="text-white font-mono text-xs">30min idle / 10h max</span>
               </div>
             </div>
           </div>
           <div>
-            <h4 class="text-sm font-medium text-white mb-3">Social Identity Providers</h4>
+            <h4 class="text-sm font-medium text-white mb-3" data-i18n="admin.social_idp">Social Identity Providers</h4>
             <div class="space-y-3">
               <div class="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
                 <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-lg">G</div>
@@ -342,7 +342,7 @@ tailwind.config = {
                   <div class="text-sm font-medium text-white">Google</div>
                   <div class="text-xs text-dark-300">OpenID Connect</div>
                 </div>
-                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-google">Configured</span>
+                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-google" data-i18n="admin.configured">Configured</span>
               </div>
               <div class="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
                 <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-lg text-blue-400">f</div>
@@ -350,7 +350,7 @@ tailwind.config = {
                   <div class="text-sm font-medium text-white">Facebook</div>
                   <div class="text-xs text-dark-300">OAuth 2.0</div>
                 </div>
-                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-facebook">Configured</span>
+                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-facebook" data-i18n="admin.configured">Configured</span>
               </div>
               <div class="flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
                 <div class="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-lg text-blue-300">M</div>
@@ -358,7 +358,7 @@ tailwind.config = {
                   <div class="text-sm font-medium text-white">Microsoft</div>
                   <div class="text-xs text-dark-300">OpenID Connect</div>
                 </div>
-                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-microsoft">Configured</span>
+                <span class="ml-auto px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green" id="idp-microsoft" data-i18n="admin.configured">Configured</span>
               </div>
             </div>
           </div>
@@ -371,40 +371,40 @@ tailwind.config = {
         <div class="grid grid-cols-2 gap-6">
           <div class="space-y-2 text-sm">
             <div class="flex justify-between py-2 border-b border-dark-700/30">
-              <span class="text-dark-300">Method</span>
+              <span class="text-dark-300" data-i18n="admin.mfa_method">Method</span>
               <span class="text-white">TOTP (Time-based One-Time Password)</span>
             </div>
             <div class="flex justify-between py-2 border-b border-dark-700/30">
-              <span class="text-dark-300">Algorithm</span>
+              <span class="text-dark-300" data-i18n="admin.mfa_algorithm">Algorithm</span>
               <span class="text-white font-mono text-xs">HmacSHA1</span>
             </div>
             <div class="flex justify-between py-2 border-b border-dark-700/30">
-              <span class="text-dark-300">Digits</span>
+              <span class="text-dark-300" data-i18n="admin.mfa_digits">Digits</span>
               <span class="text-white">6</span>
             </div>
             <div class="flex justify-between py-2 border-b border-dark-700/30">
-              <span class="text-dark-300">Period</span>
-              <span class="text-white">30 seconds</span>
+              <span class="text-dark-300" data-i18n="admin.mfa_period">Period</span>
+              <span class="text-white" data-i18n="admin.mfa_period_value">30 seconds</span>
             </div>
             <div class="flex justify-between py-2">
-              <span class="text-dark-300">Compatible Apps</span>
+              <span class="text-dark-300" data-i18n="admin.mfa_compatible">Compatible Apps</span>
               <span class="text-white text-xs">Google Authenticator, Authy, 1Password</span>
             </div>
           </div>
           <div>
-            <h4 class="text-sm font-medium text-white mb-3">MFA Policy by Role</h4>
+            <h4 class="text-sm font-medium text-white mb-3" data-i18n="admin.mfa_policy_by_role">MFA Policy by Role</h4>
             <div class="space-y-2">
               <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
-                <span class="text-sm text-dark-200">Administrators</span>
-                <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400 font-medium">Required</span>
+                <span class="text-sm text-dark-200" data-i18n="admin.mfa_role_admins">Administrators</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-red-500/10 text-red-400 font-medium" data-i18n="admin.mfa_required">Required</span>
               </div>
               <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
-                <span class="text-sm text-dark-200">Employees</span>
-                <span class="px-2 py-0.5 rounded text-xs bg-neon-amber/10 text-neon-amber font-medium">Recommended</span>
+                <span class="text-sm text-dark-200" data-i18n="admin.mfa_role_employees">Employees</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-neon-amber/10 text-neon-amber font-medium" data-i18n="admin.mfa_recommended">Recommended</span>
               </div>
               <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800/50 border border-dark-600/30">
-                <span class="text-sm text-dark-200">Clients</span>
-                <span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300 font-medium">Optional</span>
+                <span class="text-sm text-dark-200" data-i18n="admin.mfa_role_clients">Clients</span>
+                <span class="px-2 py-0.5 rounded text-xs bg-dark-500/30 text-dark-300 font-medium" data-i18n="admin.mfa_optional_label">Optional</span>
               </div>
             </div>
           </div>
@@ -416,15 +416,15 @@ tailwind.config = {
         <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.brute_force">Brute Force Protection</h3>
         <div class="grid grid-cols-3 gap-4 text-sm">
           <div class="flex justify-between py-2 border-b border-dark-700/30">
-            <span class="text-dark-300">Enabled</span>
-            <span class="text-neon-green">Yes</span>
+            <span class="text-dark-300" data-i18n="admin.bf_enabled">Enabled</span>
+            <span class="text-neon-green" data-i18n="common.yes">Yes</span>
           </div>
           <div class="flex justify-between py-2 border-b border-dark-700/30">
-            <span class="text-dark-300">Max Failures</span>
+            <span class="text-dark-300" data-i18n="admin.bf_max_failures">Max Failures</span>
             <span class="text-white">5</span>
           </div>
           <div class="flex justify-between py-2 border-b border-dark-700/30">
-            <span class="text-dark-300">Max Wait</span>
+            <span class="text-dark-300" data-i18n="admin.bf_max_wait">Max Wait</span>
             <span class="text-white">900s (15 min)</span>
           </div>
         </div>
@@ -437,35 +437,35 @@ tailwind.config = {
         <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.system_config">System Configuration</h3>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">Scoring Model</span>
-            <span class="text-white">Rules Engine v1.0 (20 profiling rules)</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_scoring_model">Scoring Model</span>
+            <span class="text-white" data-i18n="admin.cfg_scoring_model_value">Rules Engine v1.0 (20 profiling rules)</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">Supported Languages</span>
-            <span class="text-white">English, Deutsch, Romanian</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_languages">Supported Languages</span>
+            <span class="text-white" data-i18n="admin.cfg_languages_value">English, Deutsch, Romanian</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">GDPR Features</span>
-            <span class="text-neon-green">Explainability, Consent, Pseudonymization, Right to Erasure</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_gdpr">GDPR Features</span>
+            <span class="text-neon-green" data-i18n="admin.cfg_gdpr_value">Explainability, Consent, Pseudonymization, Right to Erasure</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
             <span class="text-dark-300">MiFID II</span>
-            <span class="text-neon-green">Suitability checks active</span>
+            <span class="text-neon-green" data-i18n="admin.cfg_mifid_value">Suitability checks active</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">AI Act Compliance</span>
-            <span class="text-neon-green">Human-in-the-loop, Audit trail, Transparency</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_ai_act">AI Act Compliance</span>
+            <span class="text-neon-green" data-i18n="admin.cfg_ai_act_value">Human-in-the-loop, Audit trail, Transparency</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">Database</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_database">Database</span>
             <span class="text-white">PostgreSQL 16</span>
           </div>
           <div class="flex justify-between py-3 border-b border-dark-700/30">
-            <span class="text-dark-300">Cache</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_cache">Cache</span>
             <span class="text-white">Redis 7 (256MB)</span>
           </div>
           <div class="flex justify-between py-3">
-            <span class="text-dark-300">Products in Catalog</span>
+            <span class="text-dark-300" data-i18n="admin.cfg_products">Products in Catalog</span>
             <span class="text-white">12</span>
           </div>
         </div>
@@ -477,18 +477,18 @@ tailwind.config = {
         <div class="grid grid-cols-3 gap-4">
           <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30 text-center">
             <div class="text-2xl mb-2">EN</div>
-            <div class="text-sm text-white">English</div>
-            <div class="text-xs text-dark-300 mt-1">Default</div>
+            <div class="text-sm text-white" data-i18n="admin.lang_english">English</div>
+            <div class="text-xs text-dark-300 mt-1" data-i18n="admin.lang_default">Default</div>
           </div>
           <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30 text-center">
             <div class="text-2xl mb-2">DE</div>
             <div class="text-sm text-white">Deutsch</div>
-            <div class="text-xs text-dark-300 mt-1">Supported</div>
+            <div class="text-xs text-dark-300 mt-1" data-i18n="admin.lang_supported">Supported</div>
           </div>
           <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30 text-center">
             <div class="text-2xl mb-2">RO</div>
-            <div class="text-sm text-white">Romanian</div>
-            <div class="text-xs text-dark-300 mt-1">Supported</div>
+            <div class="text-sm text-white" data-i18n="admin.lang_romanian">Romanian</div>
+            <div class="text-xs text-dark-300 mt-1" data-i18n="admin.lang_supported">Supported</div>
           </div>
         </div>
       </div>
@@ -499,7 +499,7 @@ tailwind.config = {
       <div class="glass-card rounded-2xl p-6">
         <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.audit_trail">Audit Trail</h3>
         <div id="audit-table-container">
-          <p class="text-dark-300 text-sm">Loading audit entries...</p>
+          <p class="text-dark-300 text-sm" data-i18n="admin.loading_audit">Loading audit entries...</p>
         </div>
       </div>
     </section>
@@ -508,7 +508,7 @@ tailwind.config = {
 
 <script>
 const API = window.location.origin;
-const t = (key) => window.BOAI_I18N ? window.BOAI_I18N.t(key) : key;
+// Use global t() from i18n.js — do NOT redeclare
 
 // Auth gate
 window.BOAI_AUTH.onAuthChange(user => {
@@ -563,8 +563,10 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titles = { overview: 'System Overview', users: 'User Management', security: 'Security & MFA', config: 'System Configuration', audit: 'Audit Log' };
-  document.getElementById('sectionTitle').textContent = titles[name] || name;
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleEl = document.getElementById('sectionTitle');
+  titleEl.dataset.i18n = titleKeys[name] || '';
+  titleEl.textContent = t(titleKeys[name] || name);
 
   if (name === 'audit') loadAuditLog();
 }
