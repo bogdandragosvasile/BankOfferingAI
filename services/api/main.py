@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from services.api.routers import offers, profiles
+from services.api.routers import compliance, offers, profiles
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(offers.router, prefix="/offers", tags=["offers"])
     app.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
+    app.include_router(compliance.router, prefix="/compliance", tags=["compliance"])
 
     if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
         from services.api.routers import webhooks
@@ -95,12 +96,18 @@ def create_app() -> FastAPI:
         """Liveness probe endpoint."""
         return {"status": "healthy", "service": "bank-offering-api"}
 
-    # Serve dashboard frontend
+    # Serve frontend portals
     static_dir = Path(__file__).parent / "static"
     if static_dir.is_dir():
         @app.get("/", include_in_schema=False)
         async def root():
+            """Employee portal (bank staff dashboard)."""
             return FileResponse(static_dir / "index.html")
+
+        @app.get("/portal", include_in_schema=False)
+        async def customer_portal():
+            """Customer portal (client-facing)."""
+            return FileResponse(static_dir / "portal.html")
 
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 

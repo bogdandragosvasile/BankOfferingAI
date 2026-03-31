@@ -1,7 +1,9 @@
-"""Offers router - serves ranked product offers for a customer."""
+"""Offers router - serves ranked product offers with compliance checks."""
 
+import json
 import logging
 import os
+import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -18,7 +20,7 @@ router = APIRouter()
 
 DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
-# Product catalog matching the Excel dataset
+# ===== Product catalog =====
 PRODUCTS = [
     {"id": "prod_etf_starter", "name": "ETF Starter", "type": "investment"},
     {"id": "prod_etf_growth", "name": "ETF Growth", "type": "investment"},
@@ -33,6 +35,26 @@ PRODUCTS = [
     {"id": "prod_life_insurance", "name": "Life Insurance", "type": "insurance"},
     {"id": "prod_travel_insurance", "name": "Travel Insurance", "type": "insurance"},
 ]
+
+# ===== Requirement 2: Suitability - product risk levels (MiFID II / IDD) =====
+PRODUCT_RISK_LEVEL = {
+    "prod_etf_starter": "moderate",
+    "prod_etf_growth": "high",
+    "prod_mutual_funds": "moderate",
+    "prod_managed_portfolio": "high",
+    "prod_state_bonds": "low",
+    "prod_savings_deposit": "low",
+    "prod_private_pension": "low",
+    "prod_personal_loan": "moderate",
+    "prod_mortgage": "moderate",
+    "prod_credit_card": "low",
+    "prod_life_insurance": "low",
+    "prod_travel_insurance": "low",
+}
+
+RISK_HIERARCHY = {"low": 1, "moderate": 2, "high": 3}
+
+CREDIT_PRODUCTS = {"prod_personal_loan", "prod_mortgage", "prod_credit_card"}
 
 # Life stage -> base relevance per product type
 LIFE_STAGE_BASE = {
@@ -77,9 +99,76 @@ def _safe_int(val, default=0):
         return default
 
 
+# ===== Requirement 2: Suitability check (MiFID II hard filter) =====
+
+def _check_suitability(product_id: str, customer_risk_profile: str,
+                       financial_health: str) -> tuple[bool, str | None]:
+    """Hard suitability filter. Returns (suitable, reason_if_excluded)."""
+    product_risk = PRODUCT_RISK_LEVEL.get(product_id, "moderate")
+    customer_level = RISK_HIERARCHY.get(customer_risk_profile.lower(), 2)
+    product_level = RISK_HIERARCHY.get(product_risk, 2)
+
+    if product_level > customer_level:
+        return False, (
+            f"Product risk level ({product_risk}) exceeds client risk profile "
+            f"({customer_risk_profile}) — MiFID II suitability filter"
+        )
+
+    if financial_health == "fragile" and product_id in CREDIT_PRODUCTS:
+        return False, (
+            "Client financial health is fragile — credit products excluded "
+            "per responsible lending policy"
+        )
+
+    return True, None
+
+
+# ===== Requirement 1: Explainability (GDPR art.22 + AI Act) =====
+
+def _build_explanation(product: dict, reasons: list[str], f: dict,
+                       life_stage: str) -> str:
+    """Build a full natural-language explanation with actual customer values."""
+    product_name = product["name"]
+    parts = []
+
+    idle_cash = _safe_float(f.get("idle_cash"))
+    risk_profile = str(f.get("risk_profile") or "moderate").lower()
+    income = _safe_float(f.get("annual_income"), 50000)
+    dependents = _safe_int(f.get("dependents"))
+    dti = _safe_float(f.get("debt_to_income"))
+
+    parts.append(f"We recommend {product_name} for you")
+
+    detail_parts = []
+    if idle_cash > 5000 and product["type"] in ("investment", "bond", "savings"):
+        detail_parts.append(f"you have {idle_cash:,.0f} in idle cash available for deployment")
+    if risk_profile:
+        detail_parts.append(f"your risk profile is {risk_profile}")
+    if dependents >= 2 and product["type"] == "insurance":
+        detail_parts.append(f"you have {dependents} dependents who need financial protection")
+    if dti > 3.0 and product["id"] == "prod_personal_loan":
+        detail_parts.append(f"your debt-to-income ratio ({dti:.1f}x) suggests consolidation would help")
+    if life_stage:
+        detail_parts.append(f"your life stage is {life_stage.replace('_', ' ')}")
+
+    if detail_parts:
+        parts.append("because " + ", ".join(detail_parts[:3]))
+
+    explanation = " ".join(parts) + "."
+
+    if reasons:
+        explanation += " Key signals: " + "; ".join(reasons[:3]) + "."
+
+    return explanation
+
+
 def _score_product(product: dict, life_stage: str, risk_score: float,
-                   income: float, f: dict) -> dict:
-    """Rule-based scoring for a single product using all customer signals."""
+                   income: float, f: dict, sensitive_consent: bool = True) -> dict:
+    """Rule-based scoring for a single product using customer signals.
+
+    NOTE: city is deliberately excluded from scoring (AI Act compliance).
+    marital_status is excluded unless sensitive_data_consent is granted.
+    """
     pid = product["id"]
     ptype = product["type"]
     base = LIFE_STAGE_BASE.get(life_stage, LIFE_STAGE_BASE["mid_career"]).get(ptype, 0.2)
@@ -88,9 +177,9 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     penalty = 0.0
     reasons = []
 
-    # --- Parse all features ---
     age = _safe_int(f.get("age"), 30)
-    dependents = _safe_int(f.get("dependents"), 0)
+    # dependents: only use if sensitive_data_consent granted
+    dependents = _safe_int(f.get("dependents"), 0) if sensitive_consent else 0
     idle_cash = _safe_float(f.get("idle_cash"))
     savings_rate = _safe_float(f.get("savings_rate"))
     dti = _safe_float(f.get("debt_to_income"))
@@ -100,8 +189,10 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     risk_profile = str(f.get("risk_profile") or "").lower()
     homeowner = str(f.get("homeowner_status") or "").lower()
     existing = str(f.get("existing_products") or "").lower()
+    # city: EXCLUDED from scoring (AI Act compliance)
+    # marital_status: EXCLUDED from scoring (requires separate consent)
 
-    # --- Existing-product penalties (don't recommend what they already have) ---
+    # Existing-product penalties
     if "mortgage" in existing and pid == "prod_mortgage":
         penalty += 0.5
         reasons.append("already has mortgage")
@@ -112,7 +203,7 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
         penalty += 0.4
         reasons.append("already has a loan")
 
-    # --- Risk profile from Excel (high / moderate / low) ---
+    # Risk profile
     if risk_profile == "high":
         if ptype == "investment":
             boost += 0.20
@@ -130,7 +221,7 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.10
             reasons.append("balanced risk appetite suits diversified options")
 
-    # --- Idle cash signal (from context detection rules) ---
+    # Idle cash
     if idle_cash > 10000:
         if ptype in ("investment", "bond", "savings"):
             boost += 0.25
@@ -140,18 +231,18 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.12
             reasons.append("idle cash available for investment")
 
-    # --- Investment gap signal ---
+    # Investment gap
     if investment_gap == 1:
         if pid == "prod_etf_starter":
             boost += 0.25
-            reasons.append("investment gap detected - ETF Starter is ideal entry point")
+            reasons.append("investment gap detected — ETF Starter is ideal entry point")
         elif pid == "prod_mutual_funds":
             boost += 0.20
             reasons.append("investment gap makes mutual funds a strong fit")
         elif ptype == "investment":
             boost += 0.10
 
-    # --- Savings rate ---
+    # Savings rate
     if savings_rate >= 0.5:
         if ptype == "retirement":
             boost += 0.20
@@ -164,11 +255,11 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.15
             reasons.append("savings deposit can help build a savings habit")
 
-    # --- Debt-to-income ratio ---
+    # Debt-to-income
     if dti > 3.0:
         if pid == "prod_personal_loan":
             boost += 0.25
-            reasons.append(f"high debt-to-income ({dti:.1f}x) - consolidation recommended")
+            reasons.append(f"high debt-to-income ({dti:.1f}x) — consolidation recommended")
         if ptype in ("investment", "bond"):
             penalty += 0.15
     elif dti < 0.5:
@@ -176,7 +267,7 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.10
             reasons.append("low leverage enables investment capacity")
 
-    # --- Dominant spend category ---
+    # Dominant spend category
     if category == "travel":
         if pid == "prod_travel_insurance":
             boost += 0.30
@@ -191,50 +282,51 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     elif category == "rent":
         if pid == "prod_mortgage" and "mortgage" not in existing and homeowner == "rent":
             boost += 0.20
-            reasons.append("renter with rent as top expense - mortgage could reduce costs")
+            reasons.append("renter with rent as top expense — mortgage could reduce costs")
 
-    # --- Homeowner status ---
+    # Homeowner status
     if homeowner == "rent" and pid == "prod_mortgage" and "mortgage" not in existing:
         boost += 0.15
         reasons.append("renter status suggests home ownership opportunity")
     elif homeowner == "owner" and pid == "prod_mortgage" and "mortgage" not in existing:
-        boost += 0.05  # refinancing potential only
+        boost += 0.05
 
-    # --- Dependents ---
-    if dependents >= 2:
-        if pid == "prod_life_insurance":
-            boost += 0.30
-            reasons.append(f"{dependents} dependents - life insurance is critical")
-        elif pid == "prod_private_pension":
-            boost += 0.10
-            reasons.append("family responsibility supports pension planning")
-    elif dependents == 1:
-        if pid == "prod_life_insurance":
-            boost += 0.15
-            reasons.append("family dependent increases life insurance need")
-    elif dependents == 0:
-        if pid == "prod_life_insurance":
-            penalty += 0.15  # much less relevant without dependents
+    # Dependents (only when sensitive_data_consent is active)
+    if sensitive_consent:
+        if dependents >= 2:
+            if pid == "prod_life_insurance":
+                boost += 0.30
+                reasons.append(f"{dependents} dependents — life insurance is critical")
+            elif pid == "prod_private_pension":
+                boost += 0.10
+                reasons.append("family responsibility supports pension planning")
+        elif dependents == 1:
+            if pid == "prod_life_insurance":
+                boost += 0.15
+                reasons.append("family dependent increases life insurance need")
+        elif dependents == 0:
+            if pid == "prod_life_insurance":
+                penalty += 0.15
 
-    # --- Balance trend ---
+    # Balance trend
     if trend == "growing":
         if ptype in ("investment", "bond"):
             boost += 0.08
             reasons.append("growing balance supports new investments")
     elif trend == "declining":
-        if ptype in ("investment",):
+        if ptype == "investment":
             penalty += 0.10
         if pid == "prod_savings_deposit":
             boost += 0.10
-            reasons.append("declining balance - savings buffer recommended")
+            reasons.append("declining balance — savings buffer recommended")
 
-    # --- Income-based product differentiation ---
+    # Income-based
     if income >= 120000:
         if pid == "prod_managed_portfolio":
             boost += 0.25
             reasons.append("premium income tier qualifies for managed portfolio")
         elif pid == "prod_etf_starter":
-            penalty += 0.10  # too basic
+            penalty += 0.10
     elif income >= 80000:
         if pid == "prod_etf_growth":
             boost += 0.15
@@ -246,9 +338,9 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.12
             reasons.append("personal loan can supplement lower income")
         if pid == "prod_managed_portfolio":
-            penalty += 0.20  # too premium
+            penalty += 0.20
 
-    # --- Age-specific ---
+    # Age-specific
     if age <= 25:
         if pid == "prod_etf_starter":
             boost += 0.15
@@ -259,15 +351,17 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     elif age >= 50:
         if pid == "prod_private_pension":
             boost += 0.20
-            reasons.append("approaching retirement - pension planning is urgent")
+            reasons.append("approaching retirement — pension planning is urgent")
         elif pid == "prod_state_bonds":
             boost += 0.12
             reasons.append("state bonds provide stable pre-retirement income")
 
-    # --- Compute final scores ---
+    # Final scores
     relevance = max(0.0, min(1.0, base + boost - penalty))
     confidence = max(0.2, min(1.0, 0.50 + boost * 0.6 + (0.1 if len(reasons) >= 2 else 0)))
-    reason = "; ".join(reasons[:3]) if reasons else f"Recommended for {life_stage.replace('_', ' ')} profile"
+    reason_text = "; ".join(reasons[:3]) if reasons else f"Recommended for {life_stage.replace('_', ' ')} profile"
+
+    explanation = _build_explanation(product, reasons, f, life_stage)
 
     return {
         "product_id": pid,
@@ -275,7 +369,8 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
         "product_type": ptype,
         "relevance_score": round(relevance, 4),
         "confidence_score": round(confidence, 4),
-        "personalization_reason": reason,
+        "personalization_reason": reason_text,
+        "explanation": explanation,
     }
 
 
@@ -290,11 +385,14 @@ async def get_offers(
     top_n: int = Query(default=5, ge=1, le=20, description="Number of offers to return"),
     authenticated_customer: str = Depends(get_current_customer_id),
 ):
-    """Return top-N ranked offers for the given customer."""
+    """Return top-N ranked offers with suitability checks, audit trail, and explainability."""
     if not DEMO_MODE and authenticated_customer != customer_id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     session_factory = request.app.state.db_session_factory
+    recommendation_id = str(uuid.uuid4())
+
+    # ===== Fetch customer features =====
     try:
         async with session_factory() as session:
             result = await session.execute(
@@ -311,10 +409,51 @@ async def get_offers(
         logger.error("Failed to fetch features for %s: %s", customer_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve customer data")
 
+    # ===== Requirement 5: Check profiling consent =====
+    consent_snapshot = {"profiling_consent": True, "sensitive_data_consent": True}
+    external_id = ""
+    financial_health = "stable"
+    try:
+        async with session_factory() as session:
+            result = await session.execute(
+                text("""SELECT external_id, profiling_consent, profiling_consent_ts,
+                        sensitive_data_consent, sensitive_data_consent_ts,
+                        financial_health
+                 FROM customers WHERE customer_id = :cid"""),
+                {"cid": customer_id},
+            )
+            cust_row = result.mappings().fetchone()
+            if cust_row:
+                external_id = str(cust_row["external_id"])
+                financial_health = cust_row["financial_health"] or "stable"
+                consent_snapshot = {
+                    "profiling_consent": bool(cust_row["profiling_consent"]),
+                    "profiling_consent_ts": str(cust_row["profiling_consent_ts"] or ""),
+                    "sensitive_data_consent": bool(cust_row["sensitive_data_consent"]),
+                    "sensitive_data_consent_ts": str(cust_row["sensitive_data_consent_ts"] or ""),
+                }
+    except Exception as e:
+        logger.warning("Failed to fetch consent for %s: %s", customer_id, e)
+
+    # If no profiling consent, return empty with flag
+    if not consent_snapshot["profiling_consent"]:
+        return OfferResponse(
+            customer_id=external_id or customer_id,
+            recommendation_id=recommendation_id,
+            offers=[],
+            excluded_products=[],
+            generated_at=datetime.utcnow(),
+            model_version="rules-1.0.0",
+            consent_valid=False,
+        )
+
+    sensitive_consent = consent_snapshot["sensitive_data_consent"]
+
+    # ===== Build profile =====
     profiler_input = {
         "age": features.get("age", 30),
         "annual_income": max(1.0, _safe_float(features.get("annual_income"), 50000)),
-        "dependents": features.get("dependents", 0),
+        "dependents": features.get("dependents", 0) if sensitive_consent else 0,
         "account_tenure_years": features.get("account_tenure_years", 0),
         "investment_balance": features.get("investment_balance", 0),
         "savings_ratio": min(1.0, max(0.0, _safe_float(features.get("savings_rate"), 0.1))),
@@ -327,12 +466,49 @@ async def get_offers(
         logger.error("Profiler failed for %s: %s", customer_id, e)
         raise HTTPException(status_code=500, detail="Profile generation failed")
 
+    profile_result = {
+        "life_stage": profile.life_stage,
+        "risk_score": profile.risk_score,
+        "segments": profile.segments,
+    }
+
+    # ===== Requirement 2: Suitability filter (hard) =====
+    risk_profile = str(features.get("risk_profile") or "moderate").lower()
+    suitable_products = []
+    excluded_products = []
+    suitability_checks = {}
+
+    for product in PRODUCTS:
+        suitable, reason = _check_suitability(
+            product["id"], risk_profile, financial_health
+        )
+        suitability_checks[product["id"]] = {
+            "suitable": suitable,
+            "reason": reason,
+            "product_risk": PRODUCT_RISK_LEVEL.get(product["id"], "moderate"),
+            "customer_risk": risk_profile,
+        }
+        if suitable:
+            suitable_products.append(product)
+        else:
+            excluded_products.append({
+                "product_id": product["id"],
+                "product_name": product["name"],
+                "product_type": product["type"],
+                "reason": reason,
+            })
+
+    # ===== Score only suitable products =====
     income = _safe_float(features.get("annual_income"), 50000)
-    scored = [_score_product(p, profile.life_stage, profile.risk_score, income, features) for p in PRODUCTS]
+    scored = [
+        _score_product(p, profile.life_stage, profile.risk_score, income, features, sensitive_consent)
+        for p in suitable_products
+    ]
     scored.sort(key=lambda x: x["relevance_score"], reverse=True)
 
     ranked = rank_offers(scored)
 
+    # ===== Build response =====
     offers = []
     for r in ranked[:top_n]:
         offers.append(Offer(
@@ -342,12 +518,63 @@ async def get_offers(
             relevance_score=r.relevance_score,
             confidence_score=r.confidence_score,
             personalization_reason=r.personalization_reason,
+            explanation=getattr(r, "explanation", "") or next(
+                (s.get("explanation", "") for s in scored
+                 if s["product_id"] == r.product_id), ""
+            ),
+            suitability_status="passed",
             cta_url=f"/products/{r.product_id}/apply?customer={customer_id}",
         ))
 
+    # ===== Requirement 4: Audit trail (immutable log) =====
+    try:
+        async with session_factory() as session:
+            # Sanitize features for audit: exclude city (pseudonymization)
+            audit_features = {k: v for k, v in features.items()
+                             if k not in ("city",) and v is not None}
+            # Convert non-serializable types
+            for k, v in audit_features.items():
+                if hasattr(v, "isoformat"):
+                    audit_features[k] = v.isoformat()
+                elif not isinstance(v, (str, int, float, bool, type(None))):
+                    audit_features[k] = str(v)
+
+            await session.execute(
+                text("""INSERT INTO audit_recommendations
+                    (recommendation_id, external_customer_id, customer_id,
+                     input_features, profile_result, suitability_checks,
+                     scored_products, final_offers, excluded_products,
+                     model_version, consent_snapshot)
+                    VALUES (:rid, :ext_cid::uuid, :cid, :features::jsonb,
+                            :profile::jsonb, :suitability::jsonb,
+                            :scored::jsonb, :offers::jsonb, :excluded::jsonb,
+                            :model, :consent::jsonb)"""),
+                {
+                    "rid": recommendation_id,
+                    "ext_cid": external_id or str(uuid.uuid4()),
+                    "cid": customer_id,
+                    "features": json.dumps(audit_features, default=str),
+                    "profile": json.dumps(profile_result),
+                    "suitability": json.dumps(suitability_checks),
+                    "scored": json.dumps(scored, default=str),
+                    "offers": json.dumps([o.model_dump() for o in offers], default=str),
+                    "excluded": json.dumps(excluded_products),
+                    "model": "rules-1.0.0",
+                    "consent": json.dumps(consent_snapshot),
+                },
+            )
+            await session.commit()
+    except Exception as e:
+        logger.error("Audit trail write failed for %s: %s", customer_id, e)
+        # Don't fail the request if audit write fails, but log critically
+
+    # ===== Requirement 6: Pseudonymization - return external_id =====
     return OfferResponse(
-        customer_id=customer_id,
+        customer_id=external_id or customer_id,
+        recommendation_id=recommendation_id,
         offers=offers,
+        excluded_products=excluded_products,
         generated_at=datetime.utcnow(),
         model_version="rules-1.0.0",
+        consent_valid=True,
     )

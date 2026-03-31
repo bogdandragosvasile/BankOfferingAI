@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BankOffer AI - Customer Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        dark: { 50:'#f8fafc',100:'#e2e8f0',200:'#94a3b8',300:'#64748b',400:'#475569',500:'#334155',600:'#1e293b',700:'#161e2e',800:'#111827',900:'#0b1120',950:'#060a14' },
+        accent: { DEFAULT:'#6366f1',light:'#818cf8',dark:'#4f46e5',glow:'rgba(99,102,241,0.15)' },
+        neon: { green:'#10b981',red:'#ef4444',amber:'#f59e0b',cyan:'#06b6d4',purple:'#a78bfa' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+  body { background: #060a14; }
+  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(20px); border: 1px solid rgba(99,102,241,0.08); }
+  .glass-card:hover { border-color: rgba(99,102,241,0.2); }
+  .glow-accent { box-shadow: 0 0 20px rgba(99,102,241,0.15), 0 0 60px rgba(99,102,241,0.05); }
+  .offer-card { transition: all 0.3s ease; }
+  .offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
+  .score-bar { background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 999px; height: 6px; transition: width 0.8s ease; }
+  .score-bar-bg { background: rgba(99,102,241,0.1); border-radius: 999px; height: 6px; }
+  .fade-in { animation: fadeIn 0.4s ease forwards; opacity: 0; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .pulse-dot { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .customer-btn { transition: all 0.15s; }
+  .customer-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
+  .customer-btn.selected { background: rgba(99,102,241,0.2); border-color: #6366f1; }
+  .nav-link { transition: all 0.2s; }
+  .nav-link:hover { color: #818cf8; background: rgba(99,102,241,0.08); }
+  .nav-link.active { color: #818cf8; background: rgba(99,102,241,0.12); border-bottom: 2px solid #6366f1; }
+  .toggle-track { width: 44px; height: 24px; border-radius: 12px; transition: background 0.3s; cursor: pointer; position: relative; }
+  .toggle-track.on { background: #6366f1; }
+  .toggle-track.off { background: #334155; }
+  .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: white; position: absolute; top: 2px; transition: left 0.3s; }
+  .toggle-track.on .toggle-thumb { left: 22px; }
+  .toggle-track.off .toggle-thumb { left: 2px; }
+  .table-row { transition: background 0.15s; }
+  .table-row:hover { background: rgba(99,102,241,0.06); }
+  .consent-banner { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); }
+  .health-bar { height: 8px; border-radius: 999px; transition: width 0.8s ease; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .shimmer { background: linear-gradient(90deg, rgba(99,102,241,0.05) 25%, rgba(99,102,241,0.1) 50%, rgba(99,102,241,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body class="font-sans text-dark-100 min-h-screen">
+
+<!-- ==================== CUSTOMER SELECTOR SCREEN ==================== -->
+<div id="screen-selector" class="min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-4xl w-full">
+    <div class="text-center mb-10 fade-in">
+      <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
+        <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">BankOffer <span class="text-accent-light">AI</span></h1>
+      <p class="text-dark-200 text-base">Customer Portal</p>
+      <p class="text-dark-300 text-sm mt-2">Select your customer ID to view personalized offers</p>
+      <p class="text-dark-400 text-xs mt-1">(Demo mode -- in production this would be a secure login)</p>
+    </div>
+    <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s">
+      <div class="grid grid-cols-5 sm:grid-cols-10 gap-2" id="customer-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN PORTAL (after selection) ==================== -->
+<div id="screen-portal" class="min-h-screen hidden">
+  <!-- Top Nav -->
+  <nav class="sticky top-0 z-50 border-b border-dark-600/50" style="background: rgba(6,10,20,0.92); backdrop-filter: blur(16px);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo + brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-accent flex items-center justify-center glow-accent">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <span class="text-lg font-bold text-white hidden sm:inline">BankOffer<span class="text-accent-light">AI</span></span>
+        </div>
+        <!-- Nav links (desktop) -->
+        <div class="hidden md:flex items-center gap-1" id="nav-desktop">
+          <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">My Offers</button>
+          <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">My Data</button>
+          <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">Consent</button>
+          <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">History</button>
+        </div>
+        <!-- Customer badge + switch -->
+        <div class="flex items-center gap-3">
+          <div id="customer-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-600/50">
+            <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
+              <span class="text-accent-light text-xs font-bold" id="badge-initials">--</span>
+            </div>
+            <span class="text-sm text-dark-100 hidden sm:inline" id="badge-name">Customer</span>
+          </div>
+          <button onclick="switchCustomer()" class="text-xs text-dark-300 hover:text-accent-light transition-colors" title="Switch Customer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </button>
+        </div>
+      </div>
+      <!-- Mobile nav -->
+      <div class="md:hidden flex items-center gap-1 pb-2 overflow-x-auto" id="nav-mobile">
+        <button onclick="navigateTo('offers')" data-nav="offers" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">Offers</button>
+        <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">My Data</button>
+        <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">Consent</button>
+        <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">History</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <!-- Consent Banner (shown when profiling consent is off) -->
+    <div id="consent-banner" class="consent-banner rounded-xl p-4 mb-6 hidden">
+      <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-neon-amber flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+        <div>
+          <p class="text-neon-amber font-semibold text-sm">Profiling consent required</p>
+          <p class="text-dark-200 text-xs mt-1">Enable profiling consent to receive personalized product recommendations. You can manage your consent in the <button onclick="navigateTo('consent')" class="text-accent-light underline">Consent settings</button>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MY OFFERS SECTION ===== -->
+    <section id="section-offers" class="hidden">
+      <!-- Customer info bar -->
+      <div class="glass-card rounded-2xl p-5 mb-6 fade-in">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-accent/20 flex items-center justify-center glow-accent">
+            <span class="text-accent-light text-xl font-bold" id="info-initials">--</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h2 class="text-xl font-bold text-white" id="info-name">Customer</h2>
+            <p class="text-dark-300 text-sm" id="info-subtitle">Loading...</p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <div class="text-center px-3">
+              <p class="text-xs text-dark-300">Age</p>
+              <p class="text-lg font-semibold text-white" id="info-age">--</p>
+            </div>
+            <div class="text-center px-3">
+              <p class="text-xs text-dark-300">Income Tier</p>
+              <p class="text-lg font-semibold text-neon-green" id="info-income">--</p>
+            </div>
+            <div class="text-center px-3">
+              <p class="text-xs text-dark-300">Risk Profile</p>
+              <p class="text-lg font-semibold text-neon-cyan" id="info-risk">--</p>
+            </div>
+            <div class="text-center px-3">
+              <p class="text-xs text-dark-300">Life Stage</p>
+              <p class="text-lg font-semibold text-neon-purple" id="info-lifestage">--</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offers grid -->
+      <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Your Personalized Offers
+      </h3>
+      <div id="offers-list" class="space-y-4 mb-8">
+        <div class="glass-card rounded-xl p-6 shimmer h-32"></div>
+        <div class="glass-card rounded-xl p-6 shimmer h-32"></div>
+      </div>
+
+      <!-- Excluded products -->
+      <div id="excluded-section" class="hidden">
+        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-dark-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          Products Not Shown (Suitability Filter)
+        </h3>
+        <p class="text-dark-300 text-xs mb-3">These products were filtered out based on regulatory suitability requirements (MiFID II / IDD). This transparency is required by GDPR Art. 22.</p>
+        <div id="excluded-list" class="space-y-2 mb-6"></div>
+      </div>
+    </section>
+
+    <!-- ===== MY DATA SECTION ===== -->
+    <section id="section-data" class="hidden">
+      <div class="fade-in">
+        <h3 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Your Data Transparency Report
+        </h3>
+        <p class="text-dark-300 text-sm mb-6">Below is all the data the system holds about you and uses for personalization.</p>
+
+        <!-- Privacy notice -->
+        <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-accent">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-accent-light flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="text-dark-200 text-sm">This data is used to personalize your product recommendations. No personally identifiable information (name, ID number) enters the scoring pipeline. All scoring is performed on pseudonymized feature vectors.</p>
+          </div>
+        </div>
+
+        <!-- Profile card -->
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <h4 class="text-base font-semibold text-white mb-4">Profile Summary</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="profile-grid">
+            <div class="text-center p-3 rounded-xl bg-dark-800/50">
+              <p class="text-xs text-dark-300 mb-1">Life Stage</p>
+              <p class="text-sm font-semibold text-neon-purple" id="data-lifestage">--</p>
+            </div>
+            <div class="text-center p-3 rounded-xl bg-dark-800/50">
+              <p class="text-xs text-dark-300 mb-1">Risk Score</p>
+              <p class="text-sm font-semibold text-neon-cyan" id="data-riskscore">--</p>
+            </div>
+            <div class="text-center p-3 rounded-xl bg-dark-800/50">
+              <p class="text-xs text-dark-300 mb-1">Income Bracket</p>
+              <p class="text-sm font-semibold text-neon-green" id="data-income-bracket">--</p>
+            </div>
+            <div class="text-center p-3 rounded-xl bg-dark-800/50">
+              <p class="text-xs text-dark-300 mb-1">Segments</p>
+              <p class="text-sm font-semibold text-accent-light" id="data-segments">--</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial health -->
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <h4 class="text-base font-semibold text-white mb-4">Financial Health Indicator</h4>
+          <div class="flex items-center gap-4 mb-3">
+            <span class="text-sm font-medium text-dark-200" id="health-label">--</span>
+            <div class="flex-1 bg-dark-800 rounded-full h-3">
+              <div class="health-bar" id="health-bar" style="width:0%"></div>
+            </div>
+            <span class="text-sm font-bold" id="health-value">--</span>
+          </div>
+          <p class="text-xs text-dark-400" id="health-description"></p>
+        </div>
+
+        <!-- Features table -->
+        <div class="glass-card rounded-2xl p-6">
+          <h4 class="text-base font-semibold text-white mb-4">Feature Data Used for Scoring</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-dark-600/50">
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Feature</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Value</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Description</th>
+                </tr>
+              </thead>
+              <tbody id="features-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONSENT SECTION ===== -->
+    <section id="section-consent" class="hidden">
+      <div class="fade-in">
+        <h3 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Consent Management
+        </h3>
+        <p class="text-dark-300 text-sm mb-6">Control how your data is used. Changes take effect immediately for future recommendations.</p>
+
+        <!-- Legal references -->
+        <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-neon-cyan">
+          <p class="text-dark-200 text-sm"><span class="font-semibold text-neon-cyan">Legal basis:</span> Under GDPR Article 22, you have the right not to be subject to a decision based solely on automated processing. Under the EU AI Act, you have the right to meaningful explanation of AI-driven decisions. Your consent choices below directly control whether automated profiling is performed.</p>
+        </div>
+
+        <!-- Profiling consent -->
+        <div class="glass-card rounded-2xl p-6 mb-4">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h4 class="text-base font-semibold text-white mb-2">Profiling Consent</h4>
+              <p class="text-dark-200 text-sm mb-2">Allow the bank to use your financial data to generate personalized product recommendations.</p>
+              <p class="text-dark-400 text-xs">When enabled, the system analyzes your transaction patterns, savings rate, and balance trends to find products that best match your financial situation. When disabled, you will not receive any personalized offers.</p>
+              <p class="text-dark-400 text-xs mt-2" id="profiling-timestamp"></p>
+            </div>
+            <div class="flex-shrink-0 pt-1">
+              <div id="toggle-profiling" class="toggle-track off" onclick="toggleConsent('profiling')">
+                <div class="toggle-thumb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensitive data consent -->
+        <div class="glass-card rounded-2xl p-6 mb-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h4 class="text-base font-semibold text-white mb-2">Sensitive Data Consent</h4>
+              <p class="text-dark-200 text-sm mb-2">Allow the use of family status (number of dependents) for more accurate recommendations.</p>
+              <p class="text-dark-400 text-xs">When enabled, the number of dependents you have is considered when recommending products like life insurance or pension planning. This data is never shared with third parties. When disabled, family-related signals are excluded from scoring.</p>
+              <p class="text-dark-400 text-xs mt-2" id="sensitive-timestamp"></p>
+            </div>
+            <div class="flex-shrink-0 pt-1">
+              <div id="toggle-sensitive" class="toggle-track off" onclick="toggleConsent('sensitive')">
+                <div class="toggle-thumb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="flex items-center gap-4">
+          <button onclick="saveConsent()" id="consent-save-btn" class="px-6 py-2.5 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors glow-accent">Save Consent Preferences</button>
+          <span id="consent-save-status" class="text-sm hidden"></span>
+        </div>
+
+        <!-- Warning when profiling off -->
+        <div id="consent-warning" class="hidden mt-6 glass-card rounded-xl p-4 border-l-4 border-neon-amber">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-neon-amber flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            <p class="text-dark-200 text-sm">With profiling consent disabled, you will not receive any personalized product offers. The system will only show you generic product information.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HISTORY SECTION ===== -->
+    <section id="section-history" class="hidden">
+      <div class="fade-in">
+        <h3 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Feedback History
+        </h3>
+        <p class="text-dark-300 text-sm mb-6">Your past interactions with product recommendations.</p>
+
+        <div class="glass-card rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-dark-600/50">
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Date</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Offer</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Action</th>
+                  <th class="text-left text-dark-300 font-medium py-3 px-4">Reason</th>
+                </tr>
+              </thead>
+              <tbody id="history-table">
+                <tr><td colspan="4" class="text-center text-dark-400 py-8">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ==================== STATE ====================
+const API = '';
+let state = {
+  customerId: null,
+  customerData: null,
+  profileData: null,
+  offersData: null,
+  consentData: null,
+  feedbackData: null,
+  recommendationId: null,
+  currentSection: 'offers',
+  consentLocal: { profiling: false, sensitive: false },
+  feedbackGiven: {},  // offer_id -> action
+};
+
+// ==================== PRODUCT TYPE ICONS ====================
+const typeIcons = {
+  investment: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+  bond: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  savings: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+  retirement: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  personal_loan: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+  mortgage: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+  credit_card: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+  insurance: '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+};
+
+const typeColors = {
+  investment: 'text-neon-purple',
+  bond: 'text-neon-cyan',
+  savings: 'text-neon-green',
+  retirement: 'text-neon-amber',
+  personal_loan: 'text-accent-light',
+  mortgage: 'text-neon-cyan',
+  credit_card: 'text-accent-light',
+  insurance: 'text-neon-green',
+};
+
+const typeBgColors = {
+  investment: 'bg-neon-purple/10',
+  bond: 'bg-neon-cyan/10',
+  savings: 'bg-neon-green/10',
+  retirement: 'bg-neon-amber/10',
+  personal_loan: 'bg-accent/10',
+  mortgage: 'bg-neon-cyan/10',
+  credit_card: 'bg-accent/10',
+  insurance: 'bg-neon-green/10',
+};
+
+const featureDescriptions = {
+  annual_income: 'Estimated annual income from transaction analysis',
+  idle_cash: 'Average uninvested cash balance over the last 90 days',
+  savings_rate: 'Ratio of savings deposits to total income',
+  debt_to_income: 'Total debt obligations relative to income',
+  balance_trend: 'Direction of account balance over the last 6 months',
+  spend_category: 'Dominant spending category by volume',
+  investment_gap: 'Whether current investment level is below recommended allocation',
+};
+
+// ==================== INIT ====================
+function init() {
+  // Build customer grid
+  const grid = document.getElementById('customer-grid');
+  let html = '';
+  for (let i = 1; i <= 50; i++) {
+    html += `<button class="customer-btn rounded-lg border border-dark-600/50 bg-dark-800/50 text-dark-100 text-sm font-medium py-2.5 px-1 hover:text-white" onclick="selectCustomer('CUST${String(i).padStart(3,'0')}')">${i}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ==================== CUSTOMER SELECTION ====================
+async function selectCustomer(customerId) {
+  state.customerId = customerId;
+  state.feedbackGiven = {};
+
+  // Show portal, hide selector
+  document.getElementById('screen-selector').classList.add('hidden');
+  document.getElementById('screen-portal').classList.remove('hidden');
+
+  // Set loading state
+  updateBadge('...');
+  navigateTo('offers');
+
+  // Load all data in parallel
+  await Promise.all([
+    loadCustomerData(),
+    loadProfile(),
+    loadOffers(),
+    loadFeedback(),
+  ]);
+
+  // Update UI with loaded data
+  renderCustomerInfo();
+  renderOffers();
+  updateConsentUI();
+}
+
+function switchCustomer() {
+  state.customerId = null;
+  state.customerData = null;
+  state.profileData = null;
+  state.offersData = null;
+  state.consentData = null;
+  state.feedbackData = null;
+  state.recommendationId = null;
+  state.feedbackGiven = {};
+
+  document.getElementById('screen-portal').classList.add('hidden');
+  document.getElementById('screen-selector').classList.remove('hidden');
+}
+
+// ==================== API CALLS ====================
+async function apiGet(url) {
+  try {
+    const resp = await fetch(API + url);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${resp.status}`);
+    }
+    return await resp.json();
+  } catch (e) {
+    console.error(`API GET ${url} failed:`, e);
+    return null;
+  }
+}
+
+async function apiPut(url, body) {
+  try {
+    const resp = await fetch(API + url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${resp.status}`);
+    }
+    return await resp.json();
+  } catch (e) {
+    console.error(`API PUT ${url} failed:`, e);
+    return null;
+  }
+}
+
+async function apiPost(url, body) {
+  try {
+    const resp = await fetch(API + url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${resp.status}`);
+    }
+    return await resp.json();
+  } catch (e) {
+    console.error(`API POST ${url} failed:`, e);
+    return null;
+  }
+}
+
+async function loadCustomerData() {
+  const data = await apiGet(`/compliance/customer/${state.customerId}`);
+  if (data) {
+    state.customerData = data;
+    state.consentLocal.profiling = data.profiling_consent;
+    state.consentLocal.sensitive = data.sensitive_data_consent;
+  }
+}
+
+async function loadProfile() {
+  const data = await apiGet(`/profiles/${state.customerId}`);
+  if (data) {
+    state.profileData = data;
+  }
+}
+
+async function loadOffers() {
+  const data = await apiGet(`/offers/${state.customerId}?top_n=5`);
+  if (data) {
+    state.offersData = data;
+    state.recommendationId = data.recommendation_id;
+  }
+}
+
+async function loadFeedback() {
+  const data = await apiGet(`/compliance/feedback/${state.customerId}`);
+  if (data) {
+    state.feedbackData = data;
+  }
+}
+
+// ==================== NAVIGATION ====================
+function navigateTo(section) {
+  state.currentSection = section;
+
+  // Hide all sections
+  document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+
+  // Show target
+  const target = document.getElementById(`section-${section}`);
+  if (target) {
+    target.classList.remove('hidden');
+    // Re-trigger fade-in
+    target.querySelectorAll('.fade-in').forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight; // reflow
+      el.style.animation = '';
+    });
+  }
+
+  // Update nav active state
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.classList.remove('active');
+    if (el.dataset.nav === section) el.classList.add('active');
+  });
+
+  // Render section-specific content
+  if (section === 'data') renderDataSection();
+  if (section === 'consent') renderConsentSection();
+  if (section === 'history') renderHistorySection();
+}
+
+// ==================== BADGE ====================
+function updateBadge(label) {
+  const initials = label.substring(0, 2).toUpperCase();
+  document.getElementById('badge-initials').textContent = initials;
+  document.getElementById('badge-name').textContent = label;
+}
+
+// ==================== RENDER: CUSTOMER INFO ====================
+function renderCustomerInfo() {
+  const c = state.customerData;
+  const p = state.profileData;
+  if (!c) return;
+
+  const label = `Customer ${c.customer_id}`;
+  updateBadge(c.customer_id.replace('CUST', '#'));
+
+  document.getElementById('info-initials').textContent = c.customer_id.replace('CUST', '#');
+  document.getElementById('info-name').textContent = label;
+
+  const riskLabel = (c.risk_profile || 'moderate').charAt(0).toUpperCase() + (c.risk_profile || 'moderate').slice(1);
+  const lifeStage = p ? formatLifeStage(p.life_stage) : '--';
+  const incomeBracket = p ? (p.income_bracket || '--').toUpperCase() : '--';
+
+  document.getElementById('info-subtitle').textContent = `${riskLabel} risk investor | ${lifeStage}`;
+  document.getElementById('info-age').textContent = c.age || '--';
+  document.getElementById('info-income').textContent = incomeBracket;
+  document.getElementById('info-risk').textContent = riskLabel;
+  document.getElementById('info-lifestage').textContent = lifeStage;
+
+  // Show consent banner if needed
+  const banner = document.getElementById('consent-banner');
+  if (!c.profiling_consent) {
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function formatLifeStage(stage) {
+  if (!stage) return '--';
+  return stage.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// ==================== RENDER: OFFERS ====================
+function renderOffers() {
+  const container = document.getElementById('offers-list');
+  const excludedContainer = document.getElementById('excluded-list');
+  const excludedSection = document.getElementById('excluded-section');
+  const o = state.offersData;
+
+  if (!o) {
+    container.innerHTML = '<div class="glass-card rounded-xl p-6 text-center text-dark-300">Unable to load offers. Please try again.</div>';
+    return;
+  }
+
+  if (!o.consent_valid) {
+    container.innerHTML = `
+      <div class="glass-card rounded-xl p-8 text-center">
+        <svg class="w-12 h-12 text-neon-amber mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <h4 class="text-white font-semibold text-lg mb-2">Profiling Consent Required</h4>
+        <p class="text-dark-300 text-sm mb-4">You need to enable profiling consent to receive personalized offers.</p>
+        <button onclick="navigateTo('consent')" class="px-5 py-2 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors">Manage Consent</button>
+      </div>`;
+    excludedSection.classList.add('hidden');
+    return;
+  }
+
+  if (o.offers.length === 0) {
+    container.innerHTML = '<div class="glass-card rounded-xl p-6 text-center text-dark-300">No offers available at this time.</div>';
+  } else {
+    container.innerHTML = o.offers.map((offer, i) => renderOfferCard(offer, i)).join('');
+  }
+
+  // Excluded products
+  if (o.excluded_products && o.excluded_products.length > 0) {
+    excludedSection.classList.remove('hidden');
+    excludedContainer.innerHTML = o.excluded_products.map(ep => `
+      <div class="glass-card rounded-lg p-3 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-dark-800 flex items-center justify-center text-dark-300 flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-dark-200">${escHtml(ep.product_name)}</p>
+          <p class="text-xs text-dark-400">${escHtml(ep.reason)}</p>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded bg-neon-red/10 text-neon-red font-medium flex-shrink-0">Excluded</span>
+      </div>
+    `).join('');
+  } else {
+    excludedSection.classList.add('hidden');
+  }
+}
+
+function renderOfferCard(offer, index) {
+  const ptype = offer.product_type || 'savings';
+  const icon = typeIcons[ptype] || typeIcons.savings;
+  const colorClass = typeColors[ptype] || 'text-accent-light';
+  const bgClass = typeBgColors[ptype] || 'bg-accent/10';
+  const score = Math.round((offer.relevance_score || 0) * 100);
+  const offerId = offer.offer_id || `offer_${index}`;
+  const alreadyActed = state.feedbackGiven[offerId];
+
+  let actionHtml = '';
+  if (alreadyActed) {
+    const actionColor = alreadyActed === 'accepted' ? 'text-neon-green' : 'text-neon-red';
+    const actionIcon = alreadyActed === 'accepted'
+      ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+      : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+    actionHtml = `
+      <div class="flex items-center gap-2 ${actionColor} text-sm font-medium mt-3">
+        ${actionIcon}
+        <span>${alreadyActed === 'accepted' ? 'Accepted' : 'Rejected'}</span>
+      </div>`;
+  } else {
+    actionHtml = `
+      <div class="flex items-center gap-2 mt-3" id="actions-${offerId}">
+        <button onclick="acceptOffer('${escAttr(offerId)}', '${escAttr(offer.product_name)}')" class="px-4 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-sm font-medium hover:bg-neon-green/20 transition-colors">Accept</button>
+        <button onclick="showRejectForm('${escAttr(offerId)}')" class="px-4 py-1.5 rounded-lg bg-neon-red/10 text-neon-red text-sm font-medium hover:bg-neon-red/20 transition-colors">Reject</button>
+      </div>
+      <div id="reject-form-${offerId}" class="hidden mt-3">
+        <div class="flex gap-2">
+          <input type="text" id="reject-reason-${offerId}" placeholder="Reason (optional)" class="flex-1 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50">
+          <button onclick="rejectOffer('${escAttr(offerId)}', '${escAttr(offer.product_name)}')" class="px-4 py-1.5 rounded-lg bg-neon-red text-white text-sm font-medium hover:bg-red-600 transition-colors">Submit</button>
+          <button onclick="hideRejectForm('${escAttr(offerId)}')" class="px-3 py-1.5 rounded-lg bg-dark-800 text-dark-300 text-sm hover:text-dark-100 transition-colors">Cancel</button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="offer-card glass-card rounded-xl p-5 fade-in" style="animation-delay:${index * 0.08}s">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-xl ${bgClass} ${colorClass} flex items-center justify-center flex-shrink-0">
+          ${icon}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <div>
+              <h4 class="text-base font-semibold text-white">${escHtml(offer.product_name)}</h4>
+              <span class="text-xs ${colorClass} font-medium">${formatType(ptype)}</span>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-2xl font-bold text-white">${score}<span class="text-sm text-dark-300 font-normal">%</span></p>
+              <p class="text-xs text-dark-400">relevance</p>
+            </div>
+          </div>
+          <!-- Score bar -->
+          <div class="score-bar-bg mt-2 mb-3">
+            <div class="score-bar" style="width:${score}%"></div>
+          </div>
+          <!-- Explanation (GDPR art.22) -->
+          <div class="bg-dark-800/50 rounded-lg p-3 mb-1">
+            <p class="text-xs text-dark-300 mb-1 font-medium uppercase tracking-wider">Why this offer (GDPR Art. 22)</p>
+            <p class="text-sm text-dark-100 leading-relaxed">${escHtml(offer.explanation || offer.personalization_reason || '')}</p>
+          </div>
+          <!-- Actions -->
+          ${actionHtml}
+        </div>
+      </div>
+    </div>`;
+}
+
+function formatType(type) {
+  if (!type) return '';
+  return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// ==================== OFFER ACTIONS ====================
+function showRejectForm(offerId) {
+  document.getElementById(`reject-form-${offerId}`).classList.remove('hidden');
+}
+
+function hideRejectForm(offerId) {
+  document.getElementById(`reject-form-${offerId}`).classList.add('hidden');
+}
+
+async function acceptOffer(offerId, productName) {
+  state.feedbackGiven[offerId] = 'accepted';
+  renderOffers(); // Immediate UI update
+
+  await apiPost('/compliance/feedback', {
+    recommendation_id: state.recommendationId || '',
+    offer_id: offerId,
+    customer_id: state.customerId,
+    actor_type: 'customer',
+    action: 'accepted',
+    reason: null,
+  });
+}
+
+async function rejectOffer(offerId, productName) {
+  const reasonEl = document.getElementById(`reject-reason-${offerId}`);
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+
+  state.feedbackGiven[offerId] = 'rejected';
+  renderOffers(); // Immediate UI update
+
+  await apiPost('/compliance/feedback', {
+    recommendation_id: state.recommendationId || '',
+    offer_id: offerId,
+    customer_id: state.customerId,
+    actor_type: 'customer',
+    action: 'rejected',
+    reason: reason || null,
+  });
+}
+
+// ==================== RENDER: DATA SECTION ====================
+function renderDataSection() {
+  const c = state.customerData;
+  const p = state.profileData;
+
+  if (!c || !p) return;
+
+  // Profile cards
+  document.getElementById('data-lifestage').textContent = formatLifeStage(p.life_stage);
+  document.getElementById('data-riskscore').textContent = p.risk_score ? `${p.risk_score.toFixed(1)} / 10` : '--';
+  document.getElementById('data-income-bracket').textContent = p.income_bracket ? p.income_bracket.toUpperCase() : '--';
+  document.getElementById('data-segments').textContent = p.segments && p.segments.length > 0 ? p.segments.join(', ') : 'None';
+
+  // Financial health
+  const healthMap = {
+    strong: { pct: 90, color: '#10b981', label: 'Strong', desc: 'Your financial indicators show a healthy and stable pattern. Savings rate and debt levels are within recommended ranges.' },
+    stable: { pct: 65, color: '#6366f1', label: 'Stable', desc: 'Your financial position is stable. There may be opportunities to optimize savings or reduce debt.' },
+    fragile: { pct: 30, color: '#ef4444', label: 'Fragile', desc: 'Some financial indicators suggest vulnerability. The system excludes high-risk products to protect your interests.' },
+  };
+  const health = healthMap[c.financial_health] || healthMap.stable;
+
+  document.getElementById('health-label').textContent = 'Financial Health';
+  document.getElementById('health-value').textContent = health.label;
+  document.getElementById('health-value').style.color = health.color;
+  document.getElementById('health-description').textContent = health.desc;
+
+  const bar = document.getElementById('health-bar');
+  bar.style.background = health.color;
+  setTimeout(() => { bar.style.width = health.pct + '%'; }, 100);
+
+  // Features table
+  const features = c.features || {};
+  const tableBody = document.getElementById('features-table');
+  const rows = [
+    { key: 'idle_cash', label: 'Idle Cash', value: features.idle_cash != null ? `$${Number(features.idle_cash).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '--' },
+    { key: 'savings_rate', label: 'Savings Rate', value: features.savings_rate != null ? `${(features.savings_rate * 100).toFixed(1)}%` : '--' },
+    { key: 'debt_to_income', label: 'Debt-to-Income', value: features.debt_to_income != null ? `${features.debt_to_income.toFixed(2)}x` : '--' },
+    { key: 'balance_trend', label: 'Balance Trend', value: features.balance_trend ? formatTrend(features.balance_trend) : '--' },
+    { key: 'spend_category', label: 'Top Spending Category', value: features.spend_category ? features.spend_category.charAt(0).toUpperCase() + features.spend_category.slice(1) : '--' },
+    { key: 'investment_gap', label: 'Investment Gap', value: features.investment_gap ? '<span class="text-neon-amber">Yes (under-invested)</span>' : '<span class="text-neon-green">No</span>' },
+    { key: 'annual_income', label: 'Annual Income (est.)', value: features.annual_income != null ? `$${Number(features.annual_income).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}` : '--' },
+  ];
+
+  tableBody.innerHTML = rows.map(r => `
+    <tr class="table-row border-b border-dark-600/30">
+      <td class="py-3 px-4 text-dark-100 font-medium">${r.label}</td>
+      <td class="py-3 px-4 text-white font-semibold">${r.value}</td>
+      <td class="py-3 px-4 text-dark-400 text-xs">${featureDescriptions[r.key] || ''}</td>
+    </tr>
+  `).join('');
+}
+
+function formatTrend(trend) {
+  const map = {
+    growing: '<span class="text-neon-green flex items-center gap-1"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg> Growing</span>',
+    stable: '<span class="text-accent-light flex items-center gap-1"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></svg> Stable</span>',
+    declining: '<span class="text-neon-red flex items-center gap-1"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg> Declining</span>',
+  };
+  return map[trend.toLowerCase()] || trend;
+}
+
+// ==================== RENDER: CONSENT SECTION ====================
+function renderConsentSection() {
+  const c = state.customerData;
+  if (!c) return;
+
+  // Set toggle states
+  const profilingToggle = document.getElementById('toggle-profiling');
+  const sensitiveToggle = document.getElementById('toggle-sensitive');
+
+  if (state.consentLocal.profiling) {
+    profilingToggle.classList.remove('off');
+    profilingToggle.classList.add('on');
+  } else {
+    profilingToggle.classList.remove('on');
+    profilingToggle.classList.add('off');
+  }
+
+  if (state.consentLocal.sensitive) {
+    sensitiveToggle.classList.remove('off');
+    sensitiveToggle.classList.add('on');
+  } else {
+    sensitiveToggle.classList.remove('on');
+    sensitiveToggle.classList.add('off');
+  }
+
+  // Timestamps
+  document.getElementById('profiling-timestamp').textContent = c.profiling_consent != null ? `Status: ${c.profiling_consent ? 'Granted' : 'Revoked'}` : '';
+  document.getElementById('sensitive-timestamp').textContent = c.sensitive_data_consent != null ? `Status: ${c.sensitive_data_consent ? 'Granted' : 'Revoked'}` : '';
+
+  // Warning
+  const warning = document.getElementById('consent-warning');
+  if (!state.consentLocal.profiling) {
+    warning.classList.remove('hidden');
+  } else {
+    warning.classList.add('hidden');
+  }
+}
+
+function toggleConsent(type) {
+  if (type === 'profiling') {
+    state.consentLocal.profiling = !state.consentLocal.profiling;
+  } else if (type === 'sensitive') {
+    state.consentLocal.sensitive = !state.consentLocal.sensitive;
+  }
+  renderConsentSection();
+}
+
+async function saveConsent() {
+  const btn = document.getElementById('consent-save-btn');
+  const status = document.getElementById('consent-save-status');
+
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  status.classList.add('hidden');
+
+  const result = await apiPut(`/compliance/consent/${state.customerId}`, {
+    profiling_consent: state.consentLocal.profiling,
+    sensitive_data_consent: state.consentLocal.sensitive,
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Save Consent Preferences';
+
+  if (result) {
+    // Update local state
+    if (state.customerData) {
+      state.customerData.profiling_consent = state.consentLocal.profiling;
+      state.customerData.sensitive_data_consent = state.consentLocal.sensitive;
+    }
+
+    status.textContent = 'Preferences saved successfully.';
+    status.className = 'text-sm text-neon-green';
+    status.classList.remove('hidden');
+
+    // Refresh offers to reflect new consent
+    await loadOffers();
+    renderCustomerInfo();
+    renderOffers();
+
+    // Update timestamps
+    renderConsentSection();
+
+    setTimeout(() => { status.classList.add('hidden'); }, 4000);
+  } else {
+    status.textContent = 'Failed to save. Please try again.';
+    status.className = 'text-sm text-neon-red';
+    status.classList.remove('hidden');
+    setTimeout(() => { status.classList.add('hidden'); }, 4000);
+  }
+}
+
+// ==================== RENDER: HISTORY SECTION ====================
+function renderHistorySection() {
+  const tableBody = document.getElementById('history-table');
+
+  if (!state.feedbackData || state.feedbackData.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-dark-400 py-8">No feedback history found. Accept or reject offers to build your history.</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = state.feedbackData.map(fb => {
+    const date = fb.created_at ? new Date(fb.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
+    const actionColor = fb.action === 'accepted' ? 'text-neon-green bg-neon-green/10' : fb.action === 'rejected' ? 'text-neon-red bg-neon-red/10' : 'text-neon-amber bg-neon-amber/10';
+
+    return `
+      <tr class="table-row border-b border-dark-600/30">
+        <td class="py-3 px-4 text-dark-200 text-xs whitespace-nowrap">${date}</td>
+        <td class="py-3 px-4 text-dark-100 text-sm">${escHtml(fb.offer_id || '--')}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${actionColor}">${escHtml(fb.action)}</span></td>
+        <td class="py-3 px-4 text-dark-300 text-sm">${fb.reason ? escHtml(fb.reason) : '<span class="text-dark-400">--</span>'}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ==================== UTILS ====================
+function escHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ==================== START ====================
+init();
+</script>
+</body>
+</html>
