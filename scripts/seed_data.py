@@ -162,10 +162,16 @@ def seed_customer_features(conn, customers_data, features_data):
 
 
 def seed_transactions(conn, txn_data):
+    # Build set of valid customer IDs
+    with conn.cursor() as cur:
+        cur.execute("SELECT customer_id FROM customers")
+        valid_ids = {row[0] for row in cur.fetchall()}
+
+    inserted = 0
     with conn.cursor() as cur:
         for t in txn_data:
             cid = str(t.get("customer_id", ""))
-            if not cid:
+            if not cid or cid not in valid_ids:
                 continue
             cur.execute("""
                 INSERT INTO transactions (customer_id, transaction_date, amount, category, channel, recurring_flag)
@@ -178,15 +184,22 @@ def seed_transactions(conn, txn_data):
                 t.get("channel"),
                 bool(safe_int(t.get("recurring_flag"))),
             ))
+            inserted += 1
     conn.commit()
-    logger.info("Seeded %d transactions", len(txn_data))
+    logger.info("Seeded %d transactions", inserted)
 
 
 def seed_events(conn, events_data):
+    inserted = 0
     with conn.cursor() as cur:
         for e in events_data:
             cid = str(e.get("customer_id", ""))
             if not cid:
+                continue
+            # Skip events referencing non-existent customers
+            cur.execute("SELECT 1 FROM customers WHERE customer_id = %s", (cid,))
+            if not cur.fetchone():
+                logger.debug("Skipping event for unknown customer %s", cid)
                 continue
             cur.execute("""
                 INSERT INTO events (customer_id, event_type, event_date)
@@ -196,8 +209,9 @@ def seed_events(conn, events_data):
                 e.get("event_type"),
                 e.get("date"),
             ))
+            inserted += 1
     conn.commit()
-    logger.info("Seeded %d events", len(events_data))
+    logger.info("Seeded %d events (skipped %d with unknown customers)", inserted, len(events_data) - inserted)
 
 
 def seed_products(conn, product_data):
