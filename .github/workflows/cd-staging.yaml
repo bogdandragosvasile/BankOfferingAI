@@ -3,6 +3,12 @@ name: CD — Deploy to Staging
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force sync even if ArgoCD server check fails"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -12,6 +18,8 @@ jobs:
     name: ArgoCD Sync to Staging
     runs-on: ubuntu-latest
     environment: staging
+    # Skip if ArgoCD server secret is not configured (infrastructure not provisioned yet)
+    if: ${{ vars.ARGOCD_ENABLED == 'true' && secrets.ARGOCD_SERVER != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,3 +54,14 @@ jobs:
         run: |
           argocd app get bankoffer-staging --grpc-web
           echo "Staging deployment completed for commit ${{ github.sha }}"
+
+  skip-notice:
+    name: ArgoCD Not Yet Configured
+    runs-on: ubuntu-latest
+    if: ${{ vars.ARGOCD_ENABLED != 'true' }}
+    steps:
+      - name: Notice
+        run: |
+          echo "ℹ️  Skipping ArgoCD sync — infrastructure not provisioned yet."
+          echo "Set repository variable ARGOCD_ENABLED=true and secrets ARGOCD_SERVER,"
+          echo "ARGOCD_USERNAME, ARGOCD_PASSWORD once the EKS cluster is running."

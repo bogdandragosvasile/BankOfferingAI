@@ -13,6 +13,7 @@ jobs:
     name: ArgoCD Sync to Production
     runs-on: ubuntu-latest
     environment: production
+    if: ${{ vars.ARGOCD_ENABLED == 'true' }}
     steps:
       - uses: actions/checkout@v4
 
