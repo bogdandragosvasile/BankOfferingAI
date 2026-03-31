@@ -2,6 +2,107 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.1.0] — 2026-04-01
+
+### Breaking Changes
+
+- **Customer registration creates new records instead of reusing existing ones.**
+  `POST /customer-auth/register` now creates a fresh `customers` + `customer_features` row
+  with an auto-increment integer ID (51, 52, ...) instead of assigning a random existing
+  profile. Clients relying on the old behavior (where registration returned a pre-seeded
+  customer ID 1–50) must be updated.
+
+- **Registration and login responses include `onboarding_complete` field.**
+  `CustomerRegisterResponse` and `CustomerLoginResponse` now return `onboarding_complete: bool`.
+  API consumers parsing these responses strictly will need to handle the new field.
+
+- **SSO lookup response includes `onboarding_complete` field.**
+  `GET /customer-auth/sso-lookup` now returns `onboarding_complete` in the response body.
+
+- **Employee portal customer list is now dynamic.**
+  The employee portal (`/`) no longer hardcodes customer IDs 1–50. It fetches the full list
+  from `GET /customer-auth/customers/list`. Deployments without this endpoint fall back to 1–50.
+
+- **Offers endpoint loads products from database at request time.**
+  `GET /offers/{customer_id}` now queries the `products` table for active products instead of
+  using a hardcoded product list. Falls back to built-in defaults if the DB query fails.
+
+### Added
+
+- **Customer onboarding wizard** — 3-step wizard (consent, profile questionnaire, review)
+  shown to newly registered customers. Collects GDPR/AI Act consent and profile data
+  (age, income, risk tolerance, employment, homeowner status, existing products).
+  Generates a computed profile via `build_profile()` on completion.
+  - `PUT /customer-auth/onboarding/{customer_id}` — submit wizard data
+  - `GET /customer-auth/onboarding/status/{customer_id}` — check completion status
+  - `GET /customer-auth/customers/list` — list all customer IDs
+
+- **Product catalog CRUD** — Full product management via admin portal and API.
+  - `GET /products-catalog/` — list all products
+  - `GET /products-catalog/{id}` — get single product
+  - `POST /products-catalog/` — create product
+  - `PUT /products-catalog/{id}` — update product
+  - `DELETE /products-catalog/{id}` — delete product
+
+- **Consent registry with periodic sync** — Loads consent checkbox definitions from
+  `Consent_Checkbox_Texts_Audit_Ready 1.xlsx` into 5 database tables. Background task
+  syncs every 6 hours using SHA-256 file hashing to detect changes. Version
+  auto-increments only on actual modifications.
+  - `GET /consent-registry/sync-status` — current sync state
+  - `POST /consent-registry/sync` — trigger manual sync
+  - `GET /consent-registry/texts` — official consent texts
+  - `GET /consent-registry/product-map` — product–consent matrix
+  - `GET /consent-registry/ai-rules` — AI consent rules
+  - `GET /consent-registry/implementation-map` — implementation mappings
+  - `GET /consent-registry/sources` — regulatory sources
+
+- **Regulatory source change detection** — Background task (every 24h) fetches EUR-Lex
+  URLs from the consent registry sources, computes SHA-256 of page content, and flags
+  changes for admin review. Red alert banner in admin portal.
+  - `POST /consent-registry/check-sources` — trigger manual check
+  - `GET /consent-registry/source-checks` — check results
+  - `POST /consent-registry/source-checks/{id}/review` — dismiss alert
+
+- **API token management** — Programmatic access tokens with scopes, expiry, and
+  revocation. Admin portal UI for token lifecycle management.
+  - `POST /api-tokens/` — create token
+  - `GET /api-tokens/` — list tokens
+  - `DELETE /api-tokens/{id}` — revoke token
+
+- **Internationalization** — Full i18n support (EN, DE, RO) for product catalog,
+  consent registry, onboarding wizard, and offer content (product names, types,
+  personalization explanations).
+
+- **Portal navigation bar** on all three login screens (employee, customer, admin).
+- **Mobile-responsive layout** for all three portals.
+
+### Fixed
+
+- SSO login now resolves `customer_id` from database instead of using a fallback.
+- Schema uses `IF NOT EXISTS` for `api_tokens` indexes to prevent migration errors.
+- Regulatory source initial false positives documented (EUR-Lex dynamic HTML elements).
+- Onboarding data written to both `customers` and `customer_features` tables.
+- My Data tab renders partial data when full profile is not yet available.
+- Consent registry texts collapsed into expandable section in onboarding wizard.
+
+### Commit History
+
+- `2a65681` fix: collapse regulatory consent texts into expandable section
+- `cdaca9b` fix: populate customers table + generate profile during onboarding
+- `388f05c` feat: add customer onboarding wizard with consent + profile questionnaire
+- `8ec70f7` feat: add regulatory source change detection with periodic URL monitoring
+- `5feeefb` feat: add consent registry with periodic sync from audit workbook
+- `5c430e8` feat: add product catalog CRUD API and admin portal UI
+- `422204e` feat: mobile-responsive layout for all three portals
+- `8f36ef6` fix: use IF NOT EXISTS for api_tokens indexes in schema.sql
+- `cd79526` feat: add portal navigation bar to all login screens
+- `dcb3f5d` feat: add API token management to admin portal
+- `ac7c46f` feat: translate offer content (product names, types, explanations) in DE/RO
+- `d6eb4e5` fix: resolve customer_id from database for SSO portal login
+- `361b2c4` docs: add server DB_PASSWORD reference to .env
+
+---
+
 ## [1.0.0] — 2026-03-31
 
 ### Features
