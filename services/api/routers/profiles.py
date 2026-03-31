@@ -53,7 +53,11 @@ async def get_profile(
         if not row:
             raise HTTPException(status_code=404, detail="Customer profile not found")
 
-        profile = CustomerProfile.model_validate_json(row[0])
+        data = row[0]
+        if isinstance(data, str):
+            profile = CustomerProfile.model_validate_json(data)
+        else:
+            profile = CustomerProfile.model_validate(data)
 
         # Cache for 15 minutes
         await redis.set(
