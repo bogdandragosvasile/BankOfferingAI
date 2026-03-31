@@ -1,5 +1,6 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS customer_auth CASCADE;
 DROP TABLE IF EXISTS recommendation_overrides CASCADE;
 DROP TABLE IF EXISTS suitability_confirmations CASCADE;
 DROP TABLE IF EXISTS ai_act_risk_register CASCADE;
