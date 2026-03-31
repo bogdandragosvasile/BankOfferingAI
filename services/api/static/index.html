@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BankOffer AI - Smart Banking Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      colors: {
+        dark: { 50:'#f8fafc',100:'#e2e8f0',200:'#94a3b8',300:'#64748b',400:'#475569',500:'#334155',600:'#1e293b',700:'#161e2e',800:'#111827',900:'#0b1120',950:'#060a14' },
+        accent: { DEFAULT:'#6366f1',light:'#818cf8',dark:'#4f46e5',glow:'rgba(99,102,241,0.15)' },
+        neon: { green:'#10b981',red:'#ef4444',amber:'#f59e0b',cyan:'#06b6d4',purple:'#a78bfa' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+  body { background: #060a14; }
+  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(20px); border: 1px solid rgba(99,102,241,0.08); }
+  .glass-card:hover { border-color: rgba(99,102,241,0.2); }
+  .glow-accent { box-shadow: 0 0 20px rgba(99,102,241,0.15), 0 0 60px rgba(99,102,241,0.05); }
+  .stat-glow-green { box-shadow: inset 0 -2px 0 #10b981; }
+  .stat-glow-purple { box-shadow: inset 0 -2px 0 #6366f1; }
+  .stat-glow-cyan { box-shadow: inset 0 -2px 0 #06b6d4; }
+  .stat-glow-amber { box-shadow: inset 0 -2px 0 #f59e0b; }
+  .sidebar-link { transition: all 0.2s; }
+  .sidebar-link:hover, .sidebar-link.active { background: rgba(99,102,241,0.1); color: #818cf8; }
+  .sidebar-link.active { border-right: 2px solid #6366f1; }
+  .offer-card { transition: all 0.3s ease; }
+  .offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
+  .score-bar { background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 999px; height: 6px; transition: width 0.8s ease; }
+  .score-bar-bg { background: rgba(99,102,241,0.1); border-radius: 999px; height: 6px; }
+  .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .pulse-dot { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .gradient-text { background: linear-gradient(135deg, #818cf8, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .customer-btn { transition: all 0.15s; }
+  .customer-btn:hover { background: rgba(99,102,241,0.15); }
+  .customer-btn.active { background: rgba(99,102,241,0.2); border-color: #6366f1; }
+  .txn-row:hover { background: rgba(99,102,241,0.05); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body class="font-sans text-dark-100 min-h-screen flex">
+
+<!-- Sidebar -->
+<aside class="w-[72px] hover:w-[240px] transition-all duration-300 bg-dark-900 border-r border-dark-600/50 flex flex-col items-center py-6 fixed h-full z-50 overflow-hidden group">
+  <!-- Logo -->
+  <div class="flex items-center gap-3 mb-10 px-4 w-full">
+    <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 glow-accent">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </div>
+    <span class="text-lg font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">BankOffer<span class="text-accent-light">AI</span></span>
+  </div>
+
+  <nav class="flex flex-col w-full gap-1 px-3 flex-1">
+    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="dashboard">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm0 7a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5zM4 13a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2z"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Dashboard</span>
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="offers">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Offers</span>
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="customers">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Customers</span>
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="analytics">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Analytics</span>
+    </a>
+    <a href="/docs" target="_blank" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">API Docs</span>
+    </a>
+  </nav>
+
+  <div class="px-3 w-full mt-auto">
+    <div class="flex items-center gap-3 px-3 py-3">
+      <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+        <span class="text-accent-light text-xs font-bold">AI</span>
+      </div>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-xs text-dark-300">v1.0 rules</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="ml-[72px] flex-1 min-h-screen">
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-40 bg-dark-950/80 backdrop-blur-xl border-b border-dark-600/30 px-8 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-semibold text-white">Dashboard</h1>
+      <p class="text-xs text-dark-300 mt-0.5">AI-powered personalization engine</p>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <input type="text" id="searchInput" placeholder="Search customer ID..." class="bg-dark-800 border border-dark-600/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-56 transition-all focus:w-72" />
+        <svg class="w-4 h-4 text-dark-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-neon-green pulse-dot"></div>
+        <span class="text-xs text-dark-300">System Online</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-8">
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-4 gap-5 mb-8">
+      <div class="glass-card rounded-2xl p-5 stat-glow-green fade-in" style="animation-delay:0.1s">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Total Customers</span>
+          <div class="w-9 h-9 rounded-xl bg-neon-green/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-white" id="statCustomers">--</p>
+        <p class="text-xs text-neon-green mt-1 flex items-center gap-1">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>
+          Active profiles
+        </p>
+      </div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-purple fade-in" style="animation-delay:0.2s">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Products Available</span>
+          <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-white" id="statProducts">12</p>
+        <p class="text-xs text-accent-light mt-1">Across 6 categories</p>
+      </div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-cyan fade-in" style="animation-delay:0.3s">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Avg Relevance</span>
+          <div class="w-9 h-9 rounded-xl bg-neon-cyan/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-white" id="statAvgScore">--</p>
+        <p class="text-xs text-neon-cyan mt-1">Model confidence</p>
+      </div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-amber fade-in" style="animation-delay:0.4s">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Scoring Model</span>
+          <div class="w-9 h-9 rounded-xl bg-neon-amber/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-white">Rules</p>
+        <p class="text-xs text-neon-amber mt-1">v1.0 &middot; 20 profiling rules</p>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-12 gap-6">
+      <!-- Customer Selector + Offers (Left) -->
+      <div class="col-span-8 space-y-6">
+        <!-- Customer Selector -->
+        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.5s">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Select Customer
+            </h2>
+            <span class="text-xs text-dark-300" id="selectedCustomerInfo">Click a customer to view offers</span>
+          </div>
+          <div class="flex flex-wrap gap-2" id="customerGrid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Customer Profile Card -->
+        <div class="glass-card rounded-2xl p-6 fade-in hidden" id="profileCard" style="animation-delay:0.6s">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Customer Profile
+            </h2>
+            <span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-light" id="profileLifeStage">--</span>
+          </div>
+          <div class="grid grid-cols-4 gap-4" id="profileDetails">
+          </div>
+        </div>
+
+        <!-- Offers -->
+        <div class="glass-card rounded-2xl p-6 fade-in" id="offersSection" style="animation-delay:0.7s">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+              Personalized Offers
+            </h2>
+            <span class="text-xs text-dark-300" id="offersCount">Select a customer</span>
+          </div>
+          <div id="offersGrid" class="space-y-3">
+            <div class="flex items-center justify-center py-16 text-dark-400">
+              <div class="text-center">
+                <svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                <p class="text-sm">Select a customer above to generate AI-powered offers</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-span-4 space-y-6">
+        <!-- Spending Distribution -->
+        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.6s">
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+            Offer Distribution
+          </h2>
+          <div class="relative" style="height:220px">
+            <canvas id="distributionChart"></canvas>
+          </div>
+          <div id="chartLegend" class="mt-4 space-y-2"></div>
+        </div>
+
+        <!-- Product Catalog Quick View -->
+        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.7s">
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Product Catalog
+          </h2>
+          <div class="space-y-2" id="productCatalog">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Risk Distribution -->
+        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.8s">
+          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Score Breakdown
+          </h2>
+          <div class="relative" style="height:200px">
+            <canvas id="scoreChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-dark-950/90 z-[100] flex items-center justify-center transition-opacity duration-500">
+  <div class="text-center">
+    <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
+      <svg class="w-8 h-8 text-accent-light animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+    </div>
+    <p class="text-white font-semibold text-lg">BankOffer AI</p>
+    <p class="text-dark-300 text-sm mt-1">Initializing scoring engine...</p>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';
+const PRODUCT_ICONS = {
+  investment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+  bond: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  savings: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+  retirement: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  personal_loan: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  mortgage: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+  credit_card: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+  insurance: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+};
+const TYPE_COLORS = {
+  investment: { bg: 'bg-accent/10', text: 'text-accent-light', bar: '#6366f1' },
+  bond: { bg: 'bg-neon-cyan/10', text: 'text-neon-cyan', bar: '#06b6d4' },
+  savings: { bg: 'bg-neon-green/10', text: 'text-neon-green', bar: '#10b981' },
+  retirement: { bg: 'bg-neon-amber/10', text: 'text-neon-amber', bar: '#f59e0b' },
+  personal_loan: { bg: 'bg-neon-red/10', text: 'text-neon-red', bar: '#ef4444' },
+  mortgage: { bg: 'bg-neon-purple/10', text: 'text-neon-purple', bar: '#a78bfa' },
+  credit_card: { bg: 'bg-pink-500/10', text: 'text-pink-400', bar: '#ec4899' },
+  insurance: { bg: 'bg-teal-500/10', text: 'text-teal-400', bar: '#14b8a6' },
+};
+
+const PRODUCTS = [
+  { name: 'ETF Starter', type: 'investment', cat: 'Investment' },
+  { name: 'ETF Growth', type: 'investment', cat: 'Investment' },
+  { name: 'Mutual Funds', type: 'investment', cat: 'Investment' },
+  { name: 'Managed Portfolio', type: 'investment', cat: 'Investment' },
+  { name: 'State Bonds', type: 'bond', cat: 'Investment' },
+  { name: 'Savings Deposit', type: 'savings', cat: 'Savings' },
+  { name: 'Private Pension', type: 'retirement', cat: 'Retirement' },
+  { name: 'Personal Loan', type: 'personal_loan', cat: 'Lending' },
+  { name: 'Mortgage', type: 'mortgage', cat: 'Lending' },
+  { name: 'Credit Card', type: 'credit_card', cat: 'Credit' },
+  { name: 'Life Insurance', type: 'insurance', cat: 'Insurance' },
+  { name: 'Travel Insurance', type: 'insurance', cat: 'Insurance' },
+];
+
+let distributionChart = null;
+let scoreChart = null;
+let selectedCustomerId = null;
+
+// Initialize
+async function init() {
+  renderCustomerGrid();
+  renderProductCatalog();
+  initDistributionChart();
+  initScoreChart();
+  await loadStats();
+  document.getElementById('loadingOverlay').style.opacity = '0';
+  setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 500);
+}
+
+function renderCustomerGrid() {
+  const grid = document.getElementById('customerGrid');
+  let html = '';
+  for (let i = 1; i <= 50; i++) {
+    html += `<button onclick="selectCustomer(${i})" id="custBtn${i}" class="customer-btn w-10 h-10 rounded-xl border border-dark-600/50 bg-dark-800/50 text-sm font-medium text-dark-200 hover:text-white transition-all flex items-center justify-center">${i}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderProductCatalog() {
+  const el = document.getElementById('productCatalog');
+  const categories = {};
+  PRODUCTS.forEach(p => {
+    if (!categories[p.cat]) categories[p.cat] = [];
+    categories[p.cat].push(p);
+  });
+  let html = '';
+  Object.entries(categories).forEach(([cat, products]) => {
+    html += `<div class="mb-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">${cat}</p>`;
+    products.forEach(p => {
+      const c = TYPE_COLORS[p.type] || TYPE_COLORS.investment;
+      html += `<div class="flex items-center gap-2.5 py-1.5">
+        <div class="w-7 h-7 rounded-lg ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${PRODUCT_ICONS[p.type] || ''}</div>
+        <span class="text-xs text-dark-100">${p.name}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+async function loadStats() {
+  try {
+    const resp = await fetch(`${API_BASE}/offers/1?top_n=5`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const avg = data.offers.reduce((a, o) => a + o.relevance_score, 0) / Math.max(data.offers.length, 1);
+      document.getElementById('statAvgScore').textContent = (avg * 100).toFixed(0) + '%';
+    }
+  } catch(e) { console.error(e); }
+  document.getElementById('statCustomers').textContent = '50';
+}
+
+async function selectCustomer(id) {
+  if (selectedCustomerId) {
+    const prev = document.getElementById(`custBtn${selectedCustomerId}`);
+    if (prev) prev.classList.remove('active');
+  }
+  selectedCustomerId = id;
+  const btn = document.getElementById(`custBtn${id}`);
+  btn.classList.add('active');
+  document.getElementById('selectedCustomerInfo').textContent = `Customer #${id} selected`;
+
+  // Load offers
+  const offersGrid = document.getElementById('offersGrid');
+  offersGrid.innerHTML = '<div class="flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>';
+
+  try {
+    const [offersResp, profileResp] = await Promise.all([
+      fetch(`${API_BASE}/offers/${id}?top_n=8`),
+      fetch(`${API_BASE}/profiles/${id}`),
+    ]);
+
+    if (offersResp.ok) {
+      const data = await offersResp.json();
+      renderOffers(data.offers);
+      updateDistributionChart(data.offers);
+      updateScoreChart(data.offers);
+      document.getElementById('offersCount').textContent = `${data.offers.length} offers generated`;
+      const avg = data.offers.reduce((a, o) => a + o.relevance_score, 0) / Math.max(data.offers.length, 1);
+      document.getElementById('statAvgScore').textContent = (avg * 100).toFixed(0) + '%';
+    } else {
+      offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
+    }
+
+    if (profileResp.ok) {
+      const profile = await profileResp.json();
+      renderProfile(profile);
+    }
+  } catch(e) {
+    console.error(e);
+    offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Error connecting to API</p>';
+  }
+}
+
+function renderProfile(profile) {
+  const card = document.getElementById('profileCard');
+  card.classList.remove('hidden');
+  const data = profile.data || profile;
+  document.getElementById('profileLifeStage').textContent = (data.life_stage || '').replace('_', ' ');
+
+  const details = document.getElementById('profileDetails');
+  const fields = [
+    { label: 'Risk Score', value: data.risk_score ? parseFloat(data.risk_score).toFixed(1) + '/10' : '--', color: 'text-neon-amber' },
+    { label: 'Income', value: data.income_bracket || '--', color: 'text-neon-green' },
+    { label: 'Segments', value: (data.segments || []).length, color: 'text-accent-light' },
+    { label: 'Life Stage', value: (data.life_stage || '').replace('_', ' '), color: 'text-neon-cyan' },
+  ];
+  details.innerHTML = fields.map(f => `
+    <div class="bg-dark-800/50 rounded-xl p-3">
+      <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">${f.label}</p>
+      <p class="text-sm font-semibold ${f.color}">${f.value}</p>
+    </div>
+  `).join('');
+}
+
+function renderOffers(offers) {
+  const grid = document.getElementById('offersGrid');
+  if (!offers.length) {
+    grid.innerHTML = '<p class="text-center text-dark-400 py-8 text-sm">No offers matched for this customer</p>';
+    return;
+  }
+  grid.innerHTML = offers.map((offer, i) => {
+    const c = TYPE_COLORS[offer.product_type] || TYPE_COLORS.investment;
+    const pct = (offer.relevance_score * 100).toFixed(0);
+    const conf = (offer.confidence_score * 100).toFixed(0);
+    return `
+    <div class="offer-card glass-card rounded-xl p-4 fade-in" style="animation-delay:${i * 0.08}s">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">
+          ${PRODUCT_ICONS[offer.product_type] || ''}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-sm font-semibold text-white">${offer.product_name}</h3>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold ${c.text}">${pct}%</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i + 1}</span>
+            </div>
+          </div>
+          <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${offer.personalization_reason}</p>
+          <div class="flex items-center gap-3">
+            <div class="flex-1">
+              <div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div>
+            </div>
+            <span class="text-[10px] text-dark-400">conf: ${conf}%</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function initDistributionChart() {
+  const ctx = document.getElementById('distributionChart').getContext('2d');
+  distributionChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Investment', 'Savings', 'Insurance', 'Lending', 'Credit'],
+      datasets: [{
+        data: [4, 1, 2, 2, 1],
+        backgroundColor: ['#6366f1', '#10b981', '#14b8a6', '#a78bfa', '#ec4899'],
+        borderWidth: 0,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+      }
+    }
+  });
+  updateChartLegend(['Investment', 'Savings', 'Insurance', 'Lending', 'Credit'], [4,1,2,2,1], ['#6366f1','#10b981','#14b8a6','#a78bfa','#ec4899']);
+}
+
+function updateDistributionChart(offers) {
+  const typeCount = {};
+  offers.forEach(o => {
+    const t = o.product_type;
+    typeCount[t] = (typeCount[t] || 0) + 1;
+  });
+  const labels = Object.keys(typeCount);
+  const data = Object.values(typeCount);
+  const colors = labels.map(l => (TYPE_COLORS[l] || {}).bar || '#6366f1');
+  distributionChart.data.labels = labels;
+  distributionChart.data.datasets[0].data = data;
+  distributionChart.data.datasets[0].backgroundColor = colors;
+  distributionChart.update();
+  updateChartLegend(labels, data, colors);
+}
+
+function updateChartLegend(labels, data, colors) {
+  const total = data.reduce((a, b) => a + b, 0);
+  document.getElementById('chartLegend').innerHTML = labels.map((l, i) => `
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-2.5 h-2.5 rounded-full" style="background:${colors[i]}"></div>
+        <span class="text-xs text-dark-200 capitalize">${l.replace('_', ' ')}</span>
+      </div>
+      <span class="text-xs font-medium text-dark-100">${data[i]}</span>
+    </div>
+  `).join('');
+}
+
+function initScoreChart() {
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  scoreChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Relevance',
+        data: [],
+        backgroundColor: 'rgba(99,102,241,0.6)',
+        borderRadius: 6,
+        barThickness: 14,
+      }, {
+        label: 'Confidence',
+        data: [],
+        backgroundColor: 'rgba(129,140,248,0.3)',
+        borderRadius: 6,
+        barThickness: 14,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: { max: 1, grid: { color: 'rgba(51,65,85,0.3)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => (v*100)+'%' } },
+        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+      },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 15 } },
+      }
+    }
+  });
+}
+
+function updateScoreChart(offers) {
+  const top5 = offers.slice(0, 5);
+  scoreChart.data.labels = top5.map(o => o.product_name.length > 12 ? o.product_name.slice(0,12)+'...' : o.product_name);
+  scoreChart.data.datasets[0].data = top5.map(o => o.relevance_score);
+  scoreChart.data.datasets[1].data = top5.map(o => o.confidence_score);
+  scoreChart.update();
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const val = parseInt(e.target.value);
+    if (val >= 1 && val <= 50) selectCustomer(val);
+  }
+});
+
+init();
+</script>
+</body>
+</html>
