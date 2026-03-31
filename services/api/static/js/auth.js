@@ -55,8 +55,6 @@
       });
 
       const authenticated = await _keycloak.init({
-        onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/static/silent-check-sso.html',
         pkceMethod: 'S256',
         checkLoginIframe: false
       });
@@ -92,28 +90,55 @@
     }
   }
 
+  const KC_BASE = 'https://auth.lupulup.com/realms/bankofferai/protocol/openid-connect';
+
   function keycloakLogin() {
     if (_keycloak) {
-      _keycloak.login({
-        redirectUri: window.location.href
-      });
+      try {
+        _keycloak.login({ redirectUri: window.location.href });
+        return;
+      } catch(e) {
+        console.warn('[Auth] Keycloak adapter login failed, using direct redirect');
+      }
     }
+    // Fallback: direct redirect without PKCE (works for public clients)
+    const params = new URLSearchParams({
+      client_id: 'bankofferai-app',
+      redirect_uri: window.location.href,
+      response_type: 'code',
+      scope: 'openid email profile',
+    });
+    window.location.href = KC_BASE + '/auth?' + params.toString();
   }
 
   function keycloakRegister() {
     if (_keycloak) {
-      _keycloak.register({
-        redirectUri: window.location.href
-      });
+      try {
+        _keycloak.register({ redirectUri: window.location.href });
+        return;
+      } catch(e) {}
     }
+    const params = new URLSearchParams({
+      client_id: 'bankofferai-app',
+      redirect_uri: window.location.href,
+      response_type: 'code',
+      scope: 'openid email profile',
+    });
+    window.location.href = KC_BASE + '/registrations?' + params.toString();
   }
 
   function keycloakLogout() {
     if (_keycloak) {
-      _keycloak.logout({
-        redirectUri: window.location.origin
-      });
+      try {
+        _keycloak.logout({ redirectUri: window.location.origin });
+        return;
+      } catch(e) {}
     }
+    const params = new URLSearchParams({
+      client_id: 'bankofferai-app',
+      post_logout_redirect_uri: window.location.origin,
+    });
+    window.location.href = KC_BASE + '/logout?' + params.toString();
   }
 
   // ---- Demo mode auth ----
