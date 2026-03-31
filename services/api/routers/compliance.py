@@ -183,7 +183,7 @@ async def get_audit_detail(
         async with session_factory() as session:
             result = await session.execute(
                 text("""SELECT * FROM audit_recommendations
-                     WHERE recommendation_id = :rid::uuid"""),
+                     WHERE recommendation_id = CAST(:rid AS uuid)"""),
                 {"rid": recommendation_id},
             )
             row = result.mappings().fetchone()
