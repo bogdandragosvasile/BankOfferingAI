@@ -61,6 +61,14 @@ tailwind.config = {
 </head>
 <body class="font-sans text-dark-100 min-h-screen">
 
+<!-- Auth + Theme + i18n scripts -->
+<script src="/static/js/i18n.js"></script>
+<script src="/static/js/theme.js"></script>
+<script src="/static/js/auth.js"></script>
+
+<!-- Auth gate (shown when not logged in) -->
+<div id="auth-gate"></div>
+
 <!-- ==================== CUSTOMER SELECTOR SCREEN ==================== -->
 <div id="screen-selector" class="min-h-screen flex items-center justify-center p-4">
   <div class="max-w-4xl w-full">
@@ -99,14 +107,17 @@ tailwind.config = {
           <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">Consent</button>
           <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">History</button>
         </div>
-        <!-- Customer badge + switch -->
+        <!-- Controls: language, theme, customer badge, switch -->
         <div class="flex items-center gap-3">
+          <div id="lang-selector-portal"></div>
+          <div id="theme-toggle-portal"></div>
           <div id="customer-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-800 border border-dark-600/50">
             <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
               <span class="text-accent-light text-xs font-bold" id="badge-initials">--</span>
             </div>
             <span class="text-sm text-dark-100 hidden sm:inline" id="badge-name">Customer</span>
           </div>
+          <div id="user-badge-portal"></div>
           <button onclick="switchCustomer()" class="text-xs text-dark-300 hover:text-accent-light transition-colors" title="Switch Customer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           </button>
@@ -975,7 +986,38 @@ function escAttr(str) {
   return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
+// ==================== AUTH GATE ====================
+function setupAuthGate() {
+  const gate = document.getElementById('auth-gate');
+  const selector = document.getElementById('screen-selector');
+  const portal = document.getElementById('screen-portal');
+
+  window.BOAI_AUTH.onAuthChange(user => {
+    if (!user) {
+      selector.classList.add('hidden');
+      portal.classList.add('hidden');
+      gate.innerHTML = window.BOAI_AUTH.renderLoginScreen({
+        title: 'Customer Portal',
+        subtitle: 'Sign in to view your personalized offers',
+        allowedRoles: ['admin', 'employee', 'client']
+      });
+      return;
+    }
+    gate.innerHTML = '';
+    selector.classList.remove('hidden');
+
+    // Render controls
+    const tt = document.getElementById('theme-toggle-portal');
+    const ub = document.getElementById('user-badge-portal');
+    const ls = document.getElementById('lang-selector-portal');
+    if (tt) tt.innerHTML = window.BOAI_THEME.renderToggle();
+    if (ub) ub.innerHTML = window.BOAI_AUTH.renderUserBadge();
+    if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+  });
+}
+
 // ==================== START ====================
+setupAuthGate();
 init();
 </script>
 </body>
