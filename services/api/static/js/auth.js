@@ -1,16 +1,21 @@
 /**
  * BankOffer AI — Authentication (Keycloak OIDC)
- * Include this script before the main page script.
+ * Manual PKCE authorization code flow — no dependency on keycloak-js adapter
+ * for the critical auth code exchange.
  *
  * In DEMO_MODE (no Keycloak available), provides a mock auth flow
  * with role-based demo users.
  */
 (function() {
   const STORAGE_KEY = 'boai_auth';
+  const PKCE_KEY = 'boai_pkce';
   const KC_URL = 'https://auth.lupulup.com';
   const KC_REALM = 'bankofferai';
   const KC_CLIENT_ID = 'bankofferai-app';
   const KC_BASE = KC_URL + '/realms/' + KC_REALM + '/protocol/openid-connect';
+  const TOKEN_URL = KC_BASE + '/token';
+  const AUTH_URL = KC_BASE + '/auth';
+  const LOGOUT_URL = KC_BASE + '/logout';
 
   // Demo users for when Keycloak is unavailable
   const DEMO_USERS = {
@@ -37,115 +42,226 @@
     }
   };
 
-  let _keycloak = null;
   let _currentUser = null;
   let _demoMode = true;
   let _onAuthChange = [];
-  let _kcReady = false; // true once keycloak.init() resolves
+  let _accessToken = null;
+  let _refreshToken = null;
 
-  // ---- Create Keycloak adapter immediately ----
-  try {
-    if (typeof Keycloak !== 'undefined') {
-      _keycloak = new Keycloak({
-        url: KC_URL,
-        realm: KC_REALM,
-        clientId: KC_CLIENT_ID
-      });
-    }
-  } catch(e) {
-    console.log('[Auth] Keycloak constructor failed:', e.message);
+  // ---- PKCE helpers ----
+  function _generateRandomString(length) {
+    const arr = new Uint8Array(length);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('').slice(0, length);
   }
 
-  // ---- Keycloak integration ----
-  async function initKeycloak() {
-    if (!_keycloak) {
-      console.log('[Auth] Keycloak JS not available, using demo mode');
-      return false;
-    }
+  async function _generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
 
+  function _parseJwt(token) {
     try {
-      const authenticated = await _keycloak.init({
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-        responseMode: 'query',
-        enableLogging: true
-      });
-      _kcReady = true;
-
-      if (authenticated) {
-        _demoMode = false;
-        _currentUser = {
-          sub: _keycloak.tokenParsed.sub,
-          email: _keycloak.tokenParsed.email,
-          name: _keycloak.tokenParsed.name || _keycloak.tokenParsed.preferred_username,
-          roles: _keycloak.tokenParsed.roles || _keycloak.tokenParsed.realm_access?.roles || [],
-          customer_id: _keycloak.tokenParsed.customer_id || '0'
-        };
-        _saveSession();
-        _notifyChange();
-
-        // Token refresh
-        setInterval(() => {
-          _keycloak.updateToken(30).catch(() => {
-            console.warn('[Auth] Token refresh failed, session may have expired');
-            logout();
-          });
-        }, 60000);
-
-        return true;
-      }
-      // Keycloak is available but user is not logged in
-      _demoMode = false;
-      return false;
-    } catch (e) {
-      console.log('[Auth] Keycloak init failed, using demo mode:', e.message);
-      _kcReady = true; // still mark ready so login() works
-      return false;
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
+    } catch(e) {
+      console.error('[Auth] JWT parse error:', e);
+      return null;
     }
   }
 
-  function keycloakLogin() {
-    // Use clean URL (no query params) as redirect URI
+  // ---- SSO Login (manual PKCE flow) ----
+  async function keycloakLogin() {
     const redirectUri = window.location.origin + window.location.pathname;
-    console.log('[Auth] keycloakLogin redirectUri=' + redirectUri);
-    if (_keycloak) {
-      _keycloak.login({ redirectUri: redirectUri });
-      return;
-    }
-    // Fallback if keycloak-js didn't load at all
-    var params = new URLSearchParams({
+    const state = _generateRandomString(32);
+    const nonce = _generateRandomString(32);
+    const codeVerifier = _generateRandomString(64);
+    const codeChallenge = await _generateCodeChallenge(codeVerifier);
+
+    // Store PKCE state in sessionStorage (survives redirect, same tab only)
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({
+      state: state,
+      nonce: nonce,
+      codeVerifier: codeVerifier,
+      redirectUri: redirectUri
+    }));
+
+    const params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
+      response_mode: 'query',
       scope: 'openid email profile',
+      state: state,
+      nonce: nonce,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256'
     });
-    window.location.href = KC_BASE + '/auth?' + params.toString();
+
+    console.log('[Auth] Redirecting to Keycloak for login...');
+    window.location.href = AUTH_URL + '?' + params.toString();
   }
 
-  function keycloakRegister() {
-    if (_keycloak) {
-      _keycloak.register({ redirectUri: window.location.href });
-      return;
-    }
-    var params = new URLSearchParams({
+  async function keycloakRegister() {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const state = _generateRandomString(32);
+    const nonce = _generateRandomString(32);
+    const codeVerifier = _generateRandomString(64);
+    const codeChallenge = await _generateCodeChallenge(codeVerifier);
+
+    sessionStorage.setItem(PKCE_KEY, JSON.stringify({
+      state: state,
+      nonce: nonce,
+      codeVerifier: codeVerifier,
+      redirectUri: redirectUri
+    }));
+
+    const params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
-      redirect_uri: window.location.href,
+      redirect_uri: redirectUri,
       response_type: 'code',
+      response_mode: 'query',
       scope: 'openid email profile',
+      state: state,
+      nonce: nonce,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256'
     });
+
     window.location.href = KC_BASE + '/registrations?' + params.toString();
   }
 
-  function keycloakLogout() {
-    if (_keycloak && _kcReady) {
-      _keycloak.logout({ redirectUri: window.location.origin });
-      return;
+  // ---- Auth code exchange ----
+  async function _handleAuthCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (!code || !state) return false;
+
+    console.log('[Auth] Auth callback detected: code=' + code.substring(0, 8) + '... state=' + state.substring(0, 8) + '...');
+
+    // Retrieve stored PKCE data
+    const pkceRaw = sessionStorage.getItem(PKCE_KEY);
+    if (!pkceRaw) {
+      console.error('[Auth] No PKCE data in sessionStorage — cannot exchange code');
+      return false;
     }
-    var params = new URLSearchParams({
+
+    const pkce = JSON.parse(pkceRaw);
+    sessionStorage.removeItem(PKCE_KEY);
+
+    // Validate state
+    if (pkce.state !== state) {
+      console.error('[Auth] State mismatch: expected=' + pkce.state.substring(0, 8) + ' got=' + state.substring(0, 8));
+      return false;
+    }
+
+    // Exchange code for tokens
+    console.log('[Auth] Exchanging auth code for tokens...');
+    try {
+      const resp = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: KC_CLIENT_ID,
+          code: code,
+          redirect_uri: pkce.redirectUri,
+          code_verifier: pkce.codeVerifier
+        }).toString()
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('[Auth] Token exchange failed:', resp.status, errText);
+        return false;
+      }
+
+      const tokens = await resp.json();
+      console.log('[Auth] Token exchange successful');
+
+      _accessToken = tokens.access_token;
+      _refreshToken = tokens.refresh_token;
+
+      // Parse the access token to get user info
+      const parsed = _parseJwt(_accessToken);
+      if (!parsed) return false;
+
+      _demoMode = false;
+      _currentUser = {
+        sub: parsed.sub,
+        email: parsed.email,
+        name: parsed.name || parsed.preferred_username || parsed.email,
+        roles: parsed.roles || parsed.realm_access?.roles || [],
+        customer_id: parsed.customer_id || '0'
+      };
+
+      console.log('[Auth] SSO user authenticated:', _currentUser.email, 'roles:', _currentUser.roles);
+
+      _saveSession();
+
+      // Clean URL
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+
+      // Start token refresh
+      if (tokens.expires_in) {
+        const refreshMs = Math.max((tokens.expires_in - 30) * 1000, 30000);
+        setInterval(() => _refreshAccessToken(), refreshMs);
+      }
+
+      _notifyChange();
+      return true;
+
+    } catch(e) {
+      console.error('[Auth] Token exchange error:', e);
+      return false;
+    }
+  }
+
+  async function _refreshAccessToken() {
+    if (!_refreshToken) return;
+    try {
+      const resp = await fetch(TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: KC_CLIENT_ID,
+          refresh_token: _refreshToken
+        }).toString()
+      });
+      if (resp.ok) {
+        const tokens = await resp.json();
+        _accessToken = tokens.access_token;
+        _refreshToken = tokens.refresh_token || _refreshToken;
+        _saveSession();
+      } else {
+        console.warn('[Auth] Token refresh failed, logging out');
+        logout();
+      }
+    } catch(e) {
+      console.warn('[Auth] Token refresh error:', e);
+    }
+  }
+
+  function keycloakLogout() {
+    const params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
       post_logout_redirect_uri: window.location.origin,
     });
-    window.location.href = KC_BASE + '/logout?' + params.toString();
+    if (_accessToken) {
+      params.set('id_token_hint', _accessToken);
+    }
+    _currentUser = null;
+    _accessToken = null;
+    _refreshToken = null;
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.href = LOGOUT_URL + '?' + params.toString();
   }
 
   // ---- Demo mode auth ----
@@ -173,47 +289,27 @@
 
   // ---- Common ----
   function logout() {
-    if (!_demoMode && _keycloak) {
+    if (!_demoMode && _accessToken) {
       keycloakLogout();
       return;
     }
     _currentUser = null;
+    _accessToken = null;
+    _refreshToken = null;
     localStorage.removeItem(STORAGE_KEY);
     _notifyChange();
   }
 
-  function getUser() {
-    return _currentUser;
-  }
-
-  function isAuthenticated() {
-    return _currentUser !== null;
-  }
-
-  function hasRole(role) {
-    return _currentUser?.roles?.includes(role) || false;
-  }
-
-  function isAdmin() {
-    return hasRole('admin');
-  }
-
-  function isEmployee() {
-    return hasRole('employee');
-  }
-
-  function isClient() {
-    return hasRole('client');
-  }
-
-  function isDemoMode() {
-    return _demoMode;
-  }
+  function getUser() { return _currentUser; }
+  function isAuthenticated() { return _currentUser !== null; }
+  function hasRole(role) { return _currentUser?.roles?.includes(role) || false; }
+  function isAdmin() { return hasRole('admin'); }
+  function isEmployee() { return hasRole('employee'); }
+  function isClient() { return hasRole('client'); }
+  function isDemoMode() { return _demoMode; }
 
   function getToken() {
-    if (!_demoMode && _keycloak) {
-      return _keycloak.token;
-    }
+    if (!_demoMode && _accessToken) return _accessToken;
     return null;
   }
 
@@ -294,28 +390,6 @@
     const { title, subtitle, allowedRoles } = options;
     const t = window.BOAI_I18N?.t || (k => k);
 
-    if (!_demoMode && _keycloak) {
-      return `<div class="min-h-screen flex items-center justify-center">
-        <div class="glass-card rounded-2xl p-8 max-w-md w-full text-center">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/20 flex items-center justify-center">
-            <svg class="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-white mb-2">${title || t('auth.login_title')}</h2>
-          <p class="text-dark-300 mb-6">${subtitle || t('auth.login_subtitle')}</p>
-          <button onclick="window.BOAI_AUTH.keycloakLogin()"
-            class="w-full py-3 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium transition-colors mb-3">
-            ${t('common.login')}
-          </button>
-          <button onclick="window.BOAI_AUTH.keycloakRegister()"
-            class="w-full py-3 border border-accent/30 hover:bg-accent/10 text-accent rounded-xl font-medium transition-colors">
-            ${t('common.register')}
-          </button>
-        </div>
-      </div>`;
-    }
-
     const roles = allowedRoles || ['admin', 'employee', 'client'];
     const roleInfo = {
       admin: { icon: '\uD83D\uDEE1\uFE0F', color: 'red', desc: t('auth.role_admin') },
@@ -353,45 +427,37 @@
     </div>`;
   }
 
-  // Initialize: try restoring session, then try Keycloak
+  // ---- Initialize ----
   async function init() {
-    let restored = _restoreSession();
-
-    // If we have a ?code= in the URL, Keycloak is redirecting back after login.
-    // We MUST call initKeycloak() to exchange the code for tokens, regardless
-    // of any previously saved session.
+    // FIRST: check if this is an SSO callback with ?code= in URL
     const hasAuthCode = window.location.search.includes('code=');
-    console.log('[Auth] init: restored=' + restored + ' demoMode=' + _demoMode + ' hasAuthCode=' + hasAuthCode);
 
-    if (restored && _demoMode && !hasAuthCode) {
+    if (hasAuthCode) {
+      console.log('[Auth] SSO callback detected in URL');
+      // Clear any stale session before processing
+      localStorage.removeItem(STORAGE_KEY);
+      _currentUser = null;
+      _demoMode = true;
+
+      const ok = await _handleAuthCallback();
+      if (ok) {
+        console.log('[Auth] SSO login successful');
+        return; // _notifyChange() already called in _handleAuthCallback
+      }
+      console.log('[Auth] SSO callback failed, falling through to login screen');
       _notifyChange();
       return;
     }
 
-    // Clear any stale session before processing SSO callback
-    if (hasAuthCode) {
-      console.log('[Auth] SSO callback detected, clearing stale session');
-      localStorage.removeItem(STORAGE_KEY);
-      _currentUser = null;
-      _demoMode = true;
-      restored = false;
-    }
-
-    const kcOk = await initKeycloak();
-    console.log('[Auth] initKeycloak result: ' + kcOk + ' user=' + (_currentUser ? _currentUser.email : 'null'));
-
-    if (kcOk) {
-      // Clean the URL of auth params after successful login
-      const url = new URL(window.location.href);
-      url.searchParams.delete('code');
-      url.searchParams.delete('state');
-      url.searchParams.delete('session_state');
-      url.searchParams.delete('iss');
-      window.history.replaceState({}, '', url.pathname + url.hash);
-    }
-    if (!kcOk && !restored) {
+    // No auth callback — try restoring an existing session
+    const restored = _restoreSession();
+    if (restored) {
       _notifyChange();
+      return;
     }
+
+    // No session — show login screen
+    _notifyChange();
   }
 
   // Expose API
@@ -415,7 +481,6 @@
     renderLoginScreen
   };
 
-  // Auto-init — start immediately, don't wait for DOMContentLoaded
-  // This ensures Keycloak processes any ?code= callback from SSO redirect
+  // Auto-init immediately
   init();
 })();
