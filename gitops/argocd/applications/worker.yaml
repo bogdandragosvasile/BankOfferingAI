@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bankoffer-worker
+  namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: worker=ghcr.io/ptx37/bankoffer-worker
+    argocd-image-updater.argoproj.io/worker.update-strategy: semver
+    argocd-image-updater.argoproj.io/worker.helm.image-name: image.repository
+    argocd-image-updater.argoproj.io/worker.helm.image-tag: image.tag
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ptx37/BankOfferingAI.git
+    targetRevision: main
+    path: infra/helm/bankoffer-worker
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bankoffer-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m

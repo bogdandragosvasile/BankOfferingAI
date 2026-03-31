@@ -1,0 +1,98 @@
+"""FastAPI application entry point for the Bank Offering AI API service."""
+
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+
+from services.api.routers import offers, profiles, webhooks
+
+logger = logging.getLogger(__name__)
+
+ALLOWED_ORIGINS = [
+    "https://bankofferingai.example.com",
+    "http://localhost:3000",
+]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown lifecycle events."""
+    # Startup: initialize DB connection pool and Redis
+    logger.info("Starting up API service...")
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    import redis.asyncio as aioredis
+    import os
+
+    database_url = os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/bankofferingai",
+    )
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+    engine = create_async_engine(database_url, pool_size=20, max_overflow=10)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    redis_client = aioredis.from_url(redis_url, decode_responses=True)
+
+    app.state.db_engine = engine
+    app.state.db_session_factory = session_factory
+    app.state.redis = redis_client
+
+    logger.info("Database and Redis connections established.")
+
+    yield
+
+    # Shutdown: close connections
+    logger.info("Shutting down API service...")
+    await redis_client.aclose()
+    await engine.dispose()
+    logger.info("Connections closed.")
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    app = FastAPI(
+        title="Bank Offering AI",
+        description="Personalized bank product offering engine powered by AI",
+        version="1.0.0",
+        lifespan=lifespan,
+    )
+
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+
+    # Prometheus metrics
+    Instrumentator(
+        should_group_status_codes=True,
+        should_ignore_untemplated=True,
+        excluded_handlers=["/health", "/metrics"],
+    ).instrument(app).expose(app, endpoint="/metrics")
+
+    # Routers
+    app.include_router(offers.router, prefix="/offers", tags=["offers"])
+    app.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
+    app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+
+    @app.get("/health", tags=["health"])
+    async def health_check():
+        """Liveness probe endpoint."""
+        return {"status": "healthy", "service": "bank-offering-api"}
+
+    return app
+
+
+app = create_app()
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("services.api.main:app", host="0.0.0.0", port=8000, reload=True)
