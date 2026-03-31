@@ -216,9 +216,60 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .inline-flex { display: inline-flex; align-items: center; }
 .fw-600 { font-weight: 600; }
 .border-l { border-left: 3px solid var(--accent); padding-left: 20px; }
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg2: #f1f5f9;
+  --card: rgba(255,255,255,0.85);
+  --border: rgba(99,102,241,0.15);
+  --text: #1e293b;
+  --text2: #475569;
+  --text3: #94a3b8;
+}
+[data-theme="light"] body { background: var(--bg); color: var(--text); }
+[data-theme="light"] .bg-glow { opacity: 0.08; }
+[data-theme="light"] .bg-grid {
+  background-image:
+    linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
+}
+[data-theme="light"] .card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+[data-theme="light"] .card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
+[data-theme="light"] .pill-nav { background: rgba(255,255,255,0.92); border-color: rgba(99,102,241,0.15); }
+[data-theme="light"] .pill-dot { background: #cbd5e1; }
+[data-theme="light"] .data-table th { color: var(--text3); border-bottom-color: rgba(99,102,241,0.12); }
+[data-theme="light"] .data-table td { border-bottom-color: rgba(99,102,241,0.06); }
+[data-theme="light"] .data-table tr:hover td { background: rgba(99,102,241,0.04); }
+[data-theme="light"] .data-table code { background: rgba(99,102,241,0.08); color: #4f46e5; }
+[data-theme="light"] .gradient-text { background: linear-gradient(135deg, #4f46e5, #0891b2); -webkit-background-clip: text; background-clip: text; }
+[data-theme="light"] .gradient-text-green { background: linear-gradient(135deg, #059669, #0891b2); -webkit-background-clip: text; background-clip: text; }
+[data-theme="light"] .gradient-text-purple { background: linear-gradient(135deg, #7c3aed, #4f46e5); -webkit-background-clip: text; background-clip: text; }
+[data-theme="light"] .gradient-text-amber { background: linear-gradient(135deg, #d97706, #dc2626); -webkit-background-clip: text; background-clip: text; }
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle {
+  position: fixed; top: 20px; right: 20px; z-index: 200;
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card); backdrop-filter: blur(16px);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s; color: var(--text2);
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent-light); transform: scale(1.05); }
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle .icon-sun { display: none; }
+[data-theme="light"] .theme-toggle .icon-sun { display: block; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
 </style>
 </head>
 <body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">
+  <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+  <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+</button>
 
 <!-- NAV DOTS -->
 <nav class="pill-nav" id="navDots"></nav>
@@ -851,6 +902,23 @@ window.addEventListener('scroll', () => {
     }
   });
 });
+
+// ===== THEME TOGGLE =====
+(function() {
+  const saved = localStorage.getItem('pres-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    if (next === 'dark') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', next);
+    }
+    localStorage.setItem('pres-theme', next);
+  });
+})();
 </script>
 </body>
 </html>
