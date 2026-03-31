@@ -49,7 +49,7 @@
       }
 
       _keycloak = new Keycloak({
-        url: window.location.origin + '/auth',
+        url: 'https://auth.lupulup.com',
         realm: 'bankofferai',
         clientId: 'bankofferai-app'
       });
