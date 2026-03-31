@@ -75,7 +75,7 @@ def create_customer_token(customer_id: str, external_id: str) -> str:
     "/register",
     response_model=CustomerRegisterResponse,
     summary="Register a new customer account",
-    description="Creates an account with automatic data anonymization. "
+    description="Creates a new customer with auto-increment ID and onboarding wizard. "
     "Email is stored as irreversible SHA-256 hash only (GDPR Art. 5(1)(c)). "
     "An auto-anonymization date is set per Art. 5(1)(e).",
 )
@@ -101,27 +101,39 @@ async def register_customer(body: CustomerRegisterRequest, request: Request):
                 detail="An account with this email already exists.",
             )
 
-        # Assign a random customer profile from unassigned ones
-        assigned = await session.execute(
-            text(
-                "SELECT c.customer_id, c.external_id FROM customers c "
-                "WHERE c.customer_id NOT IN (SELECT ca.customer_id FROM customer_auth ca) "
-                "ORDER BY random() LIMIT 1"
-            )
-        )
-        row = assigned.fetchone()
-        if not row:
-            # All profiles taken — reuse a random one
-            assigned = await session.execute(
-                text(
-                    "SELECT customer_id, external_id FROM customers "
-                    "ORDER BY random() LIMIT 1"
-                )
-            )
-            row = assigned.fetchone()
+        # Ensure onboarding_complete column exists
+        await session.execute(text(
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT FALSE"
+        ))
 
-        customer_id = row[0]
-        external_id = str(row[1])
+        # Auto-increment: find next integer customer_id
+        next_id_row = await session.execute(text(
+            "SELECT COALESCE(MAX(CAST(customer_id AS INTEGER)), 0) + 1 "
+            "FROM customers WHERE customer_id ~ '^[0-9]+$'"
+        ))
+        new_customer_id = str(next_id_row.scalar())
+
+        # Generate a new external UUID
+        ext_id_row = await session.execute(text("SELECT gen_random_uuid()"))
+        external_id = str(ext_id_row.scalar())
+
+        # Create customer record (onboarding_complete=false, needs wizard)
+        await session.execute(
+            text(
+                "INSERT INTO customers (customer_id, external_id, onboarding_complete) "
+                "VALUES (:cid, :eid, FALSE)"
+            ),
+            {"cid": new_customer_id, "eid": external_id},
+        )
+
+        # Create empty customer_features row for profile questionnaire
+        await session.execute(
+            text(
+                "INSERT INTO customer_features (customer_id) VALUES (:cid) "
+                "ON CONFLICT DO NOTHING"
+            ),
+            {"cid": new_customer_id},
+        )
 
         pwd_hash = hash_password(body.password)
         anon_date = datetime.utcnow() + timedelta(days=ANONYMIZATION_PERIOD_DAYS)
@@ -136,22 +148,23 @@ async def register_customer(body: CustomerRegisterRequest, request: Request):
             {
                 "eh": email_h,
                 "ph": pwd_hash,
-                "cid": customer_id,
+                "cid": new_customer_id,
                 "dn": display,
                 "anon": anon_date,
             },
         )
         await session.commit()
 
-        token = create_customer_token(customer_id, external_id)
+        token = create_customer_token(new_customer_id, external_id)
 
         return CustomerRegisterResponse(
             token=token,
-            customer_id=customer_id,
+            customer_id=new_customer_id,
             external_id=external_id,
             display_name=display,
             anonymize_after=anon_date,
-            message="Account created. Your email is stored as an irreversible hash only — automatic anonymization scheduled.",
+            onboarding_complete=False,
+            message="Account created. Please complete the onboarding wizard to receive personalized offers.",
         )
 
 
@@ -166,9 +179,13 @@ async def sso_lookup(email: str, request: Request):
     email_h = hash_email(email)
 
     async with session_factory() as session:
+        await session.execute(text(
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT FALSE"
+        ))
         result = await session.execute(
             text(
-                "SELECT ca.customer_id, ca.display_name, c.external_id, ca.anonymize_after "
+                "SELECT ca.customer_id, ca.display_name, c.external_id, ca.anonymize_after, "
+                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete "
                 "FROM customer_auth ca "
                 "JOIN customers c ON c.customer_id = ca.customer_id "
                 "WHERE ca.email_hash = :eh"
@@ -185,6 +202,7 @@ async def sso_lookup(email: str, request: Request):
             "display_name": row[1] or "Customer",
             "external_id": str(row[2]),
             "anonymize_after": row[3].isoformat() if row[3] else None,
+            "onboarding_complete": row[4],
         }
 
 
@@ -200,10 +218,16 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
     email_h = hash_email(body.email)
 
     async with session_factory() as session:
+        # Ensure onboarding_complete column exists
+        await session.execute(text(
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT FALSE"
+        ))
+
         result = await session.execute(
             text(
                 "SELECT ca.id, ca.password_hash, ca.customer_id, ca.display_name, "
-                "ca.anonymize_after, c.external_id "
+                "ca.anonymize_after, c.external_id, "
+                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete "
                 "FROM customer_auth ca "
                 "JOIN customers c ON c.customer_id = ca.customer_id "
                 "WHERE ca.email_hash = :eh"
@@ -217,6 +241,7 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
 
         customer_id = row[2]
         external_id = str(row[5])
+        onboarding_complete = row[6]
 
         # Update last_login
         await session.execute(
@@ -233,4 +258,168 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
             external_id=external_id,
             display_name=row[3] or "Customer",
             anonymize_after=row[4],
+            onboarding_complete=onboarding_complete,
         )
+
+
+@router.get(
+    "/onboarding/status/{customer_id}",
+    summary="Get onboarding status",
+    description="Returns whether a customer has completed the onboarding wizard.",
+)
+async def get_onboarding_status(customer_id: str, request: Request):
+    session_factory = request.app.state.db_session_factory
+    async with session_factory() as session:
+        await session.execute(text(
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT FALSE"
+        ))
+        result = await session.execute(
+            text(
+                "SELECT COALESCE(onboarding_complete, FALSE) FROM customers WHERE customer_id = :cid"
+            ),
+            {"cid": customer_id},
+        )
+        row = result.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Customer not found")
+        return {"customer_id": customer_id, "onboarding_complete": row[0]}
+
+
+@router.put(
+    "/onboarding/{customer_id}",
+    summary="Submit onboarding wizard data",
+    description="Saves profile questionnaire answers and consent selections from the onboarding wizard. "
+    "Creates/updates customer_features and consent columns, then marks onboarding as complete.",
+)
+async def submit_onboarding(customer_id: str, request: Request):
+    body = await request.json()
+    session_factory = request.app.state.db_session_factory
+
+    async with session_factory() as session:
+        # Ensure columns exist
+        for col, coltype in [
+            ("onboarding_complete", "BOOLEAN DEFAULT FALSE"),
+            ("profiling_consent", "BOOLEAN DEFAULT FALSE"),
+            ("profiling_consent_ts", "TIMESTAMP"),
+            ("automated_decision_consent", "BOOLEAN DEFAULT FALSE"),
+            ("automated_decision_consent_ts", "TIMESTAMP"),
+            ("marketing_push", "BOOLEAN DEFAULT FALSE"),
+            ("marketing_push_ts", "TIMESTAMP"),
+            ("marketing_email", "BOOLEAN DEFAULT FALSE"),
+            ("marketing_email_ts", "TIMESTAMP"),
+            ("marketing_sms", "BOOLEAN DEFAULT FALSE"),
+            ("marketing_sms_ts", "TIMESTAMP"),
+            ("family_context_consent", "BOOLEAN DEFAULT FALSE"),
+            ("family_context_consent_ts", "TIMESTAMP"),
+        ]:
+            await session.execute(text(
+                f"ALTER TABLE customers ADD COLUMN IF NOT EXISTS {col} {coltype}"
+            ))
+
+        # Verify customer exists
+        check = await session.execute(
+            text("SELECT customer_id FROM customers WHERE customer_id = :cid"),
+            {"cid": customer_id},
+        )
+        if not check.fetchone():
+            raise HTTPException(status_code=404, detail="Customer not found")
+
+        # --- Save consent selections ---
+        consent = body.get("consent", {})
+        now = datetime.utcnow()
+        consent_updates = []
+        consent_params = {"cid": customer_id}
+
+        consent_fields = [
+            "profiling_consent", "automated_decision_consent",
+            "marketing_push", "marketing_email", "marketing_sms",
+            "family_context_consent",
+        ]
+        for field in consent_fields:
+            if field in consent:
+                val = bool(consent[field])
+                consent_updates.append(f"{field} = :{field}")
+                consent_updates.append(f"{field}_ts = :ts")
+                consent_params[field] = val
+                consent_params["ts"] = now
+
+        if consent_updates:
+            await session.execute(
+                text(f"UPDATE customers SET {', '.join(consent_updates)} WHERE customer_id = :cid"),
+                consent_params,
+            )
+
+        # --- Save profile questionnaire to customer_features ---
+        profile = body.get("profile", {})
+        if profile:
+            # Ensure needed columns exist on customer_features
+            for col, coltype in [
+                ("age", "INTEGER"),
+                ("annual_income", "NUMERIC(12,2)"),
+                ("dependents", "INTEGER DEFAULT 0"),
+                ("risk_tolerance", "VARCHAR(20)"),
+                ("homeowner_status", "VARCHAR(20)"),
+                ("existing_products", "TEXT"),
+                ("employment_status", "VARCHAR(30)"),
+            ]:
+                await session.execute(text(
+                    f"ALTER TABLE customer_features ADD COLUMN IF NOT EXISTS {col} {coltype}"
+                ))
+
+            feat_sets = []
+            feat_params = {"cid": customer_id}
+            for key in ["age", "annual_income", "dependents", "risk_tolerance",
+                        "homeowner_status", "existing_products", "employment_status"]:
+                if key in profile:
+                    feat_sets.append(f"{key} = :{key}")
+                    feat_params[key] = profile[key]
+
+            if feat_sets:
+                # Try update first, insert if not exists
+                result = await session.execute(
+                    text(f"UPDATE customer_features SET {', '.join(feat_sets)} WHERE customer_id = :cid"),
+                    feat_params,
+                )
+                if result.rowcount == 0:
+                    await session.execute(
+                        text(
+                            "INSERT INTO customer_features (customer_id, "
+                            + ", ".join(k for k in feat_params if k != "cid")
+                            + ") VALUES (:cid, "
+                            + ", ".join(f":{k}" for k in feat_params if k != "cid")
+                            + ")"
+                        ),
+                        feat_params,
+                    )
+
+        # --- Mark onboarding complete ---
+        await session.execute(
+            text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid"),
+            {"cid": customer_id},
+        )
+        await session.commit()
+
+        return {
+            "customer_id": customer_id,
+            "onboarding_complete": True,
+            "message": "Onboarding completed successfully. Your profile is ready for personalized offers.",
+        }
+
+
+@router.get(
+    "/customers/list",
+    summary="List all customer IDs",
+    description="Returns a list of all customer IDs for the employee portal.",
+)
+async def list_customers(request: Request):
+    session_factory = request.app.state.db_session_factory
+    async with session_factory() as session:
+        result = await session.execute(
+            text(
+                "SELECT customer_id FROM customers "
+                "WHERE customer_id ~ '^[0-9]+$' "
+                "ORDER BY CAST(customer_id AS INTEGER)"
+            )
+        )
+        rows = result.fetchall()
+        return {"customer_ids": [r[0] for r in rows]}

@@ -872,7 +872,7 @@ async function renderCustomersPage() {
   if (tbody.children.length > 0) return;
   tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-dark-400"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto"></div></td></tr>';
   const rows = [];
-  for (let i = 1; i <= 50; i++) {
+  for (const i of allCustomerIds) {
     try {
       const [profResp, offResp] = await Promise.all([fetch(`${API}/profiles/${i}`), fetch(`${API}/offers/${i}?top_n=1`)]);
       const prof = profResp.ok ? await profResp.json() : null;
@@ -892,7 +892,7 @@ async function renderCustomersPage() {
         <td class="py-3 px-4 text-accent-light text-xs">${topOffer}</td>
         <td class="py-3 px-4"><span class="text-xs text-accent-light hover:underline">View &rarr;</span></td>
       </tr>`);
-      if (i % 10 === 0) { tbody.innerHTML = rows.join(''); }
+      if (rows.length % 10 === 0) { tbody.innerHTML = rows.join(''); }
     } catch(e) { console.error(e); }
   }
   tbody.innerHTML = rows.join('');
@@ -904,7 +904,7 @@ async function renderAnalyticsPage() {
   analyticsCharts.built = true;
   const profiles = [];
   const allOffers = {};
-  for (let i = 1; i <= 50; i++) {
+  for (const i of allCustomerIds) {
     try {
       const [pr, of] = await Promise.all([
         profileCache[i] ? Promise.resolve(profileCache[i]) : fetch(`${API}/profiles/${i}`).then(r=>r.json()),
@@ -1041,9 +1041,10 @@ async function loadConsentOverview() {
 
   // Fetch consent + profile data in parallel batches
   const batchSize = 10;
-  for (let batch = 0; batch < 50; batch += batchSize) {
+  for (let batch = 0; batch < allCustomerIds.length; batch += batchSize) {
     const promises = [];
-    for (let i = batch + 1; i <= Math.min(batch + batchSize, 50); i++) {
+    for (let idx = batch; idx < Math.min(batch + batchSize, allCustomerIds.length); idx++) {
+      const i = allCustomerIds[idx];
       promises.push((async (cid) => {
         try {
           const [consentResp, profResp] = await Promise.all([
@@ -1154,11 +1155,29 @@ function renderProductCatalogSidebar() {
   el.innerHTML = html;
 }
 
+// ===== CUSTOMER LIST (dynamic) =====
+let allCustomerIds = [];
+async function loadCustomerIds() {
+  try {
+    const resp = await fetch(`${API}/customer-auth/customers/list`);
+    if (resp.ok) {
+      const data = await resp.json();
+      allCustomerIds = data.customer_ids || [];
+    }
+  } catch(e) { console.error('Failed to load customer IDs:', e); }
+  if (!allCustomerIds.length) {
+    allCustomerIds = [];
+    for (let i = 1; i <= 50; i++) allCustomerIds.push(String(i));
+  }
+}
+
 // ===== DASHBOARD LOGIC =====
 function renderCustomerGrid() {
   const grid = document.getElementById('customerGrid');
   let html = '';
-  for (let i=1;i<=50;i++) html+=`<button onclick="selectCustomer(${i})" id="custBtn${i}" class="customer-btn w-10 h-10 rounded-xl border border-dark-600/50 bg-dark-800/50 text-sm font-medium text-dark-200 hover:text-white transition-all flex items-center justify-center">${i}</button>`;
+  allCustomerIds.forEach(id => {
+    html += `<button onclick="selectCustomer(${id})" id="custBtn${id}" class="customer-btn w-10 h-10 rounded-xl border border-dark-600/50 bg-dark-800/50 text-sm font-medium text-dark-200 hover:text-white transition-all flex items-center justify-center">${id}</button>`;
+  });
   grid.innerHTML = html;
 }
 
@@ -1601,12 +1620,14 @@ function setupAuthGate() {
 // ===== INIT =====
 async function init() {
   setupAuthGate();
+  await loadCustomerIds();
   renderCustomerGrid();
   renderProductCatalogSidebar();
   initDistributionChart();
   initScoreChart();
   fetchKillSwitchStatus();
-  try { const r=await fetch(`${API}/offers/1?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
+  const firstId = allCustomerIds[0] || '1';
+  try { const r=await fetch(`${API}/offers/${firstId}?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
   document.getElementById('loadingOverlay').style.opacity='0';
   setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',500);
 }
