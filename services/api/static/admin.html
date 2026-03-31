@@ -53,8 +53,55 @@ tailwind.config = {
 <script src="/static/js/theme.js"></script>
 <script src="/static/js/auth.js"></script>
 
-<!-- Auth gate container -->
-<div id="auth-gate"></div>
+<!-- Auth gate — Admin login screen -->
+<div id="auth-gate" class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" style="background: #060a14;">
+  <div class="max-w-md w-full">
+    <div class="text-center mb-8 fade-in">
+      <div class="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4" style="box-shadow: 0 0 20px rgba(239,68,68,0.15);">
+        <svg class="w-9 h-9 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">BankOffer <span class="text-red-400">AI</span></h1>
+      <div class="flex items-center justify-center gap-3 mt-2">
+        <div id="auth-lang-selector-adm"></div>
+        <div id="auth-theme-toggle-adm"></div>
+      </div>
+    </div>
+    <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s; border-color: rgba(239,68,68,0.15);">
+      <h2 class="text-xl font-semibold text-white mb-1" data-i18n="sauth.login_title_admin">Admin Portal</h2>
+      <p class="text-dark-300 text-sm mb-5" data-i18n="sauth.login_subtitle_admin">Sign in with your administrator credentials</p>
+      <div id="admin-login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.email">Email address</label>
+          <input type="email" id="admin-login-email" autocomplete="email"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-red-500/50 transition-colors"
+            placeholder="admin@bankofferai.com">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.password">Password</label>
+          <input type="password" id="admin-login-password" autocomplete="current-password"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-red-500/50 transition-colors"
+            placeholder="********">
+        </div>
+        <button onclick="handleAdminLogin()" id="admin-login-btn"
+          class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium text-sm transition-colors">
+          <span data-i18n="sauth.login_btn">Sign In</span>
+        </button>
+      </div>
+      <div class="mt-5 pt-5 border-t border-dark-600/30">
+        <p class="text-xs text-dark-400 mb-2 font-medium" data-i18n="sauth.demo_hint">Demo credentials:</p>
+        <button onclick="fillAdminDemo('admin@bankofferai.com','Admin1234!')" class="w-full text-left px-3 py-2 rounded-lg bg-dark-800/50 hover:bg-dark-800 transition-colors group">
+          <span class="text-xs text-dark-200 group-hover:text-white">admin@bankofferai.com</span>
+          <span class="text-xs text-dark-400 ml-2">/ Admin1234!</span>
+        </button>
+      </div>
+      <div class="mt-4 flex justify-center gap-4">
+        <a href="/" class="text-xs text-dark-400 hover:text-accent-light transition-colors" data-i18n="sauth.go_employee">Employee Portal</a>
+        <a href="/portal" class="text-xs text-dark-400 hover:text-accent-light transition-colors" data-i18n="sauth.go_customer">Customer Portal</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Main admin layout (hidden until authenticated) -->
 <div id="admin-app" class="min-h-screen flex hidden">
@@ -629,52 +676,149 @@ tailwind.config = {
 const API = window.location.origin;
 // Use global t() from i18n.js — do NOT redeclare
 
-// Auth gate
-window.BOAI_AUTH.onAuthChange(user => {
-  const gate = document.getElementById('auth-gate');
-  const app = document.getElementById('admin-app');
+// ===== ADMIN AUTH =====
+const STAFF_SESSION_KEY = 'boai_staff_session';
 
-  if (!user) {
-    app.classList.add('hidden');
-    gate.innerHTML = window.BOAI_AUTH.renderLoginScreen({
-      title: 'Admin Portal',
-      subtitle: 'Sign in with an administrator account',
-      allowedRoles: ['admin']
-    });
+function getStaffSession() {
+  try {
+    const raw = localStorage.getItem(STAFF_SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.ts > 8 * 60 * 60 * 1000) {
+      localStorage.removeItem(STAFF_SESSION_KEY);
+      return null;
+    }
+    return data;
+  } catch (e) { return null; }
+}
+
+function saveStaffSession(data) {
+  localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify({ ...data, ts: Date.now() }));
+}
+
+function clearStaffSession() {
+  localStorage.removeItem(STAFF_SESSION_KEY);
+}
+
+function fillAdminDemo(email, pwd) {
+  document.getElementById('admin-login-email').value = email;
+  document.getElementById('admin-login-password').value = pwd;
+}
+
+async function handleAdminLogin() {
+  const email = document.getElementById('admin-login-email').value.trim();
+  const password = document.getElementById('admin-login-password').value;
+  const errorEl = document.getElementById('admin-login-error');
+  const btn = document.getElementById('admin-login-btn');
+
+  if (!email || !password) {
+    errorEl.textContent = t('sauth.login_error');
+    errorEl.classList.remove('hidden');
     return;
   }
 
-  // Check admin role
-  if (!window.BOAI_AUTH.isAdmin()) {
-    app.classList.add('hidden');
-    gate.innerHTML = `<div class="min-h-screen flex items-center justify-center">
+  btn.disabled = true;
+  btn.textContent = '...';
+  errorEl.classList.add('hidden');
+
+  try {
+    const resp = await fetch('/staff-auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || t('sauth.login_error'));
+    }
+    const data = await resp.json();
+    saveStaffSession(data);
+
+    if (data.role !== 'admin') {
+      // Employee logged in on admin portal — redirect to employee portal
+      window.location.href = '/';
+      return;
+    }
+
+    enterAdminPortal(data);
+  } catch (e) {
+    errorEl.textContent = e.message || t('sauth.login_error');
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span data-i18n="sauth.login_btn">${t('sauth.login_btn')}</span>`;
+  }
+}
+
+function adminLogout() {
+  clearStaffSession();
+  window.location.reload();
+}
+
+function enterAdminPortal(session) {
+  const gate = document.getElementById('auth-gate');
+  const app = document.getElementById('admin-app');
+
+  if (session.role !== 'admin') {
+    gate.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center" style="background:#060a14">
       <div class="glass-card rounded-2xl p-8 max-w-md text-center">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-          <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-        </div>
-        <h2 class="text-xl font-bold text-white mb-2" data-i18n="auth.unauthorized">Access Denied</h2>
-        <p class="text-dark-300 mb-4" data-i18n="admin.restricted">${t('admin.restricted')}</p>
+        <h2 class="text-xl font-bold text-white mb-2">${t('auth.unauthorized')}</h2>
+        <p class="text-dark-300 mb-4">${t('sauth.wrong_role')}</p>
         <div class="flex gap-3 justify-center">
-          <a href="/" class="px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-xl text-sm font-medium transition-colors" data-i18n="nav.employee_portal">${t('nav.employee_portal')}</a>
-          <button onclick="window.BOAI_AUTH.logout()" class="px-4 py-2 border border-dark-500 hover:border-red-500/50 text-dark-200 hover:text-red-400 rounded-xl text-sm font-medium transition-colors" data-i18n="common.logout">${t('common.logout')}</button>
+          <a href="/" class="px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-xl text-sm font-medium transition">${t('sauth.go_employee')}</a>
+          <button onclick="adminLogout()" class="px-4 py-2 border border-dark-500 text-dark-200 rounded-xl text-sm font-medium transition hover:text-red-400">${t('sauth.logout')}</button>
         </div>
       </div>
     </div>`;
     return;
   }
 
-  gate.innerHTML = '';
+  gate.style.display = 'none';
   app.classList.remove('hidden');
 
   // Render UI elements
   document.getElementById('theme-toggle').innerHTML = window.BOAI_THEME.renderToggle();
-  document.getElementById('user-badge').innerHTML = window.BOAI_AUTH.renderUserBadge();
   if (window.BOAI_I18N) {
     document.getElementById('lang-selector').innerHTML = window.BOAI_I18N.renderLanguageSelector();
   }
+  const ub = document.getElementById('user-badge');
+  if (ub) {
+    ub.innerHTML = `<div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dark-500/50">
+        <div class="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs font-bold">${session.display_name.charAt(0)}</div>
+        <div class="text-xs">
+          <div class="font-medium text-white">${session.display_name}</div>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400">Admin</span>
+        </div>
+      </div>
+      <button onclick="adminLogout()" class="p-1.5 rounded-lg hover:bg-red-500/10 text-dark-300 hover:text-red-400 transition-colors" title="${t('sauth.logout')}">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>`;
+  }
 
   loadOverview();
-});
+}
+
+// Init: check session or show login
+(function initAdminAuth() {
+  // Render lang/theme on login screen
+  const als = document.getElementById('auth-lang-selector-adm');
+  const att = document.getElementById('auth-theme-toggle-adm');
+  if (als && window.BOAI_I18N) als.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+  if (att && window.BOAI_THEME) att.innerHTML = window.BOAI_THEME.renderToggle();
+
+  const session = getStaffSession();
+  if (session) {
+    enterAdminPortal(session);
+  }
+
+  // Enter key handlers
+  const pwdEl = document.getElementById('admin-login-password');
+  if (pwdEl) pwdEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleAdminLogin(); });
+  const emailEl = document.getElementById('admin-login-email');
+  if (emailEl) emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('admin-login-password').focus(); });
+})();
 
 function showSection(name) {
   document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));

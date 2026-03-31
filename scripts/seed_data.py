@@ -330,6 +330,34 @@ def seed_profiles(conn, customers_data, features_data):
     logger.info("Seeded customer profiles")
 
 
+def seed_staff_auth(conn):
+    """Seed demo staff (employee + admin) login accounts."""
+    import binascii as _ba
+
+    def _hash_password(password):
+        salt = os.urandom(32)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
+        return _ba.hexlify(salt).decode() + ":" + _ba.hexlify(dk).decode()
+
+    staff_accounts = [
+        ("admin@bankofferai.com",   "Admin1234!",    "System Administrator",  "admin"),
+        ("manager@bankofferai.com", "Employee1234!", "Relationship Manager",  "employee"),
+    ]
+
+    inserted = 0
+    with conn.cursor() as cur:
+        for email, pwd, name, role in staff_accounts:
+            ph = _hash_password(pwd)
+            cur.execute("""
+                INSERT INTO staff_auth (email, password_hash, display_name, role)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (email) DO NOTHING
+            """, (email, ph, name, role))
+            inserted += 1
+    conn.commit()
+    logger.info("Seeded %d staff auth accounts", inserted)
+
+
 def seed_customer_auth(conn):
     """Seed demo customer login accounts with hashed credentials."""
     import binascii as _ba
@@ -397,6 +425,7 @@ def main():
         seed_events(conn, events_data)
         seed_products(conn, product_data)
         seed_profiles(conn, customers_data, features_data)
+        seed_staff_auth(conn)
         seed_customer_auth(conn)
         logger.info("Seeding complete!")
     finally:

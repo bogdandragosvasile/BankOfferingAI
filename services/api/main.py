@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from services.api.routers import compliance, customer_auth, offers, profiles
+from services.api.routers import compliance, customer_auth, offers, profiles, staff_auth
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
     app.include_router(compliance.router, prefix="/compliance", tags=["compliance"])
     app.include_router(customer_auth.router, prefix="/customer-auth", tags=["customer-auth"])
+    app.include_router(staff_auth.router, prefix="/staff-auth", tags=["staff-auth"])
 
     if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
         from services.api.routers import webhooks
