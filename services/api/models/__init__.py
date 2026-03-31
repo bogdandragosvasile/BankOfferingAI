@@ -258,6 +258,37 @@ class AuditListEntry(BaseModel):
 
 # --- Existing models ---
 
+# --- Customer authentication models (GDPR-compliant) ---
+
+class CustomerRegisterRequest(BaseModel):
+    email: str = Field(..., description="Email address (will be hashed, never stored in plaintext)")
+    password: str = Field(..., min_length=8, description="Password (min 8 characters)")
+    display_name: Optional[str] = Field(None, description="Display name (optional)")
+    gdpr_consent: bool = Field(..., description="Must accept GDPR data processing terms")
+
+
+class CustomerRegisterResponse(BaseModel):
+    token: str = Field(..., description="JWT session token")
+    customer_id: str = Field(..., description="Assigned customer ID for API calls")
+    external_id: str = Field(..., description="Pseudonymized UUID for display (GDPR Art. 25)")
+    display_name: str
+    anonymize_after: datetime = Field(..., description="Auto-anonymization date (GDPR Art. 5(1)(e))")
+    message: str
+
+
+class CustomerLoginRequest(BaseModel):
+    email: str = Field(..., description="Email address")
+    password: str = Field(..., description="Password")
+
+
+class CustomerLoginResponse(BaseModel):
+    token: str = Field(..., description="JWT session token")
+    customer_id: str = Field(..., description="Customer ID for API calls")
+    external_id: str = Field(..., description="Pseudonymized UUID for display")
+    display_name: str
+    anonymize_after: Optional[datetime] = Field(None, description="Auto-anonymization date")
+
+
 class WebhookPayload(BaseModel):
     event_type: str = Field(..., description="Type of webhook event")
     timestamp: datetime = Field(..., description="Event timestamp")
