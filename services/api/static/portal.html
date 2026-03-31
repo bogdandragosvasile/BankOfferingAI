@@ -1586,13 +1586,13 @@ function renderDataSection() {
   const c = state.customerData;
   const p = state.profileData;
 
-  if (!c || !p) return;
+  if (!c) return;
 
   // Profile cards
-  document.getElementById('data-lifestage').textContent = formatLifeStage(p.life_stage);
-  document.getElementById('data-riskscore').textContent = p.risk_score ? `${p.risk_score.toFixed(1)} / 10` : '--';
-  document.getElementById('data-income-bracket').textContent = p.income_bracket ? p.income_bracket.toUpperCase() : '--';
-  document.getElementById('data-segments').textContent = p.segments && p.segments.length > 0 ? p.segments.join(', ') : 'None';
+  document.getElementById('data-lifestage').textContent = p ? formatLifeStage(p.life_stage) : '--';
+  document.getElementById('data-riskscore').textContent = p && p.risk_score ? `${p.risk_score.toFixed(1)} / 10` : '--';
+  document.getElementById('data-income-bracket').textContent = p && p.income_bracket ? p.income_bracket.toUpperCase() : '--';
+  document.getElementById('data-segments').textContent = p && p.segments && p.segments.length > 0 ? p.segments.join(', ') : 'None';
 
   // Financial health
   const healthMap = {
