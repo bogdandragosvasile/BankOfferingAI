@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import uuid
 
 import psycopg2
 import psycopg2.extras
@@ -59,6 +60,21 @@ def safe_int(val, default=0):
         return default
 
 
+def derive_financial_health(has_debt, debt_to_income, savings_rate, balance_trend):
+    """Derive financial_health from customer signals."""
+    dti = safe_float(debt_to_income)
+    sr = safe_float(savings_rate)
+    trend = str(balance_trend or "").lower()
+
+    if has_debt and dti > 3.0:
+        return "fragile"
+    if dti > 2.0 and trend == "declining":
+        return "fragile"
+    if sr > 0.3 and dti < 1.0:
+        return "strong"
+    return "stable"
+
+
 def run_schema(conn):
     """Execute schema.sql to create tables."""
     schema_path = os.path.join(SCRIPT_DIR, "schema.sql")
@@ -70,33 +86,49 @@ def run_schema(conn):
     logger.info("Schema applied")
 
 
-def seed_customers(conn, customers_data):
+def seed_customers(conn, customers_data, features_data):
+    features_by_id = {str(f.get("customer_id", "")): f for f in features_data}
+
     with conn.cursor() as cur:
         for c in customers_data:
             cid = str(c.get("customer_id", ""))
             if not cid:
                 continue
-            # Header has "dependents_count_(kids)"
             deps_key = next((k for k in c if "dependents" in k), "dependents_count")
+            feat = features_by_id.get(cid, {})
+
+            has_debt = bool(safe_int(c.get("has_debt")))
+            dti = safe_float(feat.get("debt_to_income"))
+            sr = safe_float(feat.get("savings_rate"))
+            trend = feat.get("balance_trend")
+            fh = derive_financial_health(has_debt, dti, sr, trend)
+
+            ext_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"bankoffer.customer.{cid}"))
+
             cur.execute("""
-                INSERT INTO customers (customer_id, age, city, income, savings, debt,
+                INSERT INTO customers (customer_id, external_id, age, city, income, savings, debt,
                     has_debt, risk_profile, marital_status, dependents_count,
-                    homeowner_status, existing_products)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    homeowner_status, existing_products, financial_health,
+                    profiling_consent, profiling_consent_ts,
+                    sensitive_data_consent, sensitive_data_consent_ts)
+                VALUES (%s,%s::uuid,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                        TRUE, NOW(), TRUE, NOW())
                 ON CONFLICT (customer_id) DO NOTHING
             """, (
                 cid,
+                ext_id,
                 safe_int(c.get("age")),
                 c.get("city"),
                 safe_float(c.get("income")),
                 safe_float(c.get("savings")),
                 safe_float(c.get("debt")),
-                bool(safe_int(c.get("has_debt"))),
+                has_debt,
                 c.get("risk_profile"),
                 c.get("marital_status"),
                 safe_int(c.get(deps_key)),
                 c.get("homeowner_status"),
                 c.get("existing_products"),
+                fh,
             ))
     conn.commit()
     logger.info("Seeded %d customers", len(customers_data))
@@ -120,7 +152,6 @@ def seed_customer_features(conn, customers_data, features_data):
             monthly_income = safe_float(c.get("income"))
             annual_income = monthly_income * 12
 
-            # Clamp savings_rate and debt_to_income to reasonable ranges
             raw_savings_rate = safe_float(feat.get("savings_rate", 0))
             savings_rate = max(0.0, min(1.0, raw_savings_rate))
 
@@ -141,8 +172,8 @@ def seed_customer_features(conn, customers_data, features_data):
                 safe_int(c.get("age")),
                 annual_income,
                 safe_int(c.get(deps_key)),
-                0,  # account_tenure_years not in dataset
-                safe_float(c.get("savings")),  # approximate investment_balance from savings
+                0,
+                safe_float(c.get("savings")),
                 savings_rate,
                 debt_to_income,
                 safe_float(feat.get("monthly_savings")),
@@ -162,7 +193,6 @@ def seed_customer_features(conn, customers_data, features_data):
 
 
 def seed_transactions(conn, txn_data):
-    # Build set of valid customer IDs
     with conn.cursor() as cur:
         cur.execute("SELECT customer_id FROM customers")
         valid_ids = {row[0] for row in cur.fetchall()}
@@ -196,10 +226,8 @@ def seed_events(conn, events_data):
             cid = str(e.get("customer_id", ""))
             if not cid:
                 continue
-            # Skip events referencing non-existent customers
             cur.execute("SELECT 1 FROM customers WHERE customer_id = %s", (cid,))
             if not cur.fetchone():
-                logger.debug("Skipping event for unknown customer %s", cid)
                 continue
             cur.execute("""
                 INSERT INTO events (customer_id, event_type, event_date)
@@ -239,7 +267,6 @@ def seed_products(conn, product_data):
 
 def seed_profiles(conn, customers_data, features_data):
     """Pre-build customer profiles and store as JSON for the profiles endpoint."""
-    # Add worker modules to path
     sys.path.insert(0, os.path.join(SCRIPT_DIR, ".."))
 
     from services.worker.profiler import build_profile
@@ -310,14 +337,13 @@ def main():
                 len(customers_data), len(features_data), len(txn_data),
                 len(events_data), len(product_data))
 
-    # Parse DATABASE_URL for psycopg2 (strip asyncpg scheme if present)
     db_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
     logger.info("Connecting to database...")
     conn = psycopg2.connect(db_url)
 
     try:
         run_schema(conn)
-        seed_customers(conn, customers_data)
+        seed_customers(conn, customers_data, features_data)
         seed_customer_features(conn, customers_data, features_data)
         seed_transactions(conn, txn_data)
         seed_events(conn, events_data)

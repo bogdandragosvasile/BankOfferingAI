@@ -55,6 +55,14 @@ tailwind.config = {
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .excluded-card { background: linear-gradient(135deg, rgba(17,24,39,0.6), rgba(11,17,32,0.7)); border: 1px solid rgba(239,68,68,0.15); }
+  .excluded-card:hover { border-color: rgba(239,68,68,0.3); }
+  .collapsible-header { cursor: pointer; user-select: none; }
+  .collapsible-header .chevron { transition: transform 0.2s; }
+  .collapsible-header.open .chevron { transform: rotate(180deg); }
+  .compliance-tab { transition: all 0.15s; }
+  .compliance-tab:hover { background: rgba(99,102,241,0.1); }
+  .compliance-tab.active { background: rgba(99,102,241,0.15); border-color: #6366f1; color: #818cf8; }
 </style>
 </head>
 <body class="font-sans text-dark-100 min-h-screen flex">
@@ -84,6 +92,10 @@ tailwind.config = {
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Analytics</span>
     </a>
+    <a href="#" onclick="navigateTo('compliance');return false" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="compliance">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Compliance</span>
+    </a>
     <a href="/docs" target="_blank" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">API Docs</span>
@@ -106,6 +118,7 @@ tailwind.config = {
       <p class="text-xs text-dark-300 mt-0.5" id="pageSubtitle">AI-powered personalization engine</p>
     </div>
     <div class="flex items-center gap-4">
+      <a href="/portal" class="text-xs text-accent-light hover:text-white transition flex items-center gap-1">Customer Portal <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg></a>
       <div class="relative">
         <input type="text" id="searchInput" placeholder="Search customer ID..." class="bg-dark-800 border border-dark-600/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-56 transition-all focus:w-72"/>
         <svg class="w-4 h-4 text-dark-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -127,6 +140,20 @@ tailwind.config = {
         <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Select Customer</h2><span class="text-xs text-dark-300" id="selectedCustomerInfo">Click a customer to view offers</span></div><div class="flex flex-wrap gap-2" id="customerGrid"></div></div>
         <div class="glass-card rounded-2xl p-6 hidden" id="profileCard"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Customer Profile</h2><span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-light" id="profileLifeStage">--</span></div><div class="grid grid-cols-4 gap-4" id="profileDetails"></div></div>
         <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>Personalized Offers</h2><span class="text-xs text-dark-300" id="offersCount">Select a customer</span></div><div id="offersGrid" class="space-y-3"><div class="flex items-center justify-center py-16 text-dark-400"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p class="text-sm">Select a customer above to generate AI-powered offers</p></div></div></div></div>
+        <!-- Excluded Products Section (collapsible, hidden by default) -->
+        <div class="glass-card rounded-2xl p-6 hidden" id="excludedProductsCard">
+          <div class="collapsible-header flex items-center justify-between" onclick="toggleExcludedProducts()">
+            <h2 class="text-base font-semibold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+              Excluded by Suitability
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-dark-400" id="excludedCount">0 products</span>
+              <svg class="w-4 h-4 text-dark-400 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+          <div id="excludedProductsList" class="mt-4 space-y-2 hidden"></div>
+        </div>
       </div>
       <div class="col-span-4 space-y-6">
         <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>Offer Distribution</h2><div class="relative" style="height:220px"><canvas id="distributionChart"></canvas></div><div id="chartLegend" class="mt-4 space-y-2"></div></div>
@@ -164,6 +191,162 @@ tailwind.config = {
       <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4">Top Recommended Products (all customers)</h2><div style="height:300px"><canvas id="analyticsProducts"></canvas></div></div>
     </div>
   </section>
+
+  <!-- ==================== COMPLIANCE SECTION ==================== -->
+  <section id="page-compliance" class="p-8 hidden">
+    <!-- Compliance Tab Navigation -->
+    <div class="flex items-center gap-2 mb-6">
+      <button onclick="switchComplianceTab('audit')" class="compliance-tab active px-4 py-2 rounded-lg border border-dark-600/50 text-sm font-medium text-dark-200" data-tab="audit">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Audit Trail
+        </span>
+      </button>
+      <button onclick="switchComplianceTab('feedback')" class="compliance-tab px-4 py-2 rounded-lg border border-dark-600/50 text-sm font-medium text-dark-200" data-tab="feedback">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          Customer Feedback
+        </span>
+      </button>
+      <button onclick="switchComplianceTab('consent')" class="compliance-tab px-4 py-2 rounded-lg border border-dark-600/50 text-sm font-medium text-dark-200" data-tab="consent">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Consent Overview
+        </span>
+      </button>
+    </div>
+
+    <!-- Audit Trail Tab -->
+    <div id="compliance-tab-audit" class="compliance-tab-content">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Recommendation Audit Trail
+          </h2>
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <input type="text" id="auditFilterCustomer" placeholder="Filter by customer ID..." class="bg-dark-800 border border-dark-600/50 rounded-lg pl-3 pr-3 py-2 text-xs text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-48"/>
+            </div>
+            <button onclick="loadAuditTrail()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Refresh</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Customer ID</th>
+                <th class="py-3 px-4"># Offers</th>
+                <th class="py-3 px-4"># Excluded</th>
+                <th class="py-3 px-4">Model Version</th>
+                <th class="py-3 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">Loading audit trail...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Feedback Tab -->
+    <div id="compliance-tab-feedback" class="compliance-tab-content hidden">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            Customer Feedback Review
+          </h2>
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <input type="number" id="feedbackCustomerId" placeholder="Customer ID..." min="1" max="50" class="bg-dark-800 border border-dark-600/50 rounded-lg pl-3 pr-3 py-2 text-xs text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-40"/>
+            </div>
+            <button onclick="loadCustomerFeedback()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Load Feedback</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Customer</th>
+                <th class="py-3 px-4">Offer</th>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Reason</th>
+                <th class="py-3 px-4">Actor Type</th>
+              </tr>
+            </thead>
+            <tbody id="feedbackTableBody">
+              <tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">Enter a customer ID and click "Load Feedback" to view feedback entries.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consent Overview Tab -->
+    <div id="compliance-tab-consent" class="compliance-tab-content hidden">
+      <div class="grid grid-cols-3 gap-5 mb-6">
+        <div class="glass-card rounded-2xl p-6 stat-glow-green">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Profiling Consent Active</span>
+            <div class="w-9 h-9 rounded-xl bg-neon-green/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-white" id="consentProfilingCount">--</p>
+          <p class="text-xs text-neon-green mt-1">Customers with profiling consent</p>
+        </div>
+        <div class="glass-card rounded-2xl p-6 stat-glow-cyan">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Sensitive Data Consent</span>
+            <div class="w-9 h-9 rounded-xl bg-neon-cyan/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-white" id="consentSensitiveCount">--</p>
+          <p class="text-xs text-neon-cyan mt-1">Customers with sensitive data consent</p>
+        </div>
+        <div class="glass-card rounded-2xl p-6 stat-glow-amber">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Consent Withdrawn</span>
+            <div class="w-9 h-9 rounded-xl bg-neon-amber/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            </div>
+          </div>
+          <p class="text-3xl font-bold text-white" id="consentWithdrawnCount">--</p>
+          <p class="text-xs text-neon-amber mt-1">Customers with consent withdrawn</p>
+        </div>
+      </div>
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Customer Consent Details
+          </h2>
+          <button onclick="loadConsentOverview()" class="bg-accent/20 hover:bg-accent/30 text-accent-light text-xs font-medium px-3 py-2 rounded-lg transition">Refresh</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
+                <th class="py-3 px-4">Customer ID</th>
+                <th class="py-3 px-4">Profiling Consent</th>
+                <th class="py-3 px-4">Sensitive Data</th>
+                <th class="py-3 px-4">Life Stage</th>
+                <th class="py-3 px-4">Risk Score</th>
+              </tr>
+            </thead>
+            <tbody id="consentTableBody">
+              <tr><td colspan="5" class="py-12 text-center text-dark-400 text-sm">Loading consent data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <!-- Product Detail Slideout -->
@@ -171,6 +354,16 @@ tailwind.config = {
   <div class="absolute inset-0 bg-black/50" onclick="closeProductDetail()"></div>
   <div class="slideout absolute right-0 top-0 h-full w-[520px] bg-dark-900 border-l border-dark-600/50 overflow-y-auto" id="slideoutPanel">
     <div class="p-8" id="productDetailContent"></div>
+  </div>
+</div>
+
+<!-- Audit Detail Slideout -->
+<div id="auditSlideout" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/50" onclick="closeAuditDetail()"></div>
+  <div class="slideout absolute right-0 top-0 h-full w-[600px] bg-dark-900 border-l border-dark-600/50 overflow-y-auto" id="auditSlideoutPanel">
+    <div class="p-8" id="auditDetailContent">
+      <div class="flex items-center justify-center py-16"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>
+    </div>
   </div>
 </div>
 
@@ -274,6 +467,8 @@ const PRODUCTS = [
 let distributionChart=null, scoreChart=null, selectedCustomerId=null;
 let analyticsCharts = {};
 let profileCache = {};
+let lastOffersResponse = null;
+let excludedProductsVisible = false;
 
 // ===== NAVIGATION =====
 function navigateTo(section) {
@@ -282,13 +477,14 @@ function navigateTo(section) {
   document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
   const link = document.querySelector(`.sidebar-link[data-section="${section}"]`);
   if (link) link.classList.add('active');
-  const titles = { dashboard:['Dashboard','AI-powered personalization engine'], products:['Product Catalog','12 financial products across 6 categories'], customers:['Customer Directory','50 profiled customers with AI scoring'], analytics:['Analytics','Aggregate insights across all customers'] };
+  const titles = { dashboard:['Dashboard','AI-powered personalization engine'], products:['Product Catalog','12 financial products across 6 categories'], customers:['Customer Directory','50 profiled customers with AI scoring'], analytics:['Analytics','Aggregate insights across all customers'], compliance:['Compliance','Audit trail, suitability checks & consent management'] };
   const t = titles[section] || titles.dashboard;
   document.getElementById('pageTitle').textContent = t[0];
   document.getElementById('pageSubtitle').textContent = t[1];
   if (section === 'products') renderProductsPage();
   if (section === 'customers') renderCustomersPage();
   if (section === 'analytics') renderAnalyticsPage();
+  if (section === 'compliance') renderCompliancePage();
 }
 
 // ===== PRODUCT DETAIL SLIDEOUT =====
@@ -325,6 +521,120 @@ function closeProductDetail() {
 function tryProductForCustomer(pid) {
   const cid = parseInt(document.getElementById('detailCustId').value);
   if (cid >= 1 && cid <= 50) { closeProductDetail(); navigateTo('dashboard'); selectCustomer(cid); }
+}
+
+// ===== AUDIT DETAIL SLIDEOUT =====
+function openAuditDetail(recommendationId) {
+  const overlay = document.getElementById('auditSlideout');
+  const content = document.getElementById('auditDetailContent');
+  content.innerHTML = '<div class="flex items-center justify-center py-16"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>';
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => document.getElementById('auditSlideoutPanel').classList.add('open'));
+
+  fetch(`${API}/compliance/audit/${recommendationId}`)
+    .then(r => { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
+    .then(data => {
+      const ts = data.timestamp ? new Date(data.timestamp).toLocaleString() : '--';
+      const offersHtml = (data.offers || []).map((o, i) => {
+        const c = COLORS[o.product_type] || COLORS.investment;
+        return `<div class="flex items-center gap-3 py-2 px-3 rounded-lg bg-dark-800/50 mb-1.5">
+          <div class="w-8 h-8 rounded-lg ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${ICONS[o.product_type] || ''}</div>
+          <div class="flex-1"><p class="text-xs font-medium text-white">${o.product_name}</p><p class="text-[10px] text-dark-300">${(o.relevance_score * 100).toFixed(0)}% relevance</p></div>
+          <span class="text-[10px] px-2 py-0.5 rounded-full ${c.bg} ${c.text}">#${i + 1}</span>
+        </div>`;
+      }).join('');
+
+      const excludedHtml = (data.excluded_products || []).map(ep => {
+        return `<div class="flex items-center gap-3 py-2 px-3 rounded-lg bg-neon-red/5 border border-neon-red/10 mb-1.5">
+          <svg class="w-4 h-4 text-neon-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          <div class="flex-1"><p class="text-xs font-medium text-dark-200">${ep.product_name || ep.product_id || 'Unknown'}</p><p class="text-[10px] text-neon-red/80">${ep.reason || 'Suitability check failed'}</p></div>
+        </div>`;
+      }).join('') || '<p class="text-xs text-dark-400">No excluded products</p>';
+
+      const suitabilityHtml = (data.suitability_checks || []).map(sc => {
+        const passed = sc.passed || sc.status === 'passed';
+        return `<div class="flex items-center gap-2 py-1.5">
+          <span class="w-5 h-5 rounded-full flex items-center justify-center ${passed ? 'bg-neon-green/10' : 'bg-neon-red/10'}">
+            ${passed
+              ? '<svg class="w-3 h-3 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+              : '<svg class="w-3 h-3 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
+            }
+          </span>
+          <span class="text-xs ${passed ? 'text-dark-200' : 'text-neon-red/80'}">${sc.product_name || sc.product_id || 'Product'}: ${sc.reason || (passed ? 'Passed' : 'Failed')}</span>
+        </div>`;
+      }).join('') || '<p class="text-xs text-dark-400">No suitability check data available</p>';
+
+      const inputFeaturesHtml = data.input_features
+        ? Object.entries(data.input_features).map(([k, v]) => `<div class="flex justify-between py-1 border-b border-dark-600/20"><span class="text-[10px] text-dark-400">${k}</span><span class="text-[10px] text-dark-200">${typeof v === 'object' ? JSON.stringify(v) : v}</span></div>`).join('')
+        : '<p class="text-xs text-dark-400">No input features data</p>';
+
+      const profileHtml = data.profile_result
+        ? Object.entries(data.profile_result).map(([k, v]) => `<div class="flex justify-between py-1 border-b border-dark-600/20"><span class="text-[10px] text-dark-400">${k}</span><span class="text-[10px] text-dark-200">${Array.isArray(v) ? v.join(', ') : (typeof v === 'object' ? JSON.stringify(v) : v)}</span></div>`).join('')
+        : '<p class="text-xs text-dark-400">No profile data</p>';
+
+      const consentHtml = data.consent_snapshot
+        ? Object.entries(data.consent_snapshot).map(([k, v]) => `<div class="flex justify-between py-1 border-b border-dark-600/20"><span class="text-[10px] text-dark-400">${k}</span><span class="text-[10px] text-dark-200 ${v === true ? 'text-neon-green' : v === false ? 'text-neon-red' : ''}">${v}</span></div>`).join('')
+        : '<p class="text-xs text-dark-400">No consent snapshot</p>';
+
+      content.innerHTML = `
+        <button onclick="closeAuditDetail()" class="absolute top-6 right-6 text-dark-400 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-xl bg-accent/10 text-accent-light flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">Audit Detail</h2>
+            <p class="text-xs text-dark-400 font-mono">${recommendationId}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">Customer ID</p><p class="text-sm font-semibold text-white">${data.customer_id || '--'}</p></div>
+          <div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">Timestamp</p><p class="text-sm font-semibold text-white">${ts}</p></div>
+          <div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">Model Version</p><p class="text-sm font-semibold text-accent-light">${data.model_version || '--'}</p></div>
+          <div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">Consent Valid</p><p class="text-sm font-semibold ${data.consent_valid ? 'text-neon-green' : 'text-neon-red'}">${data.consent_valid ? 'Yes' : 'No'}</p></div>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Input Features</p>
+            <div class="bg-dark-800/30 rounded-xl p-3 max-h-40 overflow-y-auto">${inputFeaturesHtml}</div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Profile Result</p>
+            <div class="bg-dark-800/30 rounded-xl p-3 max-h-40 overflow-y-auto">${profileHtml}</div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Suitability Checks</p>
+            <div class="bg-dark-800/30 rounded-xl p-3 max-h-48 overflow-y-auto">${suitabilityHtml}</div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Scored Products (${(data.offers || []).length} offers)</p>
+            <div class="max-h-48 overflow-y-auto">${offersHtml || '<p class="text-xs text-dark-400">No offers</p>'}</div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Excluded Products (${(data.excluded_products || []).length})</p>
+            <div class="max-h-40 overflow-y-auto">${excludedHtml}</div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-dark-300 uppercase tracking-wider mb-2">Consent Snapshot</p>
+            <div class="bg-dark-800/30 rounded-xl p-3">${consentHtml}</div>
+          </div>
+        </div>`;
+    })
+    .catch(err => {
+      content.innerHTML = `
+        <button onclick="closeAuditDetail()" class="absolute top-6 right-6 text-dark-400 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        <div class="flex flex-col items-center justify-center py-16 text-dark-400">
+          <svg class="w-12 h-12 mb-3 text-neon-red/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          <p class="text-sm">Failed to load audit detail</p>
+          <p class="text-xs text-dark-500 mt-1">${err.message}</p>
+        </div>`;
+    });
+}
+
+function closeAuditDetail() {
+  document.getElementById('auditSlideoutPanel').classList.remove('open');
+  setTimeout(() => document.getElementById('auditSlideout').classList.add('hidden'), 300);
 }
 
 // ===== PRODUCTS PAGE =====
@@ -406,6 +716,197 @@ async function renderAnalyticsPage() {
   new Chart(document.getElementById('analyticsProducts'),{type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{label:'Times recommended',data:sorted.map(s=>s[1]),backgroundColor:'rgba(99,102,241,0.6)',borderRadius:6,barThickness:20}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(51,65,85,0.3)'},ticks:{color:'#64748b'}},y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}},plugins:{legend:{display:false}}}});
 }
 
+// ===== COMPLIANCE PAGE =====
+let complianceLoaded = false;
+
+function switchComplianceTab(tab) {
+  document.querySelectorAll('.compliance-tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`compliance-tab-${tab}`).classList.remove('hidden');
+  document.querySelectorAll('.compliance-tab').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.compliance-tab[data-tab="${tab}"]`).classList.add('active');
+}
+
+function renderCompliancePage() {
+  if (!complianceLoaded) {
+    complianceLoaded = true;
+    loadAuditTrail();
+    loadConsentOverview();
+  }
+}
+
+async function loadAuditTrail() {
+  const tbody = document.getElementById('auditTableBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-dark-400"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto"></div></td></tr>';
+
+  const filterVal = document.getElementById('auditFilterCustomer').value.trim();
+  let url = `${API}/compliance/audit?limit=50`;
+  if (filterVal) url += `&customer_id=${filterVal}`;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const entries = Array.isArray(data) ? data : (data.entries || data.audits || []);
+
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">No audit entries found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = entries.map(entry => {
+      const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '--';
+      const custId = entry.customer_id || '--';
+      const numOffers = entry.num_offers ?? (entry.offers || []).length ?? '--';
+      const numExcluded = entry.num_excluded ?? (entry.excluded_products || []).length ?? '--';
+      const modelVersion = entry.model_version || '--';
+      const recId = entry.recommendation_id || entry.id || '--';
+
+      return `<tr class="table-row border-b border-dark-600/20">
+        <td class="py-3 px-4 text-dark-200 text-xs">${ts}</td>
+        <td class="py-3 px-4 font-medium text-white">${custId}</td>
+        <td class="py-3 px-4 text-dark-200">${numOffers}</td>
+        <td class="py-3 px-4 text-dark-200">${numExcluded}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/10 text-accent-light">${modelVersion}</span></td>
+        <td class="py-3 px-4"><button onclick="openAuditDetail('${recId}')" class="text-xs text-accent-light hover:text-white hover:underline transition">View Detail</button></td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('Audit trail load error:', err);
+    tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">Failed to load audit trail: ${err.message}</td></tr>`;
+  }
+}
+
+async function loadCustomerFeedback() {
+  const custId = document.getElementById('feedbackCustomerId').value.trim();
+  const tbody = document.getElementById('feedbackTableBody');
+
+  if (!custId) {
+    tbody.innerHTML = '<tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">Please enter a customer ID.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-dark-400"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto"></div></td></tr>';
+
+  try {
+    const resp = await fetch(`${API}/compliance/feedback/${custId}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const entries = Array.isArray(data) ? data : (data.feedback || data.entries || []);
+
+    if (entries.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">No feedback entries for customer #${custId}.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = entries.map(entry => {
+      const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '--';
+      const action = entry.action || entry.status || '--';
+      const actionColor = action === 'accepted' ? 'bg-neon-green/10 text-neon-green' : action === 'rejected' ? 'bg-neon-red/10 text-neon-red' : action === 'flagged' ? 'bg-neon-amber/10 text-neon-amber' : 'bg-dark-700 text-dark-200';
+      return `<tr class="table-row border-b border-dark-600/20">
+        <td class="py-3 px-4 text-dark-200 text-xs">${ts}</td>
+        <td class="py-3 px-4 font-medium text-white">${entry.customer_id || custId}</td>
+        <td class="py-3 px-4 text-dark-200 text-xs">${entry.offer_name || entry.product_name || entry.offer_id || '--'}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${actionColor}">${action}</span></td>
+        <td class="py-3 px-4 text-dark-300 text-xs">${entry.reason || '--'}</td>
+        <td class="py-3 px-4 text-dark-300 text-xs">${entry.actor_type || entry.actor || '--'}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('Feedback load error:', err);
+    tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-dark-400 text-sm">Failed to load feedback: ${err.message}</td></tr>`;
+  }
+}
+
+async function loadConsentOverview() {
+  const tbody = document.getElementById('consentTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-dark-400"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto"></div></td></tr>';
+
+  let profilingCount = 0, sensitiveCount = 0, withdrawnCount = 0;
+  const rows = [];
+
+  for (let i = 1; i <= 50; i++) {
+    try {
+      const prof = profileCache[i] || await fetch(`${API}/profiles/${i}`).then(r => r.ok ? r.json() : null);
+      if (prof) {
+        profileCache[i] = prof;
+        const d = prof.data || prof;
+        const consent = d.consent || {};
+        const profilingConsent = consent.profiling !== false;
+        const sensitiveConsent = consent.sensitive_data === true;
+        const withdrawn = consent.withdrawn === true || consent.profiling === false;
+
+        if (profilingConsent && !withdrawn) profilingCount++;
+        if (sensitiveConsent) sensitiveCount++;
+        if (withdrawn) withdrawnCount++;
+
+        const ls = (d.life_stage || '').replace(/_/g, ' ');
+        const risk = d.risk_score ? parseFloat(d.risk_score).toFixed(1) : '--';
+
+        rows.push(`<tr class="table-row border-b border-dark-600/20">
+          <td class="py-3 px-4 font-medium text-white">${i}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${profilingConsent && !withdrawn ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red'}">${profilingConsent && !withdrawn ? 'Active' : 'Inactive'}</span></td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${sensitiveConsent ? 'bg-neon-green/10 text-neon-green' : 'bg-dark-700 text-dark-300'}">${sensitiveConsent ? 'Granted' : 'Not Granted'}</span></td>
+          <td class="py-3 px-4 text-dark-200 capitalize text-xs">${ls}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${d.risk_score<4?'bg-neon-green/10 text-neon-green':d.risk_score<7?'bg-neon-amber/10 text-neon-amber':'bg-neon-red/10 text-neon-red'}">${risk}</span></td>
+        </tr>`);
+      }
+    } catch (e) { console.error(e); }
+  }
+
+  document.getElementById('consentProfilingCount').textContent = profilingCount;
+  document.getElementById('consentSensitiveCount').textContent = sensitiveCount;
+  document.getElementById('consentWithdrawnCount').textContent = withdrawnCount;
+  tbody.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" class="py-12 text-center text-dark-400 text-sm">No consent data available.</td></tr>';
+}
+
+// ===== EXCLUDED PRODUCTS (DASHBOARD) =====
+function toggleExcludedProducts() {
+  const list = document.getElementById('excludedProductsList');
+  const header = list.previousElementSibling;
+  excludedProductsVisible = !excludedProductsVisible;
+  if (excludedProductsVisible) {
+    list.classList.remove('hidden');
+    header.classList.add('open');
+  } else {
+    list.classList.add('hidden');
+    header.classList.remove('open');
+  }
+}
+
+function renderExcludedProducts(excluded) {
+  const card = document.getElementById('excludedProductsCard');
+  const list = document.getElementById('excludedProductsList');
+  const countEl = document.getElementById('excludedCount');
+
+  if (!excluded || excluded.length === 0) {
+    card.classList.add('hidden');
+    return;
+  }
+
+  card.classList.remove('hidden');
+  countEl.textContent = `${excluded.length} product${excluded.length !== 1 ? 's' : ''}`;
+
+  list.innerHTML = excluded.map(ep => {
+    const name = ep.product_name || ep.product_id || 'Unknown Product';
+    const reason = ep.reason || 'Suitability check failed';
+    return `<div class="excluded-card rounded-xl p-4 flex items-start gap-3">
+      <div class="w-9 h-9 rounded-lg bg-neon-red/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <svg class="w-4 h-4 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-sm font-medium text-dark-200">${name}</h4>
+        <p class="text-xs text-neon-red/70 mt-0.5 leading-relaxed">${reason}</p>
+      </div>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-neon-red/10 text-neon-red flex-shrink-0">Excluded</span>
+    </div>`;
+  }).join('');
+
+  // Show by default when new data arrives
+  excludedProductsVisible = true;
+  list.classList.remove('hidden');
+  document.querySelector('#excludedProductsCard .collapsible-header').classList.add('open');
+}
+
 // ===== SIDEBAR PRODUCT CATALOG =====
 function renderProductCatalogSidebar() {
   const el = document.getElementById('productCatalogSidebar');
@@ -443,10 +944,24 @@ async function selectCustomer(id) {
   document.getElementById('selectedCustomerInfo').textContent = `Customer #${id} selected`;
   const offersGrid = document.getElementById('offersGrid');
   offersGrid.innerHTML = '<div class="flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>';
+  // Hide excluded products while loading
+  document.getElementById('excludedProductsCard').classList.add('hidden');
   try {
     const [offResp, profResp] = await Promise.all([fetch(`${API}/offers/${id}?top_n=8`), fetch(`${API}/profiles/${id}`)]);
-    if (offResp.ok) { const data=await offResp.json(); renderOffers(data.offers); updateDistributionChart(data.offers); updateScoreChart(data.offers); document.getElementById('offersCount').textContent=`${data.offers.length} offers`; const avg=data.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(data.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%'; }
-    else offersGrid.innerHTML='<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
+    if (offResp.ok) {
+      const data = await offResp.json();
+      lastOffersResponse = data;
+      renderOffers(data.offers, data);
+      updateDistributionChart(data.offers);
+      updateScoreChart(data.offers);
+      document.getElementById('offersCount').textContent = `${data.offers.length} offers`;
+      const avg = data.offers.reduce((a,o) => a + o.relevance_score, 0) / Math.max(data.offers.length, 1);
+      document.getElementById('statAvgScore').textContent = (avg * 100).toFixed(0) + '%';
+      // Render excluded products
+      renderExcludedProducts(data.excluded_products);
+    } else {
+      offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
+    }
     if (profResp.ok) { const prof=await profResp.json(); profileCache[id]=prof; renderProfile(prof); }
   } catch(e) { console.error(e); offersGrid.innerHTML='<p class="text-center text-neon-red py-8 text-sm">Error connecting to API</p>'; }
 }
@@ -463,20 +978,41 @@ function renderProfile(profile) {
   ].map(f=>`<div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">${f.l}</p><p class="text-sm font-semibold ${f.c}">${f.v}</p></div>`).join('');
 }
 
-function renderOffers(offers) {
+function renderOffers(offers, responseData) {
   const grid = document.getElementById('offersGrid');
   if (!offers.length) { grid.innerHTML='<p class="text-center text-dark-400 py-8 text-sm">No offers matched</p>'; return; }
+  const recId = responseData ? (responseData.recommendation_id || '') : '';
+  const modelVersion = responseData ? (responseData.model_version || '') : '';
+
   grid.innerHTML = offers.map((o,i) => {
     const c=COLORS[o.product_type]||COLORS.investment, pct=(o.relevance_score*100).toFixed(0), conf=(o.confidence_score*100).toFixed(0);
     const prod = PRODUCTS.find(p => p.name.startsWith(o.product_name) || o.product_name.startsWith(p.name.replace(' Portfolio','')));
     const onclick = prod ? `onclick="openProductDetail('${prod.id}')"` : '';
+
+    // Suitability badge
+    const suitabilityBadge = o.suitability_status === 'passed'
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-neon-green/10 text-neon-green"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Suitable</span>`
+      : '';
+
+    // Explanation (GDPR art.22)
+    const explanation = o.explanation
+      ? `<p class="text-[11px] text-dark-400 mt-1.5 leading-relaxed italic border-l-2 border-accent/20 pl-2">${o.explanation}</p>`
+      : '';
+
+    // Recommendation ID reference
+    const recRef = recId
+      ? `<span class="text-[9px] text-dark-500 font-mono mt-1 block">ref: ${recId.substring(0, 12)}...</span>`
+      : '';
+
     return `<div class="offer-card glass-card rounded-xl p-4 fade-in cursor-pointer" style="animation-delay:${i*0.06}s" ${onclick}>
       <div class="flex items-start gap-4">
         <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">${ICONS[o.product_type]||''}</div>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-1"><h3 class="text-sm font-semibold text-white">${o.product_name}</h3><div class="flex items-center gap-2"><span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div></div>
+          <div class="flex items-center justify-between mb-1"><h3 class="text-sm font-semibold text-white">${o.product_name}</h3><div class="flex items-center gap-2">${suitabilityBadge}<span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div></div>
           <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${o.personalization_reason}</p>
-          <div class="flex items-center gap-3"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span></div>
+          ${explanation}
+          <div class="flex items-center gap-3 mt-2"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span></div>
+          ${recRef}
         </div>
       </div>
     </div>`;
