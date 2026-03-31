@@ -117,12 +117,26 @@
   }
 
   // ---- Demo mode auth ----
+  const ROLE_PORTALS = {
+    admin: '/admin',
+    employee: '/',
+    client: '/portal'
+  };
+
   function demoLogin(role) {
     const user = DEMO_USERS[role];
     if (!user) return;
     _currentUser = { ...user };
     _demoMode = true;
     _saveSession();
+
+    // Redirect to the correct portal for this role
+    const targetPortal = ROLE_PORTALS[role];
+    const currentPath = window.location.pathname;
+    if (targetPortal && currentPath !== targetPortal) {
+      window.location.href = targetPortal;
+      return; // skip _notifyChange — the page will reload
+    }
     _notifyChange();
   }
 
