@@ -123,6 +123,22 @@ en: {
   'cauth.external_id': 'Your pseudonymized ID',
   'cauth.logout': 'Log out',
 
+  // Staff Auth
+  'sauth.login_title_employee': 'Employee Portal',
+  'sauth.login_title_admin': 'Admin Portal',
+  'sauth.login_subtitle_employee': 'Sign in with your employee credentials',
+  'sauth.login_subtitle_admin': 'Sign in with your administrator credentials',
+  'sauth.email': 'Email address',
+  'sauth.password': 'Password',
+  'sauth.login_btn': 'Sign In',
+  'sauth.login_error': 'Invalid email or password',
+  'sauth.demo_hint': 'Demo credentials:',
+  'sauth.logout': 'Log out',
+  'sauth.go_customer': 'Customer Portal',
+  'sauth.go_employee': 'Employee Portal',
+  'sauth.go_admin': 'Admin Portal',
+  'sauth.wrong_role': 'Your account does not have access to this portal.',
+
   // Dashboard
   'dashboard.title': 'Dashboard',
   'dashboard.subtitle': 'AI-powered personalization engine',
@@ -645,6 +661,22 @@ de: {
   'cauth.external_id': 'Ihre pseudonymisierte ID',
   'cauth.logout': 'Abmelden',
 
+  // Staff Auth
+  'sauth.login_title_employee': 'Mitarbeiterportal',
+  'sauth.login_title_admin': 'Admin-Portal',
+  'sauth.login_subtitle_employee': 'Melden Sie sich mit Ihren Mitarbeiterdaten an',
+  'sauth.login_subtitle_admin': 'Melden Sie sich mit Ihrem Administratorkonto an',
+  'sauth.email': 'E-Mail-Adresse',
+  'sauth.password': 'Passwort',
+  'sauth.login_btn': 'Anmelden',
+  'sauth.login_error': 'Ungültige E-Mail oder Passwort',
+  'sauth.demo_hint': 'Demo-Zugangsdaten:',
+  'sauth.logout': 'Abmelden',
+  'sauth.go_customer': 'Kundenportal',
+  'sauth.go_employee': 'Mitarbeiterportal',
+  'sauth.go_admin': 'Admin-Portal',
+  'sauth.wrong_role': 'Ihr Konto hat keinen Zugang zu diesem Portal.',
+
   // Dashboard
   'dashboard.title': 'Dashboard',
   'dashboard.subtitle': 'KI-gesteuerte Personalisierungs-Engine',
@@ -1166,6 +1198,22 @@ ro: {
   'cauth.anon_badge': 'Auto-anonimizare activă',
   'cauth.external_id': 'ID-ul dumneavoastră pseudonimizat',
   'cauth.logout': 'Deconectare',
+
+  // Staff Auth
+  'sauth.login_title_employee': 'Portal Angajat',
+  'sauth.login_title_admin': 'Portal Administrator',
+  'sauth.login_subtitle_employee': 'Autentificați-vă cu credențialele de angajat',
+  'sauth.login_subtitle_admin': 'Autentificați-vă cu contul de administrator',
+  'sauth.email': 'Adresă de email',
+  'sauth.password': 'Parolă',
+  'sauth.login_btn': 'Autentificare',
+  'sauth.login_error': 'Email sau parolă invalidă',
+  'sauth.demo_hint': 'Credențiale demo:',
+  'sauth.logout': 'Deconectare',
+  'sauth.go_customer': 'Portal Client',
+  'sauth.go_employee': 'Portal Angajat',
+  'sauth.go_admin': 'Portal Administrator',
+  'sauth.wrong_role': 'Contul dumneavoastră nu are acces la acest portal.',
 
   // Dashboard
   'dashboard.title': 'Tablou de bord',

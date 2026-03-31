@@ -258,6 +258,20 @@ class AuditListEntry(BaseModel):
 
 # --- Existing models ---
 
+# --- Staff authentication models ---
+
+class StaffLoginRequest(BaseModel):
+    email: str = Field(..., description="Staff email address")
+    password: str = Field(..., description="Password")
+
+
+class StaffLoginResponse(BaseModel):
+    token: str = Field(..., description="JWT session token")
+    email: str
+    display_name: str
+    role: str = Field(..., description="'admin' or 'employee'")
+
+
 # --- Customer authentication models (GDPR-compliant) ---
 
 class CustomerRegisterRequest(BaseModel):

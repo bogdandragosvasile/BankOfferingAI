@@ -74,8 +74,62 @@ tailwind.config = {
 <script src="/static/js/theme.js"></script>
 <script src="/static/js/auth.js"></script>
 
-<!-- Auth gate (shown when not logged in) -->
-<div id="auth-gate"></div>
+<!-- Auth gate — Staff login screen -->
+<div id="auth-gate" class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" style="background: #060a14;">
+  <div class="max-w-md w-full">
+    <div class="text-center mb-8 fade-in">
+      <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
+        <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-2">BankOffer <span class="text-accent-light">AI</span></h1>
+      <div class="flex items-center justify-center gap-3 mt-2">
+        <div id="auth-lang-selector-emp"></div>
+        <div id="auth-theme-toggle-emp"></div>
+      </div>
+    </div>
+    <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s">
+      <h2 class="text-xl font-semibold text-white mb-1" data-i18n="sauth.login_title_employee">Employee Portal</h2>
+      <p class="text-dark-300 text-sm mb-5" data-i18n="sauth.login_subtitle_employee">Sign in with your employee credentials</p>
+      <div id="staff-login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.email">Email address</label>
+          <input type="email" id="staff-login-email" autocomplete="email"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="manager@bankofferai.com">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.password">Password</label>
+          <input type="password" id="staff-login-password" autocomplete="current-password"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="********">
+        </div>
+        <button onclick="handleStaffLogin()" id="staff-login-btn"
+          class="w-full py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors">
+          <span data-i18n="sauth.login_btn">Sign In</span>
+        </button>
+      </div>
+      <div class="mt-5 pt-5 border-t border-dark-600/30">
+        <p class="text-xs text-dark-400 mb-2 font-medium" data-i18n="sauth.demo_hint">Demo credentials:</p>
+        <div class="space-y-1.5">
+          <button onclick="fillStaffDemo('admin@bankofferai.com','Admin1234!')" class="w-full text-left px-3 py-2 rounded-lg bg-dark-800/50 hover:bg-dark-800 transition-colors group">
+            <span class="text-xs text-dark-200 group-hover:text-white">admin@bankofferai.com</span>
+            <span class="text-xs text-dark-400 ml-2">/ Admin1234!</span>
+            <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-red-500/15 text-red-400">Admin</span>
+          </button>
+          <button onclick="fillStaffDemo('manager@bankofferai.com','Employee1234!')" class="w-full text-left px-3 py-2 rounded-lg bg-dark-800/50 hover:bg-dark-800 transition-colors group">
+            <span class="text-xs text-dark-200 group-hover:text-white">manager@bankofferai.com</span>
+            <span class="text-xs text-dark-400 ml-2">/ Employee1234!</span>
+            <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400">Employee</span>
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <a href="/portal" class="text-xs text-dark-400 hover:text-accent-light transition-colors" data-i18n="sauth.go_customer">Customer Portal</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Sidebar -->
 <aside class="w-[72px] hover:w-[240px] transition-all duration-300 bg-dark-900 border-r border-dark-600/50 flex flex-col items-center py-6 fixed h-full z-50 overflow-hidden group">
@@ -1336,51 +1390,150 @@ document.getElementById('searchInput').addEventListener('keydown', e => {
   if (e.key==='Enter') { const v=parseInt(e.target.value); if(v>=1&&v<=50){navigateTo('dashboard');selectCustomer(v);} }
 });
 
-// ===== AUTH GATE =====
-function setupAuthGate() {
+// ===== STAFF AUTH =====
+const STAFF_SESSION_KEY = 'boai_staff_session';
+
+function saveStaffSession(data) {
+  localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify({ ...data, ts: Date.now() }));
+}
+
+function getStaffSession() {
+  try {
+    const raw = localStorage.getItem(STAFF_SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.ts > 8 * 60 * 60 * 1000) {
+      localStorage.removeItem(STAFF_SESSION_KEY);
+      return null;
+    }
+    return data;
+  } catch (e) { return null; }
+}
+
+function clearStaffSession() {
+  localStorage.removeItem(STAFF_SESSION_KEY);
+}
+
+function fillStaffDemo(email, pwd) {
+  document.getElementById('staff-login-email').value = email;
+  document.getElementById('staff-login-password').value = pwd;
+}
+
+async function handleStaffLogin() {
+  const email = document.getElementById('staff-login-email').value.trim();
+  const password = document.getElementById('staff-login-password').value;
+  const errorEl = document.getElementById('staff-login-error');
+  const btn = document.getElementById('staff-login-btn');
+
+  if (!email || !password) {
+    errorEl.textContent = t('sauth.login_error');
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  errorEl.classList.add('hidden');
+
+  try {
+    const resp = await fetch('/staff-auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || t('sauth.login_error'));
+    }
+    const data = await resp.json();
+    saveStaffSession(data);
+
+    // Redirect based on role
+    if (data.role === 'admin') {
+      window.location.href = '/admin';
+    } else {
+      enterStaffPortal(data);
+    }
+  } catch (e) {
+    errorEl.textContent = e.message || t('sauth.login_error');
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span data-i18n="sauth.login_btn">${t('sauth.login_btn')}</span>`;
+  }
+}
+
+function staffLogout() {
+  clearStaffSession();
+  window.location.reload();
+}
+
+function enterStaffPortal(session) {
   const gate = document.getElementById('auth-gate');
   const sidebar = document.querySelector('aside');
   const mainEl = document.querySelector('main');
 
-  window.BOAI_AUTH.onAuthChange(user => {
-    if (!user) {
-      sidebar.style.display = 'none';
-      mainEl.style.display = 'none';
-      gate.innerHTML = window.BOAI_AUTH.renderLoginScreen({
-        title: 'Employee Portal',
-        subtitle: 'Sign in as an employee or administrator',
-        allowedRoles: ['admin', 'employee']
-      });
-      return;
-    }
-    // Employee or admin can access
-    if (!window.BOAI_AUTH.isEmployee() && !window.BOAI_AUTH.isAdmin()) {
-      sidebar.style.display = 'none';
-      mainEl.style.display = 'none';
-      gate.innerHTML = `<div class="min-h-screen flex items-center justify-center">
-        <div class="glass-card rounded-2xl p-8 max-w-md text-center">
-          <h2 class="text-xl font-bold text-white mb-2">Access Denied</h2>
-          <p class="text-dark-300 mb-4">This portal is for bank employees only.</p>
-          <div class="flex gap-3 justify-center">
-            <a href="/portal" class="px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-xl text-sm font-medium transition">Customer Portal</a>
-            <button onclick="window.BOAI_AUTH.logout()" class="px-4 py-2 border border-dark-500 text-dark-200 rounded-xl text-sm font-medium transition hover:text-red-400">Log Out</button>
-          </div>
+  // Check role — employee or admin can access
+  if (session.role !== 'employee' && session.role !== 'admin') {
+    gate.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center" style="background:#060a14">
+      <div class="glass-card rounded-2xl p-8 max-w-md text-center">
+        <h2 class="text-xl font-bold text-white mb-2">${t('auth.unauthorized')}</h2>
+        <p class="text-dark-300 mb-4">${t('sauth.wrong_role')}</p>
+        <div class="flex gap-3 justify-center">
+          <a href="/portal" class="px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-xl text-sm font-medium transition">${t('sauth.go_customer')}</a>
+          <button onclick="staffLogout()" class="px-4 py-2 border border-dark-500 text-dark-200 rounded-xl text-sm font-medium transition hover:text-red-400">${t('sauth.logout')}</button>
         </div>
-      </div>`;
-      return;
-    }
-    gate.innerHTML = '';
-    sidebar.style.display = '';
-    mainEl.style.display = '';
+      </div>
+    </div>`;
+    return;
+  }
 
-    // Render controls
-    const tt = document.getElementById('theme-toggle-emp');
-    const ub = document.getElementById('user-badge-emp');
-    const ls = document.getElementById('lang-selector-emp');
-    if (tt) tt.innerHTML = window.BOAI_THEME.renderToggle();
-    if (ub) ub.innerHTML = window.BOAI_AUTH.renderUserBadge();
-    if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
-  });
+  gate.style.display = 'none';
+  sidebar.style.display = '';
+  mainEl.style.display = '';
+
+  // Render controls
+  const tt = document.getElementById('theme-toggle-emp');
+  const ls = document.getElementById('lang-selector-emp');
+  const ub = document.getElementById('user-badge-emp');
+  if (tt) tt.innerHTML = window.BOAI_THEME.renderToggle();
+  if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+  if (ub) {
+    const roleClass = session.role === 'admin' ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400';
+    const roleName = session.role.charAt(0).toUpperCase() + session.role.slice(1);
+    ub.innerHTML = `<div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dark-500/50">
+        <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">${session.display_name.charAt(0)}</div>
+        <div class="text-xs">
+          <div class="font-medium text-white">${session.display_name}</div>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${roleClass}">${roleName}</span>
+        </div>
+      </div>
+      <button onclick="staffLogout()" class="p-1.5 rounded-lg hover:bg-red-500/10 text-dark-300 hover:text-red-400 transition-colors" title="${t('sauth.logout')}">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>`;
+  }
+}
+
+function setupAuthGate() {
+  // Render lang/theme on auth screen
+  const als = document.getElementById('auth-lang-selector-emp');
+  const att = document.getElementById('auth-theme-toggle-emp');
+  if (als && window.BOAI_I18N) als.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+  if (att && window.BOAI_THEME) att.innerHTML = window.BOAI_THEME.renderToggle();
+
+  // Check for existing staff session
+  const session = getStaffSession();
+  if (session) {
+    enterStaffPortal(session);
+  }
+
+  // Enter key on password field
+  const pwdEl = document.getElementById('staff-login-password');
+  if (pwdEl) pwdEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleStaffLogin(); });
+  const emailEl = document.getElementById('staff-login-email');
+  if (emailEl) emailEl.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('staff-login-password').focus(); });
 }
 
 // ===== INIT =====

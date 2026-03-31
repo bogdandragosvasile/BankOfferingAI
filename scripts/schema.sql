@@ -1,5 +1,6 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS staff_auth CASCADE;
 DROP TABLE IF EXISTS customer_auth CASCADE;
 DROP TABLE IF EXISTS recommendation_overrides CASCADE;
 DROP TABLE IF EXISTS suitability_confirmations CASCADE;
@@ -191,6 +192,17 @@ CREATE TABLE recommendation_overrides (
     product_id VARCHAR(100),
     override_type VARCHAR(30) NOT NULL CHECK (override_type IN ('reject', 'suppress', 'escalate')),
     reason TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ===== Staff authentication =====
+CREATE TABLE staff_auth (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(200) NOT NULL UNIQUE,
+    password_hash VARCHAR(200) NOT NULL,           -- PBKDF2-SHA256 with random salt
+    display_name VARCHAR(200) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'employee')),
+    last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
