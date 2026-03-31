@@ -1,17 +1,19 @@
 """FastAPI application entry point for the Bank Offering AI API service."""
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from services.api.routers import offers, profiles, webhooks
+from services.api.routers import offers, profiles
 
 logger = logging.getLogger(__name__)
 
 ALLOWED_ORIGINS = [
+    "https://bankoffer.lupulup.com",
     "https://bankofferingai.example.com",
     "http://localhost:3000",
 ]
@@ -80,7 +82,10 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(offers.router, prefix="/offers", tags=["offers"])
     app.include_router(profiles.router, prefix="/profiles", tags=["profiles"])
-    app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+
+    if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
+        from services.api.routers import webhooks
+        app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
     @app.get("/health", tags=["health"])
     async def health_check():
