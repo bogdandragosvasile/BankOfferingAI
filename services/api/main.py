@@ -56,10 +56,17 @@ async def lifespan(app: FastAPI):
     )
     app.state.consent_sync_task = sync_task
 
+    # Start regulatory source change detection
+    source_check_task = asyncio.create_task(
+        consent_registry.start_background_source_checks(session_factory)
+    )
+    app.state.source_check_task = source_check_task
+
     yield
 
-    # Cancel background sync
+    # Cancel background tasks
     sync_task.cancel()
+    source_check_task.cancel()
 
     # Shutdown: close connections
     logger.info("Shutting down API service...")
