@@ -47,6 +47,7 @@
   let _onAuthChange = [];
   let _accessToken = null;
   let _refreshToken = null;
+  let _idToken = null;
 
   // ---- PKCE helpers ----
   function _generateRandomString(length) {
@@ -186,6 +187,7 @@
 
       _accessToken = tokens.access_token;
       _refreshToken = tokens.refresh_token;
+      _idToken = tokens.id_token;
 
       // Parse the access token to get user info
       const parsed = _parseJwt(_accessToken);
@@ -254,12 +256,13 @@
       client_id: KC_CLIENT_ID,
       post_logout_redirect_uri: window.location.origin,
     });
-    if (_accessToken) {
-      params.set('id_token_hint', _accessToken);
+    if (_idToken) {
+      params.set('id_token_hint', _idToken);
     }
     _currentUser = null;
     _accessToken = null;
     _refreshToken = null;
+    _idToken = null;
     localStorage.removeItem(STORAGE_KEY);
     window.location.href = LOGOUT_URL + '?' + params.toString();
   }
@@ -289,13 +292,14 @@
 
   // ---- Common ----
   function logout() {
-    if (!_demoMode && _accessToken) {
+    if (!_demoMode && (_accessToken || _idToken)) {
       keycloakLogout();
       return;
     }
     _currentUser = null;
     _accessToken = null;
     _refreshToken = null;
+    _idToken = null;
     localStorage.removeItem(STORAGE_KEY);
     _notifyChange();
   }
