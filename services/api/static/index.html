@@ -72,6 +72,7 @@ tailwind.config = {
 <!-- Auth + Theme + i18n scripts -->
 <script src="/static/js/i18n.js"></script>
 <script src="/static/js/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/keycloak-js@26.2.0/dist/keycloak.min.js"></script>
 <script src="/static/js/auth.js"></script>
 
 <!-- Auth gate — Staff login screen -->
@@ -91,6 +92,19 @@ tailwind.config = {
       <h2 class="text-xl font-semibold text-white mb-1" data-i18n="sauth.login_title_employee">Employee Portal</h2>
       <p class="text-dark-300 text-sm mb-5" data-i18n="sauth.login_subtitle_employee">Sign in with your employee credentials</p>
       <div id="staff-login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+      <!-- SSO Button -->
+      <button onclick="ssoLogin()" id="sso-login-btn"
+        class="w-full py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2 mb-4">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span data-i18n="sauth.sso_login">Sign in with SSO (Keycloak)</span>
+      </button>
+      <!-- Divider -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+        <span class="text-xs text-dark-400 uppercase">or</span>
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+      </div>
+      <!-- Email/Password form -->
       <div class="space-y-4">
         <div>
           <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.email">Email address</label>
@@ -105,7 +119,7 @@ tailwind.config = {
             placeholder="********">
         </div>
         <button onclick="handleStaffLogin()" id="staff-login-btn"
-          class="w-full py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors">
+          class="w-full py-2.5 border border-dark-500/50 hover:border-accent/30 text-white rounded-xl font-medium text-sm transition-colors">
           <span data-i18n="sauth.login_btn">Sign In</span>
         </button>
       </div>
@@ -1392,6 +1406,7 @@ document.getElementById('searchInput').addEventListener('keydown', e => {
 
 // ===== STAFF AUTH =====
 const STAFF_SESSION_KEY = 'boai_staff_session';
+let _ssoAuthenticated = false;
 
 function saveStaffSession(data) {
   localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify({ ...data, ts: Date.now() }));
@@ -1419,6 +1434,14 @@ function fillStaffDemo(email, pwd) {
   document.getElementById('staff-login-password').value = pwd;
 }
 
+// SSO login via Keycloak
+function ssoLogin() {
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.keycloakLogin();
+  }
+}
+
+// Email/password login
 async function handleStaffLogin() {
   const email = document.getElementById('staff-login-email').value.trim();
   const password = document.getElementById('staff-login-password').value;
@@ -1448,7 +1471,6 @@ async function handleStaffLogin() {
     const data = await resp.json();
     saveStaffSession(data);
 
-    // Redirect based on role
     if (data.role === 'admin') {
       window.location.href = '/admin';
     } else {
@@ -1464,6 +1486,10 @@ async function handleStaffLogin() {
 }
 
 function staffLogout() {
+  if (_ssoAuthenticated && window.BOAI_AUTH) {
+    window.BOAI_AUTH.logout();
+    return;
+  }
   clearStaffSession();
   window.location.reload();
 }
@@ -1473,8 +1499,11 @@ function enterStaffPortal(session) {
   const sidebar = document.querySelector('aside');
   const mainEl = document.querySelector('main');
 
-  // Check role — employee or admin can access
-  if (session.role !== 'employee' && session.role !== 'admin') {
+  // Determine role — works for both SSO (session.roles) and email/pwd (session.role)
+  const role = session.role || ((session.roles || []).includes('admin') ? 'admin' : (session.roles || []).includes('employee') ? 'employee' : '');
+  const displayName = session.display_name || session.name || session.email || 'User';
+
+  if (role !== 'employee' && role !== 'admin') {
     gate.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center" style="background:#060a14">
       <div class="glass-card rounded-2xl p-8 max-w-md text-center">
         <h2 class="text-xl font-bold text-white mb-2">${t('auth.unauthorized')}</h2>
@@ -1492,20 +1521,20 @@ function enterStaffPortal(session) {
   sidebar.style.display = '';
   mainEl.style.display = '';
 
-  // Render controls
   const tt = document.getElementById('theme-toggle-emp');
   const ls = document.getElementById('lang-selector-emp');
   const ub = document.getElementById('user-badge-emp');
   if (tt) tt.innerHTML = window.BOAI_THEME.renderToggle();
   if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
   if (ub) {
-    const roleClass = session.role === 'admin' ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400';
-    const roleName = session.role.charAt(0).toUpperCase() + session.role.slice(1);
+    const roleClass = role === 'admin' ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400';
+    const roleName = role.charAt(0).toUpperCase() + role.slice(1);
+    const ssoTag = _ssoAuthenticated ? '<span class="text-accent text-[10px] ml-1">(SSO)</span>' : '';
     ub.innerHTML = `<div class="flex items-center gap-2">
       <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dark-500/50">
-        <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">${session.display_name.charAt(0)}</div>
+        <div class="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">${displayName.charAt(0)}</div>
         <div class="text-xs">
-          <div class="font-medium text-white">${session.display_name}</div>
+          <div class="font-medium text-white">${displayName}${ssoTag}</div>
           <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${roleClass}">${roleName}</span>
         </div>
       </div>
@@ -1523,13 +1552,29 @@ function setupAuthGate() {
   if (als && window.BOAI_I18N) als.innerHTML = window.BOAI_I18N.renderLanguageSelector();
   if (att && window.BOAI_THEME) att.innerHTML = window.BOAI_THEME.renderToggle();
 
-  // Check for existing staff session
+  // Check for existing email/password session
   const session = getStaffSession();
   if (session) {
     enterStaffPortal(session);
+    return;
   }
 
-  // Enter key on password field
+  // Listen for Keycloak SSO auth
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.onAuthChange(function(user) {
+      if (user && !_ssoAuthenticated) {
+        _ssoAuthenticated = true;
+        const roles = user.roles || [];
+        if (roles.includes('admin') && !roles.includes('employee')) {
+          window.location.href = '/admin';
+          return;
+        }
+        enterStaffPortal(user);
+      }
+    });
+  }
+
+  // Enter key handlers
   const pwdEl = document.getElementById('staff-login-password');
   if (pwdEl) pwdEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleStaffLogin(); });
   const emailEl = document.getElementById('staff-login-email');

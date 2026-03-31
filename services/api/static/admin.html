@@ -51,6 +51,7 @@ tailwind.config = {
 <!-- Auth + Theme + i18n scripts -->
 <script src="/static/js/i18n.js"></script>
 <script src="/static/js/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/keycloak-js@26.2.0/dist/keycloak.min.js"></script>
 <script src="/static/js/auth.js"></script>
 
 <!-- Auth gate — Admin login screen -->
@@ -70,6 +71,19 @@ tailwind.config = {
       <h2 class="text-xl font-semibold text-white mb-1" data-i18n="sauth.login_title_admin">Admin Portal</h2>
       <p class="text-dark-300 text-sm mb-5" data-i18n="sauth.login_subtitle_admin">Sign in with your administrator credentials</p>
       <div id="admin-login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+      <!-- SSO Button -->
+      <button onclick="ssoAdminLogin()" id="sso-admin-btn"
+        class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2 mb-4">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span data-i18n="sauth.sso_login">Sign in with SSO (Keycloak)</span>
+      </button>
+      <!-- Divider -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+        <span class="text-xs text-dark-400 uppercase">or</span>
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+      </div>
+      <!-- Email/Password form -->
       <div class="space-y-4">
         <div>
           <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="sauth.email">Email address</label>
@@ -84,7 +98,7 @@ tailwind.config = {
             placeholder="********">
         </div>
         <button onclick="handleAdminLogin()" id="admin-login-btn"
-          class="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium text-sm transition-colors">
+          class="w-full py-2.5 border border-dark-500/50 hover:border-red-500/30 text-white rounded-xl font-medium text-sm transition-colors">
           <span data-i18n="sauth.login_btn">Sign In</span>
         </button>
       </div>
@@ -678,6 +692,7 @@ const API = window.location.origin;
 
 // ===== ADMIN AUTH =====
 const STAFF_SESSION_KEY = 'boai_staff_session';
+let _ssoAuthenticated = false;
 
 function getStaffSession() {
   try {
@@ -705,6 +720,14 @@ function fillAdminDemo(email, pwd) {
   document.getElementById('admin-login-password').value = pwd;
 }
 
+// SSO login via Keycloak
+function ssoAdminLogin() {
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.keycloakLogin();
+  }
+}
+
+// Email/password login
 async function handleAdminLogin() {
   const email = document.getElementById('admin-login-email').value.trim();
   const password = document.getElementById('admin-login-password').value;
@@ -735,7 +758,6 @@ async function handleAdminLogin() {
     saveStaffSession(data);
 
     if (data.role !== 'admin') {
-      // Employee logged in on admin portal — redirect to employee portal
       window.location.href = '/';
       return;
     }
@@ -751,6 +773,10 @@ async function handleAdminLogin() {
 }
 
 function adminLogout() {
+  if (_ssoAuthenticated && window.BOAI_AUTH) {
+    window.BOAI_AUTH.logout();
+    return;
+  }
   clearStaffSession();
   window.location.reload();
 }
@@ -759,7 +785,11 @@ function enterAdminPortal(session) {
   const gate = document.getElementById('auth-gate');
   const app = document.getElementById('admin-app');
 
-  if (session.role !== 'admin') {
+  // Determine role — works for both SSO (session.roles) and email/pwd (session.role)
+  const role = session.role || ((session.roles || []).includes('admin') ? 'admin' : '');
+  const displayName = session.display_name || session.name || session.email || 'User';
+
+  if (role !== 'admin') {
     gate.innerHTML = `<div class="fixed inset-0 z-[100] flex items-center justify-center" style="background:#060a14">
       <div class="glass-card rounded-2xl p-8 max-w-md text-center">
         <h2 class="text-xl font-bold text-white mb-2">${t('auth.unauthorized')}</h2>
@@ -776,18 +806,18 @@ function enterAdminPortal(session) {
   gate.style.display = 'none';
   app.classList.remove('hidden');
 
-  // Render UI elements
   document.getElementById('theme-toggle').innerHTML = window.BOAI_THEME.renderToggle();
   if (window.BOAI_I18N) {
     document.getElementById('lang-selector').innerHTML = window.BOAI_I18N.renderLanguageSelector();
   }
   const ub = document.getElementById('user-badge');
+  const ssoTag = _ssoAuthenticated ? '<span class="text-accent text-[10px] ml-1">(SSO)</span>' : '';
   if (ub) {
     ub.innerHTML = `<div class="flex items-center gap-2">
       <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dark-500/50">
-        <div class="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs font-bold">${session.display_name.charAt(0)}</div>
+        <div class="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs font-bold">${displayName.charAt(0)}</div>
         <div class="text-xs">
-          <div class="font-medium text-white">${session.display_name}</div>
+          <div class="font-medium text-white">${displayName}${ssoTag}</div>
           <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400">Admin</span>
         </div>
       </div>
@@ -802,15 +832,31 @@ function enterAdminPortal(session) {
 
 // Init: check session or show login
 (function initAdminAuth() {
-  // Render lang/theme on login screen
   const als = document.getElementById('auth-lang-selector-adm');
   const att = document.getElementById('auth-theme-toggle-adm');
   if (als && window.BOAI_I18N) als.innerHTML = window.BOAI_I18N.renderLanguageSelector();
   if (att && window.BOAI_THEME) att.innerHTML = window.BOAI_THEME.renderToggle();
 
+  // Check email/password session first
   const session = getStaffSession();
   if (session) {
     enterAdminPortal(session);
+  }
+
+  // Listen for Keycloak SSO auth
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.onAuthChange(function(user) {
+      if (user && !_ssoAuthenticated) {
+        _ssoAuthenticated = true;
+        const roles = user.roles || [];
+        if (!roles.includes('admin')) {
+          // Non-admin via SSO → redirect to employee portal
+          window.location.href = '/';
+          return;
+        }
+        enterAdminPortal(user);
+      }
+    });
   }
 
   // Enter key handlers

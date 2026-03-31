@@ -111,62 +111,7 @@
       ]
     }
   ],
-  "identityProviders": [
-    {
-      "alias": "google",
-      "displayName": "Google",
-      "providerId": "google",
-      "enabled": true,
-      "firstBrokerLoginFlowAlias": "first broker login",
-      "trustEmail": true,
-      "storeToken": false,
-      "addReadTokenRoleOnCreate": false,
-      "authenticateByDefault": false,
-      "linkOnly": false,
-      "config": {
-        "clientId": "${GOOGLE_CLIENT_ID:-placeholder}",
-        "clientSecret": "${GOOGLE_CLIENT_SECRET:-placeholder}",
-        "defaultScope": "openid email profile",
-        "syncMode": "IMPORT"
-      }
-    },
-    {
-      "alias": "facebook",
-      "displayName": "Facebook",
-      "providerId": "facebook",
-      "enabled": true,
-      "firstBrokerLoginFlowAlias": "first broker login",
-      "trustEmail": true,
-      "storeToken": false,
-      "addReadTokenRoleOnCreate": false,
-      "authenticateByDefault": false,
-      "linkOnly": false,
-      "config": {
-        "clientId": "${FACEBOOK_CLIENT_ID:-placeholder}",
-        "clientSecret": "${FACEBOOK_CLIENT_SECRET:-placeholder}",
-        "defaultScope": "email public_profile",
-        "syncMode": "IMPORT"
-      }
-    },
-    {
-      "alias": "microsoft",
-      "displayName": "Microsoft",
-      "providerId": "microsoft",
-      "enabled": true,
-      "firstBrokerLoginFlowAlias": "first broker login",
-      "trustEmail": true,
-      "storeToken": false,
-      "addReadTokenRoleOnCreate": false,
-      "authenticateByDefault": false,
-      "linkOnly": false,
-      "config": {
-        "clientId": "${MICROSOFT_CLIENT_ID:-placeholder}",
-        "clientSecret": "${MICROSOFT_CLIENT_SECRET:-placeholder}",
-        "defaultScope": "openid email profile",
-        "syncMode": "IMPORT"
-      }
-    }
-  ],
+  "identityProviders": [],
   "requiredActions": [
     {
       "alias": "CONFIGURE_TOTP",
@@ -194,12 +139,11 @@
       "credentials": [
         {
           "type": "password",
-          "value": "Admin@123!",
+          "value": "Admin1234!",
           "temporary": false
         }
       ],
       "realmRoles": ["admin", "employee"],
-      "requiredActions": ["CONFIGURE_TOTP"],
       "attributes": {
         "customer_id": ["0"]
       }
@@ -214,7 +158,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "Manager@123!",
+          "value": "Employee1234!",
           "temporary": false
         }
       ],
@@ -224,22 +168,98 @@
       }
     },
     {
-      "username": "client1@bankofferai.com",
-      "email": "client1@bankofferai.com",
+      "username": "demo@bankofferai.com",
+      "email": "demo@bankofferai.com",
       "emailVerified": true,
       "enabled": true,
       "firstName": "Demo",
-      "lastName": "Client",
+      "lastName": "User",
       "credentials": [
         {
           "type": "password",
-          "value": "Client@123!",
+          "value": "Demo1234!",
           "temporary": false
         }
       ],
       "realmRoles": ["client"],
       "attributes": {
         "customer_id": ["1"]
+      }
+    },
+    {
+      "username": "maria.johnson@example.com",
+      "email": "maria.johnson@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Maria",
+      "lastName": "Johnson",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer1!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "customer_id": ["2"]
+      }
+    },
+    {
+      "username": "alex.chen@example.com",
+      "email": "alex.chen@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Alex",
+      "lastName": "Chen",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer1!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "customer_id": ["3"]
+      }
+    },
+    {
+      "username": "sarah.miller@example.com",
+      "email": "sarah.miller@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Sarah",
+      "lastName": "Miller",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer1!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "customer_id": ["4"]
+      }
+    },
+    {
+      "username": "john.doe@example.com",
+      "email": "john.doe@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "John",
+      "lastName": "Doe",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Customer1!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["client"],
+      "attributes": {
+        "customer_id": ["5"]
       }
     }
   ]
