@@ -545,10 +545,11 @@ async def get_offers(
                      input_features, profile_result, suitability_checks,
                      scored_products, final_offers, excluded_products,
                      model_version, consent_snapshot)
-                    VALUES (:rid, :ext_cid::uuid, :cid, :features::jsonb,
-                            :profile::jsonb, :suitability::jsonb,
-                            :scored::jsonb, :offers::jsonb, :excluded::jsonb,
-                            :model, :consent::jsonb)"""),
+                    VALUES (CAST(:rid AS uuid), CAST(:ext_cid AS uuid), :cid,
+                            CAST(:features AS jsonb), CAST(:profile AS jsonb),
+                            CAST(:suitability AS jsonb), CAST(:scored AS jsonb),
+                            CAST(:offers AS jsonb), CAST(:excluded AS jsonb),
+                            :model, CAST(:consent AS jsonb))"""),
                 {
                     "rid": recommendation_id,
                     "ext_cid": external_id or str(uuid.uuid4()),
