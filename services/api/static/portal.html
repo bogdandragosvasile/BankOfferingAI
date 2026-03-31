@@ -86,6 +86,19 @@ tailwind.config = {
       <h2 class="text-xl font-semibold text-white mb-1" data-i18n="cauth.login_title">Customer Login</h2>
       <p class="text-dark-300 text-sm mb-5" data-i18n="cauth.login_subtitle">Sign in to your banking portal</p>
 
+      <!-- SSO Button -->
+      <button onclick="ssoCustomerLogin()" id="sso-customer-btn"
+        class="w-full py-2.5 mb-4 bg-dark-700 hover:bg-dark-600 border border-dark-500/50 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        <span data-i18n="sauth.sso_login">Sign in with SSO (Keycloak)</span>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+        <span class="text-xs text-dark-400">or</span>
+        <div class="flex-1 h-px bg-dark-600/50"></div>
+      </div>
+
       <div id="login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
 
       <div class="space-y-4">
@@ -928,6 +941,14 @@ function customerLogout() {
   state.feedbackGiven = {};
   state.suitabilityPending = null;
 
+  // If logged in via SSO, do Keycloak logout
+  if (_ssoCustomerAuth && window.BOAI_AUTH && !window.BOAI_AUTH.isDemoMode()) {
+    _ssoCustomerAuth = false;
+    window.BOAI_AUTH.logout();
+    return;
+  }
+
+  _ssoCustomerAuth = false;
   document.getElementById('screen-portal').classList.add('hidden');
   document.getElementById('screen-auth').classList.remove('hidden');
   showLoginForm();
@@ -1584,10 +1605,35 @@ function escAttr(str) {
   return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
+// ==================== SSO LOGIN ====================
+let _ssoCustomerAuth = false;
+
+function ssoCustomerLogin() {
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.keycloakLogin();
+  }
+}
+
 // ==================== AUTH GATE ====================
 function setupAuthGate() {
-  // Customer portal uses its own auth (email/password), not the demo role selector.
-  // Nothing to do here — init() handles session restoration.
+  // Listen for Keycloak SSO auth
+  if (window.BOAI_AUTH) {
+    window.BOAI_AUTH.onAuthChange(function(user) {
+      if (user && !_ssoCustomerAuth) {
+        const roles = user.roles || [];
+        // If this is an admin/employee SSO user, redirect them to their portal
+        if (roles.includes('admin') || (roles.includes('employee') && !roles.includes('client'))) {
+          window.location.href = '/';
+          return;
+        }
+        // Client SSO user — enter the customer portal
+        _ssoCustomerAuth = true;
+        const customerId = user.customer_id || '0';
+        const displayName = user.name || user.email;
+        enterPortal(customerId, displayName, null);
+      }
+    });
+  }
 }
 
 // ==================== LANGUAGE CHANGE HANDLER ====================
