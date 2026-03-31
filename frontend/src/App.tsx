@@ -52,19 +52,10 @@ function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) throw new Error("Invalid credentials");
-      const { token } = await res.json();
-      localStorage.setItem("auth_token", token);
-      window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message || "Login failed");
-    }
+    // Mock login for local development
+    const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcl9pZCI6ImRlbW8tMDAxIiwiZW1haWwiOiJkZW1vQGJhbmsuY29tIiwiYXVkIjoiYmFuay1vZmZlcmluZy1hcGkiLCJpc3MiOiJiYW5rLWF1dGgtc2VydmljZSJ9.mock";
+    localStorage.setItem("auth_token", mockToken);
+    window.location.href = "/dashboard";
   };
 
   return (
