@@ -1618,7 +1618,7 @@ function ssoCustomerLogin() {
 function setupAuthGate() {
   // Listen for Keycloak SSO auth
   if (window.BOAI_AUTH) {
-    window.BOAI_AUTH.onAuthChange(function(user) {
+    window.BOAI_AUTH.onAuthChange(async function(user) {
       if (user && !_ssoCustomerAuth) {
         const roles = user.roles || [];
         // If this is an admin/employee SSO user, redirect them to their portal
@@ -1626,11 +1626,22 @@ function setupAuthGate() {
           window.location.href = '/';
           return;
         }
-        // Client SSO user — enter the customer portal
+        // Client SSO user — look up customer_id from database by email
         _ssoCustomerAuth = true;
-        const customerId = user.customer_id || '0';
-        const displayName = user.name || user.email;
-        enterPortal(customerId, displayName, null);
+        try {
+          const resp = await fetch(API + '/customer-auth/sso-lookup?email=' + encodeURIComponent(user.email));
+          if (resp.ok) {
+            const data = await resp.json();
+            enterPortal(data.customer_id, data.display_name || user.name, data.external_id);
+          } else {
+            // No customer account linked — use SSO name with fallback customer_id
+            console.warn('[Portal] No customer account for SSO email:', user.email);
+            enterPortal(user.customer_id || '1', user.name || user.email, null);
+          }
+        } catch(e) {
+          console.error('[Portal] SSO lookup failed:', e);
+          enterPortal(user.customer_id || '1', user.name || user.email, null);
+        }
       }
     });
   }

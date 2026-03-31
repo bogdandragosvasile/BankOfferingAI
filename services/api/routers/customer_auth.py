@@ -155,6 +155,39 @@ async def register_customer(body: CustomerRegisterRequest, request: Request):
         )
 
 
+@router.get(
+    "/sso-lookup",
+    summary="Look up customer by email for SSO login",
+    description="Returns customer_id and display_name for a Keycloak-authenticated user. "
+    "No password required — caller must already be authenticated via SSO.",
+)
+async def sso_lookup(email: str, request: Request):
+    session_factory = request.app.state.db_session_factory
+    email_h = hash_email(email)
+
+    async with session_factory() as session:
+        result = await session.execute(
+            text(
+                "SELECT ca.customer_id, ca.display_name, c.external_id, ca.anonymize_after "
+                "FROM customer_auth ca "
+                "JOIN customers c ON c.customer_id = ca.customer_id "
+                "WHERE ca.email_hash = :eh"
+            ),
+            {"eh": email_h},
+        )
+        row = result.fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="No customer account linked to this email")
+
+        return {
+            "customer_id": str(row[0]),
+            "display_name": row[1] or "Customer",
+            "external_id": str(row[2]),
+            "anonymize_after": row[3].isoformat() if row[3] else None,
+        }
+
+
 @router.post(
     "/login",
     response_model=CustomerLoginResponse,
