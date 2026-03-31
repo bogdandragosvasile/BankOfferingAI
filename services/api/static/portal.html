@@ -659,13 +659,18 @@ tailwind.config = {
             <p class="text-sm text-dark-200" data-i18n="onboarding.ai_notice">This platform uses AI to generate personalized product recommendations (EU AI Act Art. 13). You have the right to request explanations and contest any automated decision.</p>
           </div>
 
-          <!-- Dynamic consent checkboxes from registry -->
-          <div id="onboarding-consent-list" class="space-y-3">
-            <!-- Filled dynamically from consent registry -->
+          <!-- Regulatory info from consent registry (collapsible) -->
+          <div id="onboarding-consent-list" class="mb-5 hidden">
+            <div onclick="this.classList.toggle('open'); document.getElementById('ob-reg-details').classList.toggle('hidden')" class="collapsible-header flex items-center gap-2 cursor-pointer p-3 rounded-xl bg-dark-800/30 border border-dark-600/20 hover:border-accent/20 transition-colors">
+              <svg class="w-4 h-4 text-dark-300 chevron transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <span class="text-xs font-medium text-dark-200" data-i18n="onboarding.regulatory_consents">Regulatory consent information</span>
+              <span id="ob-reg-count" class="text-[10px] text-dark-400 ml-auto"></span>
+            </div>
+            <div id="ob-reg-details" class="hidden mt-2 space-y-1.5 pl-2"></div>
           </div>
 
-          <!-- Static consent toggles -->
-          <div class="mt-5 space-y-3">
+          <!-- Consent toggles -->
+          <div class="space-y-3">
             <label class="flex items-start gap-3 p-3 rounded-xl bg-dark-800/50 border border-dark-600/30 cursor-pointer hover:border-accent/20 transition-colors">
               <input type="checkbox" id="ob-profiling" class="mt-0.5 w-4 h-4 accent-accent" checked>
               <div>
@@ -2004,25 +2009,28 @@ async function loadOnboardingConsentTexts() {
     const resp = await fetch(API + '/consent-registry/texts');
     if (!resp.ok) return;
     const texts = await resp.json();
-    const container = document.getElementById('onboarding-consent-list');
-    if (!container || !texts.length) return;
+    if (!texts.length) return;
 
-    container.innerHTML = '<p class="text-xs text-dark-400 font-medium mb-2">' + t('onboarding.regulatory_consents') + '</p>';
-    texts.forEach(txt => {
+    const wrapper = document.getElementById('onboarding-consent-list');
+    const details = document.getElementById('ob-reg-details');
+    const countEl = document.getElementById('ob-reg-count');
+    if (!wrapper || !details) return;
+
+    wrapper.classList.remove('hidden');
+    if (countEl) countEl.textContent = `${texts.length} items`;
+
+    details.innerHTML = texts.map(txt => {
       const lang = (window.BOAI_I18N?.currentLang || 'en').toUpperCase();
       const label = (lang === 'DE' ? txt.text_de : lang === 'RO' ? txt.text_ro : null) || txt.official_text || txt.consent_type;
-      container.innerHTML += `
-        <div class="p-3 rounded-xl bg-dark-800/30 border border-dark-600/20">
-          <div class="flex items-start gap-2">
-            <svg class="w-4 h-4 text-neon-cyan flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div>
-              <p class="text-xs font-medium text-dark-100">${escHtml(txt.consent_type || '')}</p>
-              <p class="text-xs text-dark-300 mt-1">${escHtml(label)}</p>
-              ${txt.legal_reference ? `<p class="text-[10px] text-dark-400 mt-1">${escHtml(txt.legal_reference)}</p>` : ''}
-            </div>
-          </div>
-        </div>`;
-    });
+      return `<div class="flex items-start gap-2 p-2 rounded-lg bg-dark-800/20">
+        <span class="text-[10px] text-neon-cyan mt-0.5">&#9679;</span>
+        <div>
+          <span class="text-[11px] font-medium text-dark-200">${escHtml(txt.consent_type || '')}</span>
+          ${txt.legal_reference ? `<span class="text-[10px] text-dark-400 ml-1">(${escHtml(txt.legal_reference)})</span>` : ''}
+          <p class="text-[10px] text-dark-400 mt-0.5 leading-relaxed">${escHtml(label)}</p>
+        </div>
+      </div>`;
+    }).join('');
   } catch (e) {
     console.error('Failed to load consent texts:', e);
   }
