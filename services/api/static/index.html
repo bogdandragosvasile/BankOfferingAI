@@ -63,6 +63,8 @@ tailwind.config = {
   .compliance-tab { transition: all 0.15s; }
   .compliance-tab:hover { background: rgba(99,102,241,0.1); }
   .compliance-tab.active { background: rgba(99,102,241,0.15); border-color: #6366f1; color: #818cf8; }
+  .override-form { animation: fadeIn 0.2s ease forwards; }
+  .kill-switch-banner { background: linear-gradient(90deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08)); border-bottom: 1px solid rgba(239,68,68,0.3); }
 </style>
 </head>
 <body class="font-sans text-dark-100 min-h-screen flex">
@@ -119,6 +121,12 @@ tailwind.config = {
 
 <!-- Main Content -->
 <main class="ml-[72px] flex-1 min-h-screen">
+  <!-- Kill-switch banner (AI Act human oversight) -->
+  <div id="killSwitchBanner" class="kill-switch-banner hidden sticky top-0 z-50 px-8 py-3 flex items-center justify-center gap-3">
+    <svg class="w-5 h-5 text-neon-red animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+    <span class="text-sm font-bold text-neon-red tracking-wide" data-i18n="compliance.model_suspended">MODEL SUSPENDED</span>
+    <span class="text-xs text-neon-red/70" id="killSwitchReason"></span>
+  </div>
   <!-- Top Bar -->
   <header class="sticky top-0 z-40 bg-dark-950/80 backdrop-blur-xl border-b border-dark-600/30 px-8 py-4 flex items-center justify-between">
     <div>
@@ -135,7 +143,8 @@ tailwind.config = {
       <div id="lang-selector-emp"></div>
       <div id="theme-toggle-emp"></div>
       <div id="user-badge-emp"></div>
-      <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-neon-green pulse-dot"></div><span class="text-xs text-dark-300" data-i18n="common.online">System Online</span></div>
+      <div id="killSwitchIndicator" class="hidden flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neon-red/10 border border-neon-red/20"><div class="w-2 h-2 rounded-full bg-neon-red pulse-dot"></div><span class="text-[10px] font-semibold text-neon-red" data-i18n="compliance.model_suspended_short">SUSPENDED</span></div>
+      <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-neon-green pulse-dot" id="systemStatusDot"></div><span class="text-xs text-dark-300" id="systemStatusText" data-i18n="common.online">System Online</span></div>
     </div>
   </header>
 
@@ -151,7 +160,21 @@ tailwind.config = {
       <div class="col-span-8 space-y-6">
         <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><span data-i18n="dashboard.select_customer">Select Customer</span></h2><span class="text-xs text-dark-300" id="selectedCustomerInfo" data-i18n="dashboard.click_customer">Click a customer to view offers</span></div><div class="flex flex-wrap gap-2" id="customerGrid"></div></div>
         <div class="glass-card rounded-2xl p-6 hidden" id="profileCard"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span data-i18n="dashboard.customer_profile">Customer Profile</span></h2><span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-light" id="profileLifeStage">--</span></div><div class="grid grid-cols-4 gap-4" id="profileDetails"></div></div>
-        <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg><span data-i18n="dashboard.personalized_offers">Personalized Offers</span></h2><span class="text-xs text-dark-300" id="offersCount" data-i18n="common.select_customer">Select a customer</span></div><div id="offersGrid" class="space-y-3"><div class="flex items-center justify-center py-16 text-dark-400"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p class="text-sm" data-i18n="dashboard.select_customer_prompt">Select a customer above to generate AI-powered offers</p></div></div></div></div>
+        <!-- Consent Status Card (AI Act Art.22 transparency) -->
+        <div class="glass-card rounded-2xl p-5 hidden" id="consentStatusCard">
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2 mb-3">
+            <svg class="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <span data-i18n="compliance.consent_status">Consent Status</span>
+          </h3>
+          <div class="grid grid-cols-3 gap-3" id="consentStatusDetails"></div>
+        </div>
+        <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg><span data-i18n="dashboard.personalized_offers">Personalized Offers</span></h2><span class="text-xs text-dark-300" id="offersCount" data-i18n="common.select_customer">Select a customer</span></div>
+        <!-- AI Act disclosure -->
+        <div class="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-lg bg-accent/5 border border-accent/10" id="aiDisclosure">
+          <svg class="w-4 h-4 text-accent-light flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-[11px] text-dark-300 leading-relaxed" data-i18n="compliance.ai_disclosure">Recommendations generated by AI scoring model (rules-1.0.0). Employees can override any recommendation.</p>
+        </div>
+        <div id="offersGrid" class="space-y-3"><div class="flex items-center justify-center py-16 text-dark-400"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p class="text-sm" data-i18n="dashboard.select_customer_prompt">Select a customer above to generate AI-powered offers</p></div></div></div></div>
         <!-- Excluded Products Section (collapsible, hidden by default) -->
         <div class="glass-card rounded-2xl p-6 hidden" id="excludedProductsCard">
           <div class="collapsible-header flex items-center justify-between" onclick="toggleExcludedProducts()">
@@ -962,8 +985,9 @@ async function selectCustomer(id) {
   document.getElementById('selectedCustomerInfo').textContent = `Customer #${id} selected`;
   const offersGrid = document.getElementById('offersGrid');
   offersGrid.innerHTML = '<div class="flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>';
-  // Hide excluded products while loading
+  // Hide excluded products and consent status while loading
   document.getElementById('excludedProductsCard').classList.add('hidden');
+  document.getElementById('consentStatusCard').classList.add('hidden');
   try {
     const [offResp, profResp] = await Promise.all([fetch(`${API}/offers/${id}?top_n=8`), fetch(`${API}/profiles/${id}`)]);
     if (offResp.ok) {
@@ -981,6 +1005,8 @@ async function selectCustomer(id) {
       offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
     }
     if (profResp.ok) { const prof=await profResp.json(); profileCache[id]=prof; renderProfile(prof); }
+    // Load granular consent status for AI Act transparency
+    loadConsentStatus(id);
   } catch(e) { console.error(e); offersGrid.innerHTML='<p class="text-center text-neon-red py-8 text-sm">Error connecting to API</p>'; }
 }
 
@@ -1006,10 +1032,21 @@ function renderOffers(offers, responseData) {
     const c=COLORS[o.product_type]||COLORS.investment, pct=(o.relevance_score*100).toFixed(0), conf=(o.confidence_score*100).toFixed(0);
     const prod = PRODUCTS.find(p => p.name.startsWith(o.product_name) || o.product_name.startsWith(p.name.replace(' Portfolio','')));
     const onclick = prod ? `onclick="openProductDetail('${prod.id}')"` : '';
+    const productId = prod ? prod.id : (o.product_id || o.product_name);
 
     // Suitability badge
     const suitabilityBadge = o.suitability_status === 'passed'
       ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-neon-green/10 text-neon-green"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Suitable</span>`
+      : '';
+
+    // Human review required badge (AI Act Art.22)
+    const humanReviewBadge = o.human_review_required
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-neon-amber/10 text-neon-amber" title="Customer has not given Art. 22 automated decision consent" data-i18n="compliance.requires_review">Requires Review</span>`
+      : '';
+
+    // MiFID II suitability confirmation badge
+    const mifidBadge = o.requires_suitability_confirmation
+      ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-neon-cyan/10 text-neon-cyan" title="MiFID II suitability confirmation required" data-i18n="compliance.mifid_ii">MiFID II</span>`
       : '';
 
     // Explanation (GDPR art.22)
@@ -1022,19 +1059,154 @@ function renderOffers(offers, responseData) {
       ? `<span class="text-[9px] text-dark-500 font-mono mt-1 block">ref: ${recId.substring(0, 12)}...</span>`
       : '';
 
+    // Override button and inline form
+    const overrideId = `override-${i}`;
+    const overrideBtn = `<button onclick="event.stopPropagation();toggleOverrideForm('${overrideId}')" class="text-[10px] text-neon-amber hover:text-neon-amber/80 font-medium px-2 py-0.5 rounded border border-neon-amber/20 hover:border-neon-amber/40 transition" data-i18n="compliance.override">Override</button>`;
+    const overrideForm = `<div id="${overrideId}" class="hidden override-form mt-3 p-3 rounded-lg bg-dark-800/60 border border-dark-600/30" onclick="event.stopPropagation()">
+      <div class="flex items-center gap-2 mb-2">
+        <select id="${overrideId}-type" class="bg-dark-900 border border-dark-600/50 rounded-lg px-2 py-1.5 text-[11px] text-dark-100 focus:outline-none focus:border-accent/50 flex-shrink-0">
+          <option value="reject">Reject</option>
+          <option value="suppress">Suppress</option>
+          <option value="escalate">Escalate</option>
+        </select>
+        <input type="text" id="${overrideId}-reason" placeholder="Reason (required)..." class="bg-dark-900 border border-dark-600/50 rounded-lg px-2 py-1.5 text-[11px] text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 flex-1 min-w-0"/>
+        <button onclick="submitOverride('${recId}', ${selectedCustomerId}, '${productId}', '${overrideId}')" class="bg-neon-amber/20 hover:bg-neon-amber/30 text-neon-amber text-[11px] font-medium px-3 py-1.5 rounded-lg transition flex-shrink-0" data-i18n="common.submit">Submit</button>
+      </div>
+    </div>`;
+
     return `<div class="offer-card glass-card rounded-xl p-4 fade-in cursor-pointer" style="animation-delay:${i*0.06}s" ${onclick}>
       <div class="flex items-start gap-4">
         <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">${ICONS[o.product_type]||''}</div>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-1"><h3 class="text-sm font-semibold text-white">${o.product_name}</h3><div class="flex items-center gap-2">${suitabilityBadge}<span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div></div>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-sm font-semibold text-white">${o.product_name}</h3>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">${humanReviewBadge}${mifidBadge}${suitabilityBadge}<span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div>
+          </div>
           <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${o.personalization_reason}</p>
           ${explanation}
-          <div class="flex items-center gap-3 mt-2"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span></div>
+          <div class="flex items-center gap-3 mt-2"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span><span class="ml-1">${overrideBtn}</span></div>
           ${recRef}
+          ${overrideForm}
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+// ===== AI ACT HUMAN OVERSIGHT =====
+function toggleOverrideForm(overrideId) {
+  const form = document.getElementById(overrideId);
+  if (form) form.classList.toggle('hidden');
+}
+
+async function submitOverride(recommendationId, customerId, productId, overrideId) {
+  const typeEl = document.getElementById(`${overrideId}-type`);
+  const reasonEl = document.getElementById(`${overrideId}-reason`);
+  if (!reasonEl || !typeEl) return;
+  const reason = reasonEl.value.trim();
+  if (!reason) {
+    reasonEl.style.borderColor = 'rgba(239,68,68,0.5)';
+    reasonEl.placeholder = 'Reason is required!';
+    return;
+  }
+  const overrideType = typeEl.value;
+  const employeeId = (window.BOAI_AUTH && window.BOAI_AUTH.getUser) ? (window.BOAI_AUTH.getUser()?.id || 'employee-demo') : 'employee-demo';
+
+  try {
+    const resp = await fetch(`${API}/compliance/override`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recommendation_id: recommendationId,
+        customer_id: customerId,
+        employee_id: employeeId,
+        product_id: productId,
+        override_type: overrideType,
+        reason: reason
+      })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const result = await resp.json();
+    showNotification(`Override ${overrideType}d successfully (ID: ${result.id || 'ok'})`, 'success');
+    const form = document.getElementById(overrideId);
+    if (form) form.innerHTML = `<p class="text-[11px] text-neon-green flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Override recorded: ${overrideType}</p>`;
+  } catch (err) {
+    console.error('Override error:', err);
+    showNotification(`Override failed: ${err.message}`, 'error');
+  }
+}
+
+function showNotification(message, type) {
+  const existing = document.getElementById('aiActNotification');
+  if (existing) existing.remove();
+  const colors = type === 'success' ? 'bg-neon-green/10 border-neon-green/30 text-neon-green' : 'bg-neon-red/10 border-neon-red/30 text-neon-red';
+  const notif = document.createElement('div');
+  notif.id = 'aiActNotification';
+  notif.className = `fixed bottom-6 right-6 z-[200] px-4 py-3 rounded-xl border ${colors} text-sm font-medium shadow-lg fade-in`;
+  notif.textContent = message;
+  document.body.appendChild(notif);
+  setTimeout(() => { notif.style.opacity = '0'; notif.style.transition = 'opacity 0.3s'; setTimeout(() => notif.remove(), 300); }, 4000);
+}
+
+async function fetchKillSwitchStatus() {
+  try {
+    const resp = await fetch(`${API}/compliance/kill-switch`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const banner = document.getElementById('killSwitchBanner');
+    const indicator = document.getElementById('killSwitchIndicator');
+    if (data.active) {
+      banner.classList.remove('hidden');
+      indicator.classList.remove('hidden');
+      indicator.classList.add('flex');
+      const reasonEl = document.getElementById('killSwitchReason');
+      if (reasonEl && data.reason) reasonEl.textContent = `- ${data.reason}`;
+      // Update system status to reflect suspended state
+      const dot = document.getElementById('systemStatusDot');
+      const text = document.getElementById('systemStatusText');
+      if (dot) { dot.classList.remove('bg-neon-green'); dot.classList.add('bg-neon-red'); }
+      if (text) text.textContent = 'Model Suspended';
+    }
+  } catch (err) {
+    console.error('Kill-switch check failed:', err);
+  }
+}
+
+async function loadConsentStatus(customerId) {
+  const card = document.getElementById('consentStatusCard');
+  const details = document.getElementById('consentStatusDetails');
+  if (!card || !details) return;
+  try {
+    const resp = await fetch(`${API}/compliance/consent/${customerId}`);
+    if (!resp.ok) { card.classList.add('hidden'); return; }
+    const data = await resp.json();
+    card.classList.remove('hidden');
+    const icon = (val) => val ? '<span class="text-neon-green">&#10003;</span>' : '<span class="text-neon-red">&#10007;</span>';
+    details.innerHTML = `
+      <div class="bg-dark-800/50 rounded-lg p-2.5">
+        <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1" data-i18n="consent.profiling">Profiling</p>
+        <p class="text-sm font-medium text-dark-100">${icon(data.profiling_consent)} ${data.profiling_consent ? 'Granted' : 'Not granted'}</p>
+      </div>
+      <div class="bg-dark-800/50 rounded-lg p-2.5">
+        <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1" data-i18n="consent.automated_decisions">Automated Decisions</p>
+        <p class="text-sm font-medium text-dark-100">${icon(data.automated_decision_consent)} ${data.automated_decision_consent ? 'Granted' : 'Not granted'}</p>
+      </div>
+      <div class="bg-dark-800/50 rounded-lg p-2.5">
+        <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1" data-i18n="consent.family_data">Family Data</p>
+        <p class="text-sm font-medium text-dark-100">${icon(data.family_context_consent)} ${data.family_context_consent ? 'Granted' : 'Not granted'}</p>
+      </div>
+      <div class="bg-dark-800/50 rounded-lg p-2.5 col-span-3">
+        <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1" data-i18n="consent.marketing">Marketing Channels</p>
+        <div class="flex items-center gap-4 mt-0.5">
+          <span class="text-xs text-dark-200">Push: ${icon(data.marketing_push)}</span>
+          <span class="text-xs text-dark-200">Email: ${icon(data.marketing_email)}</span>
+          <span class="text-xs text-dark-200">SMS: ${icon(data.marketing_sms)}</span>
+        </div>
+      </div>`;
+  } catch (err) {
+    console.error('Consent status load error:', err);
+    card.classList.add('hidden');
+  }
 }
 
 // ===== CHARTS =====
@@ -1118,6 +1290,7 @@ async function init() {
   renderProductCatalogSidebar();
   initDistributionChart();
   initScoreChart();
+  fetchKillSwitchStatus();
   try { const r=await fetch(`${API}/offers/1?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
   document.getElementById('loadingOverlay').style.opacity='0';
   setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',500);

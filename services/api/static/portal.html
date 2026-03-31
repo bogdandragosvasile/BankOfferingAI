@@ -179,6 +179,17 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- AI Act Art. 13 Transparency Disclosure -->
+      <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-accent">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-accent-light flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <div>
+            <p class="text-accent-light font-semibold text-sm mb-1" data-i18n="portal.ai_act_disclosure_title">AI-Generated Recommendations (EU AI Act Art. 13)</p>
+            <p class="text-dark-200 text-sm" data-i18n="portal.ai_act_disclosure">These recommendations are generated automatically by an AI system. You have the right to request an explanation and contest any recommendation.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Offers grid -->
       <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
         <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -283,16 +294,24 @@ tailwind.config = {
 
         <!-- Legal references -->
         <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-neon-cyan">
-          <p class="text-dark-200 text-sm"><span class="font-semibold text-neon-cyan" data-i18n="consent.legal">Legal basis: GDPR Art. 22, EU AI Act</span> <span data-i18n="portal.consent_legal_text">Under GDPR Article 22, you have the right not to be subject to a decision based solely on automated processing. Under the EU AI Act, you have the right to meaningful explanation of AI-driven decisions. Your consent choices below directly control whether automated profiling is performed.</span></p>
+          <p class="text-dark-200 text-sm"><span class="font-semibold text-neon-cyan" data-i18n="consent.legal">Legal basis: GDPR Art. 6(1)(a), Art. 9, Art. 22, ePrivacy Directive, EU AI Act</span> <span data-i18n="portal.consent_legal_text">Under GDPR Article 22, you have the right not to be subject to a decision based solely on automated processing. Under the EU AI Act, you have the right to meaningful explanation of AI-driven decisions. Your consent choices below directly control whether automated profiling is performed.</span></p>
         </div>
 
-        <!-- Profiling consent -->
+        <!-- Consent #1: General Financial Profiling -->
         <div class="glass-card rounded-2xl p-6 mb-4">
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
-              <h4 class="text-base font-semibold text-white mb-2" data-i18n="consent.profiling">Profiling Consent</h4>
-              <p class="text-dark-200 text-sm mb-2" data-i18n="consent.profiling_desc">Allow the bank to use your financial data to generate personalized product recommendations.</p>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-accent-light bg-accent/10 px-2 py-0.5 rounded">1</span>
+                <h4 class="text-base font-semibold text-white" data-i18n="consent.profiling">General Financial Profiling</h4>
+              </div>
+              <p class="text-xs text-neon-cyan font-medium mb-2">GDPR Art. 6(1)(a)</p>
+              <p class="text-dark-200 text-sm mb-2" data-i18n="consent.profiling_desc">Allow analysis of your financial data to generate personalized offers.</p>
               <p class="text-dark-400 text-xs" data-i18n="portal.profiling_detail">When enabled, the system analyzes your transaction patterns, savings rate, and balance trends to find products that best match your financial situation. When disabled, you will not receive any personalized offers.</p>
+              <div class="mt-2 flex items-center gap-2">
+                <svg class="w-4 h-4 text-neon-amber flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                <p class="text-neon-amber text-xs font-medium" data-i18n="consent.profiling_warning">Without this consent, no offers can be generated</p>
+              </div>
               <p class="text-dark-400 text-xs mt-2" id="profiling-timestamp"></p>
             </div>
             <div class="flex-shrink-0 pt-1">
@@ -303,19 +322,117 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- Sensitive data consent -->
-        <div class="glass-card rounded-2xl p-6 mb-6">
+        <!-- Consent #2: Automated Decisions -->
+        <div id="consent-automated-wrapper" class="glass-card rounded-2xl p-6 mb-4 transition-opacity duration-300">
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
-              <h4 class="text-base font-semibold text-white mb-2" data-i18n="consent.sensitive">Sensitive Data Consent</h4>
-              <p class="text-dark-200 text-sm mb-2" data-i18n="portal.sensitive_desc_full">Allow the use of family status (number of dependents) for more accurate recommendations.</p>
-              <p class="text-dark-400 text-xs" data-i18n="portal.sensitive_detail">When enabled, the number of dependents you have is considered when recommending products like life insurance or pension planning. This data is never shared with third parties. When disabled, family-related signals are excluded from scoring.</p>
-              <p class="text-dark-400 text-xs mt-2" id="sensitive-timestamp"></p>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-accent-light bg-accent/10 px-2 py-0.5 rounded">2</span>
+                <h4 class="text-base font-semibold text-white" data-i18n="consent.automated_decision">Automated Decisions</h4>
+              </div>
+              <p class="text-xs text-neon-cyan font-medium mb-2">GDPR Art. 22</p>
+              <p class="text-dark-200 text-sm mb-2" data-i18n="consent.automated_decision_desc">Allow fully automated offer generation without human review per offer.</p>
+              <p class="text-dark-400 text-xs" data-i18n="consent.automated_decision_note">You can always request an explanation and contest any offer, regardless of this setting.</p>
+              <p class="text-dark-400 text-xs mt-2" id="automated-decision-timestamp"></p>
             </div>
             <div class="flex-shrink-0 pt-1">
-              <div id="toggle-sensitive" class="toggle-track off" onclick="toggleConsent('sensitive')">
+              <div id="toggle-automated-decision" class="toggle-track off" onclick="toggleConsent('automated_decision')">
                 <div class="toggle-thumb"></div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consent #3: Marketing Communications -->
+        <div class="glass-card rounded-2xl p-6 mb-4">
+          <div class="flex items-start gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-accent-light bg-accent/10 px-2 py-0.5 rounded">3</span>
+                <h4 class="text-base font-semibold text-white" data-i18n="consent.marketing">Marketing Communications</h4>
+              </div>
+              <p class="text-xs text-neon-cyan font-medium mb-2">ePrivacy Directive</p>
+              <p class="text-dark-200 text-sm mb-4" data-i18n="consent.marketing_desc">Choose how you want to receive personalized offers.</p>
+
+              <!-- Push notifications toggle -->
+              <div class="flex items-center justify-between py-3 border-b border-dark-600/30">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-dark-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                  <div>
+                    <p class="text-sm text-dark-100 font-medium" data-i18n="consent.marketing_push">Push Notifications</p>
+                    <p class="text-dark-400 text-xs mt-1" id="marketing-push-timestamp"></p>
+                  </div>
+                </div>
+                <div id="toggle-marketing-push" class="toggle-track off" onclick="toggleConsent('marketing_push')">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
+
+              <!-- Email toggle -->
+              <div class="flex items-center justify-between py-3 border-b border-dark-600/30">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-dark-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  <div>
+                    <p class="text-sm text-dark-100 font-medium" data-i18n="consent.marketing_email">Email</p>
+                    <p class="text-dark-400 text-xs mt-1" id="marketing-email-timestamp"></p>
+                  </div>
+                </div>
+                <div id="toggle-marketing-email" class="toggle-track off" onclick="toggleConsent('marketing_email')">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
+
+              <!-- SMS toggle -->
+              <div class="flex items-center justify-between py-3">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-dark-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                  <div>
+                    <p class="text-sm text-dark-100 font-medium" data-i18n="consent.marketing_sms">SMS</p>
+                    <p class="text-dark-400 text-xs mt-1" id="marketing-sms-timestamp"></p>
+                  </div>
+                </div>
+                <div id="toggle-marketing-sms" class="toggle-track off" onclick="toggleConsent('marketing_sms')">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consent #4: Family Context -->
+        <div id="consent-family-wrapper" class="glass-card rounded-2xl p-6 mb-6 transition-opacity duration-300">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-accent-light bg-accent/10 px-2 py-0.5 rounded">4</span>
+                <h4 class="text-base font-semibold text-white" data-i18n="consent.family_context">Family Context</h4>
+              </div>
+              <p class="text-xs text-neon-cyan font-medium mb-2">GDPR Art. 9 (special category data)</p>
+              <p class="text-dark-200 text-sm mb-2" data-i18n="consent.family_context_desc">Allow use of family data (marital status, dependents) for insurance and family product recommendations.</p>
+              <div class="mt-2 flex items-center gap-2">
+                <svg class="w-4 h-4 text-dark-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-dark-400 text-xs" data-i18n="consent.family_context_warning">Without this consent, family-related products won't be recommended</p>
+              </div>
+              <p class="text-dark-400 text-xs mt-2" id="family-context-timestamp"></p>
+            </div>
+            <div class="flex-shrink-0 pt-1">
+              <div id="toggle-family-context" class="toggle-track off" onclick="toggleConsent('family_context')">
+                <div class="toggle-thumb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consent #5: MiFID II Suitability notice -->
+        <div class="glass-card rounded-2xl p-6 mb-6 border-l-4 border-neon-purple">
+          <div class="flex items-start gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-bold text-neon-purple bg-neon-purple/10 px-2 py-0.5 rounded">5</span>
+                <h4 class="text-base font-semibold text-white" data-i18n="consent.suitability">MiFID II Suitability Confirmation</h4>
+              </div>
+              <p class="text-xs text-neon-purple font-medium mb-2">MiFID II Art. 25</p>
+              <p class="text-dark-200 text-sm" data-i18n="consent.suitability_desc">When you accept an investment or bond product, you will be asked to confirm that you understand the risks and that the product matches your financial objectives. This confirmation is required per offer and is handled at the time of acceptance.</p>
             </div>
           </div>
         </div>
@@ -367,6 +484,35 @@ tailwind.config = {
   </main>
 </div>
 
+<!-- MiFID II Suitability Confirmation Modal -->
+<div id="suitability-modal" class="fixed inset-0 z-[100] hidden items-center justify-center" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+  <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4 glow-accent" style="border-color: rgba(167,139,250,0.3);">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-neon-purple/20 flex items-center justify-center">
+        <svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <div>
+        <h4 class="text-lg font-bold text-white" data-i18n="consent.suitability_modal_title">Suitability Confirmation</h4>
+        <p class="text-xs text-neon-purple font-medium">MiFID II Art. 25</p>
+      </div>
+    </div>
+    <div class="mb-4">
+      <p class="text-sm text-dark-200 mb-2"><span data-i18n="consent.suitability_product">Product:</span> <span id="suitability-product-name" class="text-white font-semibold"></span></p>
+      <p class="text-sm text-dark-200"><span data-i18n="consent.suitability_risk">Your risk profile:</span> <span id="suitability-risk-profile" class="text-neon-cyan font-semibold"></span></p>
+    </div>
+    <div class="bg-dark-800/50 rounded-xl p-4 mb-4">
+      <label class="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" id="suitability-checkbox" class="mt-1 w-4 h-4 rounded accent-neon-purple">
+        <span class="text-sm text-dark-100" data-i18n="consent.suitability_confirm_text">I confirm I understand the risks associated with this investment product and that it corresponds to my financial objectives.</span>
+      </label>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="suitability-confirm-btn" onclick="confirmSuitability()" disabled class="flex-1 px-4 py-2.5 rounded-xl bg-neon-purple/20 text-neon-purple/50 font-medium text-sm cursor-not-allowed transition-all" data-i18n="consent.suitability_confirm_btn">Confirm and Accept</button>
+      <button onclick="closeSuitabilityModal()" class="px-4 py-2.5 rounded-xl bg-dark-800 text-dark-200 font-medium text-sm hover:text-white transition-colors" data-i18n="common.cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ==================== STATE ====================
 const API = '';
@@ -379,8 +525,17 @@ let state = {
   feedbackData: null,
   recommendationId: null,
   currentSection: 'offers',
-  consentLocal: { profiling: false, sensitive: false },
+  consentLocal: {
+    profiling: false,
+    automated_decision: false,
+    marketing_push: false,
+    marketing_email: false,
+    marketing_sms: false,
+    family_context: false,
+    sensitive: false,
+  },
   feedbackGiven: {},  // offer_id -> action
+  suitabilityPending: null,  // { offerId, productName, productType }
 };
 
 // ==================== PRODUCT TYPE ICONS ====================
@@ -462,7 +617,6 @@ async function selectCustomer(customerId) {
   // Update UI with loaded data
   renderCustomerInfo();
   renderOffers();
-  updateConsentUI();
 }
 
 function switchCustomer() {
@@ -474,6 +628,7 @@ function switchCustomer() {
   state.feedbackData = null;
   state.recommendationId = null;
   state.feedbackGiven = {};
+  state.suitabilityPending = null;
 
   document.getElementById('screen-portal').classList.add('hidden');
   document.getElementById('screen-selector').classList.remove('hidden');
@@ -535,6 +690,11 @@ async function loadCustomerData() {
   if (data) {
     state.customerData = data;
     state.consentLocal.profiling = data.profiling_consent;
+    state.consentLocal.automated_decision = data.automated_decision_consent;
+    state.consentLocal.marketing_push = data.marketing_push;
+    state.consentLocal.marketing_email = data.marketing_email;
+    state.consentLocal.marketing_sms = data.marketing_sms;
+    state.consentLocal.family_context = data.family_context_consent;
     state.consentLocal.sensitive = data.sensitive_data_consent;
   }
 }
@@ -693,6 +853,16 @@ function renderOfferCard(offer, index) {
   const score = Math.round((offer.relevance_score || 0) * 100);
   const offerId = offer.offer_id || `offer_${index}`;
   const alreadyActed = state.feedbackGiven[offerId];
+  const needsSuitability = offer.requires_suitability_confirmation || (ptype === 'investment' || ptype === 'bond');
+
+  // AI Act badges
+  let badgesHtml = '';
+  if (offer.human_review_required) {
+    badgesHtml += `<span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-neon-amber/10 text-neon-amber" data-i18n="portal.badge_human_review"><span class="text-sm">&#9203;</span> Pending human review</span>`;
+  }
+  if (offer.requires_suitability_confirmation || needsSuitability) {
+    badgesHtml += `<span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-neon-purple/10 text-neon-purple" data-i18n="portal.badge_suitability"><span class="text-sm">&#128203;</span> Suitability confirmation required</span>`;
+  }
 
   let actionHtml = '';
   if (alreadyActed) {
@@ -706,9 +876,13 @@ function renderOfferCard(offer, index) {
         <span>${alreadyActed === 'accepted' ? t('offers.accepted') : t('offers.rejected')}</span>
       </div>`;
   } else {
+    // For investment/bond offers, route through suitability modal
+    const acceptFn = needsSuitability
+      ? `openSuitabilityModal('${escAttr(offerId)}', '${escAttr(offer.product_name)}', '${escAttr(ptype)}', '${escAttr(offer.product_id || '')}')`
+      : `acceptOffer('${escAttr(offerId)}', '${escAttr(offer.product_name)}')`;
     actionHtml = `
       <div class="flex items-center gap-2 mt-3" id="actions-${offerId}">
-        <button onclick="acceptOffer('${escAttr(offerId)}', '${escAttr(offer.product_name)}')" class="px-4 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-sm font-medium hover:bg-neon-green/20 transition-colors">${t('offers.accept')}</button>
+        <button onclick="${acceptFn}" class="px-4 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-sm font-medium hover:bg-neon-green/20 transition-colors">${t('offers.accept')}</button>
         <button onclick="showRejectForm('${escAttr(offerId)}')" class="px-4 py-1.5 rounded-lg bg-neon-red/10 text-neon-red text-sm font-medium hover:bg-neon-red/20 transition-colors">${t('offers.reject')}</button>
       </div>
       <div id="reject-form-${offerId}" class="hidden mt-3">
@@ -731,6 +905,7 @@ function renderOfferCard(offer, index) {
             <div>
               <h4 class="text-base font-semibold text-white">${escHtml(offer.product_name)}</h4>
               <span class="text-xs ${colorClass} font-medium">${formatType(ptype)}</span>
+              ${badgesHtml ? `<div class="flex flex-wrap gap-1.5 mt-1.5">${badgesHtml}</div>` : ''}
             </div>
             <div class="text-right flex-shrink-0">
               <p class="text-2xl font-bold text-white">${score}<span class="text-sm text-dark-300 font-normal">%</span></p>
@@ -860,33 +1035,59 @@ function formatTrend(trend) {
 }
 
 // ==================== RENDER: CONSENT SECTION ====================
+function setToggleState(toggleId, isOn) {
+  const el = document.getElementById(toggleId);
+  if (!el) return;
+  if (isOn) {
+    el.classList.remove('off');
+    el.classList.add('on');
+  } else {
+    el.classList.remove('on');
+    el.classList.add('off');
+  }
+}
+
 function renderConsentSection() {
   const c = state.customerData;
   if (!c) return;
 
-  // Set toggle states
-  const profilingToggle = document.getElementById('toggle-profiling');
-  const sensitiveToggle = document.getElementById('toggle-sensitive');
+  // Set all toggle states
+  setToggleState('toggle-profiling', state.consentLocal.profiling);
+  setToggleState('toggle-automated-decision', state.consentLocal.automated_decision);
+  setToggleState('toggle-marketing-push', state.consentLocal.marketing_push);
+  setToggleState('toggle-marketing-email', state.consentLocal.marketing_email);
+  setToggleState('toggle-marketing-sms', state.consentLocal.marketing_sms);
+  setToggleState('toggle-family-context', state.consentLocal.family_context);
+
+  // Consent #2 (automated) and #4 (family context) depend on profiling consent
+  const automatedWrapper = document.getElementById('consent-automated-wrapper');
+  const familyWrapper = document.getElementById('consent-family-wrapper');
 
   if (state.consentLocal.profiling) {
-    profilingToggle.classList.remove('off');
-    profilingToggle.classList.add('on');
+    automatedWrapper.style.opacity = '1';
+    automatedWrapper.style.pointerEvents = 'auto';
+    familyWrapper.style.opacity = '1';
+    familyWrapper.style.pointerEvents = 'auto';
   } else {
-    profilingToggle.classList.remove('on');
-    profilingToggle.classList.add('off');
-  }
-
-  if (state.consentLocal.sensitive) {
-    sensitiveToggle.classList.remove('off');
-    sensitiveToggle.classList.add('on');
-  } else {
-    sensitiveToggle.classList.remove('on');
-    sensitiveToggle.classList.add('off');
+    automatedWrapper.style.opacity = '0.4';
+    automatedWrapper.style.pointerEvents = 'none';
+    familyWrapper.style.opacity = '0.4';
+    familyWrapper.style.pointerEvents = 'none';
+    // Also disable dependent consents when profiling is off
+    state.consentLocal.automated_decision = false;
+    state.consentLocal.family_context = false;
+    setToggleState('toggle-automated-decision', false);
+    setToggleState('toggle-family-context', false);
   }
 
   // Timestamps
-  document.getElementById('profiling-timestamp').textContent = c.profiling_consent != null ? `Status: ${c.profiling_consent ? 'Granted' : 'Revoked'}` : '';
-  document.getElementById('sensitive-timestamp').textContent = c.sensitive_data_consent != null ? `Status: ${c.sensitive_data_consent ? 'Granted' : 'Revoked'}` : '';
+  const statusText = (val) => val ? 'Granted' : 'Revoked';
+  document.getElementById('profiling-timestamp').textContent = c.profiling_consent != null ? `Status: ${statusText(state.consentLocal.profiling)}` : '';
+  document.getElementById('automated-decision-timestamp').textContent = c.automated_decision_consent != null ? `Status: ${statusText(state.consentLocal.automated_decision)}` : '';
+  document.getElementById('marketing-push-timestamp').textContent = `Status: ${statusText(state.consentLocal.marketing_push)}`;
+  document.getElementById('marketing-email-timestamp').textContent = `Status: ${statusText(state.consentLocal.marketing_email)}`;
+  document.getElementById('marketing-sms-timestamp').textContent = `Status: ${statusText(state.consentLocal.marketing_sms)}`;
+  document.getElementById('family-context-timestamp').textContent = c.family_context_consent != null ? `Status: ${statusText(state.consentLocal.family_context)}` : '';
 
   // Warning
   const warning = document.getElementById('consent-warning');
@@ -898,10 +1099,28 @@ function renderConsentSection() {
 }
 
 function toggleConsent(type) {
-  if (type === 'profiling') {
-    state.consentLocal.profiling = !state.consentLocal.profiling;
-  } else if (type === 'sensitive') {
-    state.consentLocal.sensitive = !state.consentLocal.sensitive;
+  switch (type) {
+    case 'profiling':
+      state.consentLocal.profiling = !state.consentLocal.profiling;
+      break;
+    case 'automated_decision':
+      state.consentLocal.automated_decision = !state.consentLocal.automated_decision;
+      break;
+    case 'marketing_push':
+      state.consentLocal.marketing_push = !state.consentLocal.marketing_push;
+      break;
+    case 'marketing_email':
+      state.consentLocal.marketing_email = !state.consentLocal.marketing_email;
+      break;
+    case 'marketing_sms':
+      state.consentLocal.marketing_sms = !state.consentLocal.marketing_sms;
+      break;
+    case 'family_context':
+      state.consentLocal.family_context = !state.consentLocal.family_context;
+      break;
+    case 'sensitive':
+      state.consentLocal.sensitive = !state.consentLocal.sensitive;
+      break;
   }
   renderConsentSection();
 }
@@ -916,17 +1135,27 @@ async function saveConsent() {
 
   const result = await apiPut(`/compliance/consent/${state.customerId}`, {
     profiling_consent: state.consentLocal.profiling,
-    sensitive_data_consent: state.consentLocal.sensitive,
+    automated_decision_consent: state.consentLocal.automated_decision,
+    marketing_push: state.consentLocal.marketing_push,
+    marketing_email: state.consentLocal.marketing_email,
+    marketing_sms: state.consentLocal.marketing_sms,
+    family_context_consent: state.consentLocal.family_context,
+    sensitive_data_consent: state.consentLocal.family_context, // sync with family_context
   });
 
   btn.disabled = false;
   btn.textContent = t('portal.save_consent');
 
   if (result) {
-    // Update local state
+    // Update local state from API response
     if (state.customerData) {
       state.customerData.profiling_consent = state.consentLocal.profiling;
-      state.customerData.sensitive_data_consent = state.consentLocal.sensitive;
+      state.customerData.automated_decision_consent = state.consentLocal.automated_decision;
+      state.customerData.marketing_push = state.consentLocal.marketing_push;
+      state.customerData.marketing_email = state.consentLocal.marketing_email;
+      state.customerData.marketing_sms = state.consentLocal.marketing_sms;
+      state.customerData.family_context_consent = state.consentLocal.family_context;
+      state.customerData.sensitive_data_consent = state.consentLocal.family_context;
     }
 
     status.textContent = t('portal.saved_success');
@@ -971,6 +1200,69 @@ function renderHistorySection() {
         <td class="py-3 px-4 text-dark-300 text-sm">${fb.reason ? escHtml(fb.reason) : '<span class="text-dark-400">--</span>'}</td>
       </tr>`;
   }).join('');
+}
+
+// ==================== SUITABILITY MODAL (MiFID II) ====================
+function openSuitabilityModal(offerId, productName, productType, productId) {
+  state.suitabilityPending = { offerId, productName, productType, productId };
+
+  document.getElementById('suitability-product-name').textContent = productName;
+  const riskProfile = state.customerData ? (state.customerData.risk_profile || 'moderate') : 'moderate';
+  document.getElementById('suitability-risk-profile').textContent = riskProfile.charAt(0).toUpperCase() + riskProfile.slice(1);
+
+  const checkbox = document.getElementById('suitability-checkbox');
+  checkbox.checked = false;
+  updateSuitabilityBtn();
+
+  const modal = document.getElementById('suitability-modal');
+  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+}
+
+function closeSuitabilityModal() {
+  state.suitabilityPending = null;
+  const modal = document.getElementById('suitability-modal');
+  modal.classList.add('hidden');
+  modal.style.display = '';
+}
+
+function updateSuitabilityBtn() {
+  const checkbox = document.getElementById('suitability-checkbox');
+  const btn = document.getElementById('suitability-confirm-btn');
+  if (checkbox.checked) {
+    btn.disabled = false;
+    btn.className = 'flex-1 px-4 py-2.5 rounded-xl bg-neon-purple text-white font-medium text-sm cursor-pointer hover:bg-purple-600 transition-all';
+  } else {
+    btn.disabled = true;
+    btn.className = 'flex-1 px-4 py-2.5 rounded-xl bg-neon-purple/20 text-neon-purple/50 font-medium text-sm cursor-not-allowed transition-all';
+  }
+}
+
+// Attach checkbox listener after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const cb = document.getElementById('suitability-checkbox');
+  if (cb) cb.addEventListener('change', updateSuitabilityBtn);
+});
+// Also run immediately in case DOM is already loaded
+if (document.getElementById('suitability-checkbox')) {
+  document.getElementById('suitability-checkbox').addEventListener('change', updateSuitabilityBtn);
+}
+
+async function confirmSuitability() {
+  if (!state.suitabilityPending) return;
+  const { offerId, productName, productId } = state.suitabilityPending;
+
+  // Call the suitability confirmation API
+  await apiPost(`/compliance/suitability-confirm/${state.customerId}`, {
+    product_id: productId || offerId,
+    recommendation_id: state.recommendationId || '',
+    confirmed: true,
+  });
+
+  closeSuitabilityModal();
+
+  // Now proceed with the normal accept flow
+  await acceptOffer(offerId, productName);
 }
 
 // ==================== UTILS ====================

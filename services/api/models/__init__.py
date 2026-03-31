@@ -81,6 +81,12 @@ class Offer(BaseModel):
     suitability_status: str = Field(
         default="passed", description="Suitability check result: passed/excluded"
     )
+    human_review_required: bool = Field(
+        default=False, description="True if automated_decision_consent is missing (GDPR Art. 22)"
+    )
+    requires_suitability_confirmation: bool = Field(
+        default=False, description="True for investment products needing MiFID II confirmation"
+    )
     terms_summary: Optional[str] = Field(None, description="Brief terms summary")
     cta_url: str = Field(..., description="Call-to-action URL")
 
@@ -120,20 +126,105 @@ class FeedbackResponse(BaseModel):
     created_at: datetime
 
 
-# --- Consent models ---
+# --- Consent models (5-tier GDPR/ePrivacy/MiFID II consent map) ---
 
 class ConsentUpdate(BaseModel):
-    profiling_consent: Optional[bool] = None
-    sensitive_data_consent: Optional[bool] = None
+    """Update any combination of the 5 consent types."""
+    profiling_consent: Optional[bool] = None           # Consent #1: GDPR Art. 6(1)(a)
+    automated_decision_consent: Optional[bool] = None  # Consent #2: GDPR Art. 22
+    marketing_push: Optional[bool] = None              # Consent #3a: ePrivacy
+    marketing_email: Optional[bool] = None             # Consent #3b: ePrivacy
+    marketing_sms: Optional[bool] = None               # Consent #3c: ePrivacy
+    family_context_consent: Optional[bool] = None      # Consent #4: GDPR Art. 9
+    sensitive_data_consent: Optional[bool] = None      # Legacy (maps to family_context)
 
 
 class ConsentStatus(BaseModel):
+    """Full consent state for a customer."""
     customer_id: str
     external_id: str
+    # Consent #1: General financial profiling
     profiling_consent: bool
     profiling_consent_ts: Optional[datetime]
+    # Consent #2: Automated decisions (GDPR Art. 22)
+    automated_decision_consent: bool = False
+    automated_decision_consent_ts: Optional[datetime] = None
+    # Consent #3: Marketing per channel
+    marketing_push: bool = False
+    marketing_push_ts: Optional[datetime] = None
+    marketing_email: bool = False
+    marketing_email_ts: Optional[datetime] = None
+    marketing_sms: bool = False
+    marketing_sms_ts: Optional[datetime] = None
+    # Consent #4: Family context (Art. 9 special category)
+    family_context_consent: bool = False
+    family_context_consent_ts: Optional[datetime] = None
+    # Legacy
     sensitive_data_consent: bool
     sensitive_data_consent_ts: Optional[datetime]
+
+
+# --- MiFID II Suitability confirmation (Consent #5) ---
+
+class SuitabilityConfirmRequest(BaseModel):
+    product_id: str = Field(..., description="Product being confirmed")
+    recommendation_id: Optional[str] = Field(None, description="Audit trail reference")
+    confirmed: bool = Field(..., description="Client confirms understanding of risk")
+
+
+class SuitabilityConfirmResponse(BaseModel):
+    id: int
+    customer_id: str
+    product_id: str
+    risk_profile_at_confirmation: str
+    confirmed: bool
+    confirmed_at: datetime
+
+
+# --- AI Act compliance models ---
+
+class KillSwitchStatus(BaseModel):
+    active: bool
+    activated_by: Optional[str] = None
+    reason: Optional[str] = None
+    activated_at: Optional[datetime] = None
+
+
+class KillSwitchToggle(BaseModel):
+    active: bool
+    reason: str
+    activated_by: str
+
+
+class RiskRegisterEntry(BaseModel):
+    id: Optional[int] = None
+    risk_id: str
+    category: str
+    description: str
+    severity: str
+    mitigation: str
+    status: str = "open"
+    owner: Optional[str] = None
+    model_version: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class OverrideRequest(BaseModel):
+    recommendation_id: str
+    customer_id: str
+    employee_id: str
+    product_id: Optional[str] = None
+    override_type: str = Field(..., description="'reject', 'suppress', or 'escalate'")
+    reason: str
+
+
+class OverrideResponse(BaseModel):
+    id: int
+    recommendation_id: str
+    override_type: str
+    reason: str
+    created_at: datetime
 
 
 # --- Audit models ---

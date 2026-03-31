@@ -82,6 +82,10 @@ tailwind.config = {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         <span data-i18n="admin.security">Security & MFA</span>
       </button>
+      <button onclick="showSection('aiact')" data-section="aiact" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 1v2m0 18v2m-9-11H1m22 0h-2"/></svg>
+        <span data-i18n="admin.aiact">AI Act Compliance</span>
+      </button>
       <button onclick="showSection('config')" data-section="config" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span data-i18n="admin.config">System Config</span>
@@ -431,6 +435,121 @@ tailwind.config = {
       </div>
     </section>
 
+    <!-- ===== AI ACT COMPLIANCE SECTION ===== -->
+    <section id="section-aiact" class="p-8 space-y-6 hidden">
+
+      <!-- Classification & Status -->
+      <div class="glass-card rounded-2xl p-6 border border-neon-amber/20 fade-in">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="w-12 h-12 rounded-xl bg-neon-amber/10 flex items-center justify-center">
+            <svg class="w-7 h-7 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-neon-amber" id="aiact-classification" data-i18n="admin.aiact_high_risk">HIGH-RISK AI System</h3>
+            <p class="text-sm text-dark-200" id="aiact-legal-basis" data-i18n="admin.aiact_legal_basis">EU AI Act Annex III -- financial services</p>
+          </div>
+          <div class="ml-auto text-right">
+            <span class="text-xs text-dark-300" data-i18n="admin.aiact_model_version">Model Version</span>
+            <p class="text-sm font-mono text-white" id="aiact-model-version">--</p>
+          </div>
+        </div>
+        <!-- Deadline Cards -->
+        <div class="grid grid-cols-3 gap-4" id="aiact-deadlines">
+          <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30">
+            <p class="text-xs text-dark-300 mb-1" data-i18n="admin.aiact_deadline_practices">Prohibited Practices Ban</p>
+            <p class="text-lg font-semibold text-white" id="aiact-dl-practices-date">--</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs" id="aiact-dl-practices-status">--</span>
+          </div>
+          <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30">
+            <p class="text-xs text-dark-300 mb-1" data-i18n="admin.aiact_deadline_gpai">GPAI Obligations</p>
+            <p class="text-lg font-semibold text-white" id="aiact-dl-gpai-date">--</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs" id="aiact-dl-gpai-status">--</span>
+          </div>
+          <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30">
+            <p class="text-xs text-dark-300 mb-1" data-i18n="admin.aiact_deadline_highrisk">High-Risk Conformity</p>
+            <p class="text-lg font-semibold text-white" id="aiact-dl-highrisk-date">--</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded text-xs" id="aiact-dl-highrisk-status">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kill-Switch Control Panel -->
+      <div class="glass-card rounded-2xl p-6 fade-in" id="aiact-killswitch-card" style="animation-delay:0.1s">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-neon-red/10 flex items-center justify-center">
+            <svg class="w-6 h-6 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-white" data-i18n="admin.aiact_killswitch">Kill-Switch Control</h3>
+            <p class="text-xs text-dark-300" data-i18n="admin.aiact_killswitch_desc">Emergency shutdown of AI recommendation engine (Art. 14 Human Oversight)</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-6 p-4 rounded-xl bg-dark-800/50 border border-dark-600/30">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-sm text-dark-300" data-i18n="admin.aiact_ks_status">Status:</span>
+              <span class="px-3 py-1 rounded-full text-sm font-semibold" id="aiact-ks-badge">--</span>
+            </div>
+            <div id="aiact-ks-details" class="text-xs text-dark-300 space-y-1"></div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button id="aiact-ks-activate" onclick="toggleKillSwitch(true)"
+              class="px-5 py-2.5 bg-neon-red/20 hover:bg-neon-red/30 text-neon-red border border-neon-red/30 rounded-xl text-sm font-semibold transition-all hidden"
+              data-i18n="admin.aiact_ks_activate">
+              Activate Kill-Switch
+            </button>
+            <button id="aiact-ks-deactivate" onclick="toggleKillSwitch(false)"
+              class="px-5 py-2.5 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green border border-neon-green/30 rounded-xl text-sm font-semibold transition-all hidden"
+              data-i18n="admin.aiact_ks_deactivate">
+              Deactivate Kill-Switch
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Checklist (Art. 9-15) -->
+      <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.2s">
+        <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.aiact_checklist">Compliance Checklist (Art. 9-15)</h3>
+        <div class="grid grid-cols-3 gap-4" id="aiact-checklist-grid">
+          <div class="text-sm text-dark-300" data-i18n="common.loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Prohibited Practices (Art. 5) -->
+      <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.3s">
+        <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.aiact_prohibited">Prohibited Practices Check (Art. 5)</h3>
+        <div class="space-y-3" id="aiact-prohibited-grid">
+          <div class="text-sm text-dark-300" data-i18n="common.loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Risk Register (Art. 9) -->
+      <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.4s">
+        <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.aiact_risk_register">Risk Register (Art. 9)</h3>
+        <div id="aiact-risk-summary" class="grid grid-cols-4 gap-4 mb-4"></div>
+        <div class="overflow-x-auto" id="aiact-risk-table-container">
+          <p class="text-dark-300 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Consent Statistics -->
+      <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.5s">
+        <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.aiact_consent">Consent Statistics</h3>
+        <div class="grid grid-cols-3 gap-4" id="aiact-consent-grid">
+          <div class="text-sm text-dark-300" data-i18n="common.loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Operational Metrics -->
+      <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.6s">
+        <h3 class="text-lg font-semibold text-white mb-4" data-i18n="admin.aiact_operational">Operational Metrics</h3>
+        <div class="grid grid-cols-3 gap-4" id="aiact-metrics-grid">
+          <div class="text-sm text-dark-300" data-i18n="common.loading">Loading...</div>
+        </div>
+      </div>
+
+    </section>
+
     <!-- ===== CONFIG SECTION ===== -->
     <section id="section-config" class="p-8 space-y-6 hidden">
       <div class="glass-card rounded-2xl p-6">
@@ -563,12 +682,13 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', config: 'admin.system_config', audit: 'admin.audit_log' };
   const titleEl = document.getElementById('sectionTitle');
   titleEl.dataset.i18n = titleKeys[name] || '';
   titleEl.textContent = t(titleKeys[name] || name);
 
   if (name === 'audit') loadAuditLog();
+  if (name === 'aiact') loadAiActCompliance();
 }
 
 async function loadOverview() {
@@ -616,6 +736,317 @@ async function loadOverview() {
     document.getElementById('stat-health').textContent = 'Error';
     document.getElementById('stat-health-detail').textContent = e.message;
   }
+}
+
+// ===== AI ACT COMPLIANCE =====
+let aiActData = null;
+
+async function loadAiActCompliance() {
+  try {
+    const [statusResp, riskResp] = await Promise.all([
+      fetch(`${API}/compliance/ai-act-status`),
+      fetch(`${API}/compliance/risk-register`)
+    ]);
+    aiActData = await statusResp.json();
+    const risks = await riskResp.json();
+    renderAiActStatus(aiActData);
+    renderKillSwitch(aiActData.kill_switch);
+    renderComplianceChecklist(aiActData.compliance_checklist);
+    renderProhibitedPractices(aiActData.prohibited_practices_check);
+    renderRiskRegister(risks, aiActData.risk_register);
+    renderConsentStats(aiActData.consent_statistics);
+    renderOperationalMetrics(aiActData);
+  } catch (e) {
+    console.error('AI Act load error:', e);
+  }
+}
+
+function deadlineStatusBadge(status) {
+  if (status === 'COMPLIANT') return 'bg-neon-green/10 text-neon-green';
+  if (status === 'IN_PROGRESS') return 'bg-neon-amber/10 text-neon-amber';
+  return 'bg-neon-red/10 text-neon-red';
+}
+
+function renderAiActStatus(data) {
+  document.getElementById('aiact-classification').textContent = data.classification + ' AI System';
+  document.getElementById('aiact-legal-basis').textContent = data.legal_basis;
+  document.getElementById('aiact-model-version').textContent = data.model_version;
+
+  const dlMap = {
+    'practices_banned': { el: 'practices', label: 'admin.aiact_deadline_practices' },
+    'gpai_obligations': { el: 'gpai', label: 'admin.aiact_deadline_gpai' },
+    'high_risk_conformity': { el: 'highrisk', label: 'admin.aiact_deadline_highrisk' }
+  };
+  for (const [key, cfg] of Object.entries(dlMap)) {
+    const dl = data.deadlines[key];
+    if (!dl) continue;
+    document.getElementById(`aiact-dl-${cfg.el}-date`).textContent = dl.date;
+    const statusEl = document.getElementById(`aiact-dl-${cfg.el}-status`);
+    statusEl.textContent = dl.status.replace('_', ' ');
+    statusEl.className = `inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${deadlineStatusBadge(dl.status)}`;
+  }
+}
+
+function renderKillSwitch(ks) {
+  const badge = document.getElementById('aiact-ks-badge');
+  const details = document.getElementById('aiact-ks-details');
+  const activateBtn = document.getElementById('aiact-ks-activate');
+  const deactivateBtn = document.getElementById('aiact-ks-deactivate');
+  const card = document.getElementById('aiact-killswitch-card');
+
+  if (ks.active) {
+    badge.textContent = t('admin.aiact_ks_active') || 'ACTIVE -- ENGINE HALTED';
+    badge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-neon-red/20 text-neon-red animate-pulse';
+    card.classList.add('border', 'border-neon-red/40');
+    card.classList.remove('border-neon-green/20');
+    details.innerHTML = `
+      <p><span class="text-dark-400" data-i18n="admin.aiact_ks_by">Activated by:</span> <span class="text-white">${ks.activated_by || '--'}</span></p>
+      <p><span class="text-dark-400" data-i18n="admin.aiact_ks_reason">Reason:</span> <span class="text-neon-red">${ks.reason || '--'}</span></p>
+    `;
+    activateBtn.classList.add('hidden');
+    deactivateBtn.classList.remove('hidden');
+  } else {
+    badge.textContent = t('admin.aiact_ks_inactive') || 'INACTIVE -- Engine Running';
+    badge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-neon-green/20 text-neon-green';
+    card.classList.remove('border-neon-red/40');
+    card.classList.add('border', 'border-transparent');
+    details.innerHTML = `<p class="text-neon-green" data-i18n="admin.aiact_ks_normal">AI recommendation engine operating normally.</p>`;
+    activateBtn.classList.remove('hidden');
+    deactivateBtn.classList.add('hidden');
+  }
+}
+
+async function toggleKillSwitch(activate) {
+  let reason = '';
+  const user = window.BOAI_AUTH.getUser();
+  const activatedBy = user?.email || user?.name || 'admin';
+
+  if (activate) {
+    reason = prompt(t('admin.aiact_ks_reason_prompt') || 'Enter reason for activating the kill-switch:');
+    if (!reason) return;
+  } else {
+    if (!confirm(t('admin.aiact_ks_deactivate_confirm') || 'Are you sure you want to re-enable the AI recommendation engine?')) return;
+  }
+
+  try {
+    const resp = await fetch(`${API}/compliance/kill-switch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: activate, reason: reason, activated_by: activatedBy })
+    });
+    if (!resp.ok) throw new Error('Failed to toggle kill-switch');
+    const ks = await resp.json();
+    renderKillSwitch(ks.kill_switch || ks);
+  } catch (e) {
+    alert((t('admin.aiact_ks_error') || 'Error toggling kill-switch: ') + e.message);
+  }
+}
+
+function renderComplianceChecklist(checklist) {
+  const articles = {
+    'risk_management_system': { art: 'Art. 9', title: 'admin.aiact_cl_risk_mgmt', fallback: 'Risk Management System' },
+    'data_governance': { art: 'Art. 10', title: 'admin.aiact_cl_data_gov', fallback: 'Data Governance' },
+    'technical_documentation': { art: 'Art. 11', title: 'admin.aiact_cl_tech_doc', fallback: 'Technical Documentation' },
+    'transparency_logging': { art: 'Art. 12+13', title: 'admin.aiact_cl_transparency', fallback: 'Transparency & Logging' },
+    'human_oversight': { art: 'Art. 14', title: 'admin.aiact_cl_human_oversight', fallback: 'Human Oversight' },
+    'accuracy_robustness': { art: 'Art. 15', title: 'admin.aiact_cl_accuracy', fallback: 'Accuracy & Robustness' },
+    'conformity_assessment': { art: 'Art. 43', title: 'admin.aiact_cl_conformity', fallback: 'Conformity Assessment' },
+    'eu_database_registration': { art: 'Art. 71', title: 'admin.aiact_cl_eu_db', fallback: 'EU Database Registration' },
+    'ai_literacy': { art: 'Art. 4', title: 'admin.aiact_cl_literacy', fallback: 'AI Literacy' }
+  };
+
+  const grid = document.getElementById('aiact-checklist-grid');
+  let html = '';
+  for (const [key, cfg] of Object.entries(articles)) {
+    const done = checklist[key];
+    const iconColor = done ? 'text-neon-green' : 'text-neon-amber';
+    const bgColor = done ? 'bg-neon-green/10' : 'bg-neon-amber/10';
+    const borderColor = done ? 'border-neon-green/20' : 'border-neon-amber/20';
+    const icon = done
+      ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+      : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    const statusText = done
+      ? (t('admin.aiact_cl_compliant') || 'Compliant')
+      : (t('admin.aiact_cl_in_progress') || 'In Progress');
+
+    html += `
+      <div class="p-4 rounded-xl bg-dark-800/50 border ${borderColor}">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-8 h-8 rounded-lg ${bgColor} flex items-center justify-center ${iconColor}">${icon}</div>
+          <span class="text-xs font-mono text-dark-300">${cfg.art}</span>
+        </div>
+        <p class="text-sm font-medium text-white mb-1" data-i18n="${cfg.title}">${t(cfg.title) || cfg.fallback}</p>
+        <span class="px-2 py-0.5 rounded text-xs ${bgColor} ${iconColor} font-medium">${statusText}</span>
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderProhibitedPractices(practices) {
+  const labels = {
+    'manipulative_ui': { title: 'admin.aiact_pp_manipulative', fallback: 'Manipulative UI Patterns' },
+    'vulnerable_exploitation': { title: 'admin.aiact_pp_vulnerable', fallback: 'Vulnerable Group Exploitation' },
+    'social_scoring': { title: 'admin.aiact_pp_social', fallback: 'Social Scoring' },
+    'protected_characteristics': { title: 'admin.aiact_pp_protected', fallback: 'Protected Characteristics' },
+    'predatory_targeting': { title: 'admin.aiact_pp_predatory', fallback: 'Predatory Targeting' }
+  };
+
+  const grid = document.getElementById('aiact-prohibited-grid');
+  let html = '';
+  for (const [key, cfg] of Object.entries(labels)) {
+    const value = practices[key] || '';
+    const isClear = value.startsWith('CLEAR');
+    html += `
+      <div class="flex items-center gap-4 p-4 rounded-xl bg-dark-800/50 border ${isClear ? 'border-neon-green/20' : 'border-neon-red/20'}">
+        <div class="w-10 h-10 rounded-xl ${isClear ? 'bg-neon-green/10' : 'bg-neon-red/10'} flex items-center justify-center flex-shrink-0">
+          ${isClear
+            ? '<svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
+            : '<svg class="w-5 h-5 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
+          }
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-medium text-white" data-i18n="${cfg.title}">${t(cfg.title) || cfg.fallback}</p>
+          <p class="text-xs text-dark-300 mt-0.5">${value}</p>
+        </div>
+        <span class="px-2 py-0.5 rounded text-xs font-medium ${isClear ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red'}">${isClear ? 'CLEAR' : 'FLAG'}</span>
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderRiskRegister(risks, summary) {
+  // Summary cards
+  const summaryEl = document.getElementById('aiact-risk-summary');
+  const sumCfg = [
+    { key: 'open', label: 'admin.aiact_risk_open', fallback: 'Open', color: 'amber' },
+    { key: 'mitigated', label: 'admin.aiact_risk_mitigated', fallback: 'Mitigated', color: 'green' },
+    { key: 'accepted', label: 'admin.aiact_risk_accepted', fallback: 'Accepted', color: 'cyan' },
+    { key: 'closed', label: 'admin.aiact_risk_closed', fallback: 'Closed', color: 'dark-200' }
+  ];
+  let summaryHtml = '';
+  for (const sc of sumCfg) {
+    summaryHtml += `
+      <div class="glass-card rounded-xl p-4 stat-glow-${sc.color === 'dark-200' ? 'purple' : sc.color}">
+        <p class="text-xs text-dark-300 uppercase tracking-wider" data-i18n="${sc.label}">${t(sc.label) || sc.fallback}</p>
+        <p class="text-2xl font-bold text-white mt-1">${summary?.[sc.key] ?? 0}</p>
+      </div>`;
+  }
+  summaryEl.innerHTML = summaryHtml;
+
+  // Risk table
+  const container = document.getElementById('aiact-risk-table-container');
+  if (!risks || !risks.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm" data-i18n="admin.aiact_risk_empty">No risk register entries found.</p>`;
+    return;
+  }
+
+  const sevColor = { critical: 'bg-neon-red/10 text-neon-red', high: 'bg-neon-amber/10 text-neon-amber', medium: 'bg-yellow-500/10 text-yellow-400', low: 'bg-neon-green/10 text-neon-green' };
+  const statusColor = { open: 'bg-neon-amber/10 text-neon-amber', mitigated: 'bg-neon-green/10 text-neon-green', accepted: 'bg-neon-cyan/10 text-neon-cyan', closed: 'bg-dark-500/30 text-dark-300' };
+
+  let html = `<table class="w-full text-sm">
+    <thead><tr class="text-left text-xs text-dark-300 uppercase tracking-wider border-b border-dark-600/30">
+      <th class="pb-3 pr-4" data-i18n="admin.aiact_risk_th_id">Risk ID</th>
+      <th class="pb-3 pr-4" data-i18n="admin.aiact_risk_th_category">Category</th>
+      <th class="pb-3 pr-4" data-i18n="admin.aiact_risk_th_severity">Severity</th>
+      <th class="pb-3 pr-4" data-i18n="admin.aiact_risk_th_status">Status</th>
+      <th class="pb-3 pr-4" data-i18n="admin.aiact_risk_th_owner">Owner</th>
+      <th class="pb-3" data-i18n="admin.aiact_risk_th_mitigation">Mitigation</th>
+    </tr></thead><tbody>`;
+
+  for (const r of risks) {
+    const sev = (r.severity || '').toLowerCase();
+    const stat = (r.status || '').toLowerCase();
+    html += `<tr class="table-row border-b border-dark-700/30">
+      <td class="py-3 pr-4 font-mono text-xs text-accent-light">${r.risk_id || '--'}</td>
+      <td class="py-3 pr-4 text-white">${r.category || '--'}</td>
+      <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${sevColor[sev] || 'bg-dark-500/30 text-dark-300'}">${r.severity || '--'}</span></td>
+      <td class="py-3 pr-4"><span class="px-2 py-0.5 rounded text-xs font-medium ${statusColor[stat] || 'bg-dark-500/30 text-dark-300'}">${r.status || '--'}</span></td>
+      <td class="py-3 pr-4 text-dark-200">${r.owner || '--'}</td>
+      <td class="py-3 text-dark-200 text-xs max-w-xs truncate" title="${(r.mitigation || '').replace(/"/g, '&quot;')}">${r.mitigation || '--'}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderConsentStats(consent) {
+  if (!consent) return;
+  const total = consent.total || 1;
+  const items = [
+    { key: 'profiling', label: 'admin.aiact_consent_profiling', fallback: 'Profiling Consent', color: 'accent' },
+    { key: 'automated', label: 'admin.aiact_consent_automated', fallback: 'Automated Decisions', color: 'neon-cyan' },
+    { key: 'family', label: 'admin.aiact_consent_family', fallback: 'Family Context', color: 'neon-purple' },
+    { key: 'mkt_push', label: 'admin.aiact_consent_push', fallback: 'Marketing (Push)', color: 'neon-green' },
+    { key: 'mkt_email', label: 'admin.aiact_consent_email', fallback: 'Marketing (Email)', color: 'neon-amber' }
+  ];
+
+  const grid = document.getElementById('aiact-consent-grid');
+  let html = '';
+  for (const item of items) {
+    const count = consent[item.key] || 0;
+    const pct = Math.round((count / total) * 100);
+    html += `
+      <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-600/30">
+        <p class="text-xs text-dark-300 mb-2" data-i18n="${item.label}">${t(item.label) || item.fallback}</p>
+        <div class="flex items-end gap-2 mb-2">
+          <span class="text-2xl font-bold text-white">${count}</span>
+          <span class="text-sm text-dark-300 mb-0.5">/ ${total}</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-dark-700 overflow-hidden">
+          <div class="h-full rounded-full bg-${item.color}" style="width: ${pct}%"></div>
+        </div>
+        <p class="text-xs text-dark-300 mt-1">${pct}%</p>
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderOperationalMetrics(data) {
+  const grid = document.getElementById('aiact-metrics-grid');
+  const metrics = [
+    {
+      value: data.total_recommendations ?? 0,
+      label: 'admin.aiact_metric_recs',
+      fallback: 'Total Recommendations',
+      icon: '<svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
+      color: 'purple',
+      desc: 'admin.aiact_metric_recs_desc',
+      descFallback: 'AI-generated product recommendations'
+    },
+    {
+      value: data.total_overrides ?? 0,
+      label: 'admin.aiact_metric_overrides',
+      fallback: 'Employee Overrides',
+      icon: '<svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+      color: 'amber',
+      desc: 'admin.aiact_metric_overrides_desc',
+      descFallback: 'Human-in-the-loop corrections'
+    },
+    {
+      value: data.total_suitability_confirmations ?? 0,
+      label: 'admin.aiact_metric_suitability',
+      fallback: 'Suitability Confirmations',
+      icon: '<svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      color: 'green',
+      desc: 'admin.aiact_metric_suitability_desc',
+      descFallback: 'MiFID II suitability checks passed'
+    }
+  ];
+
+  let html = '';
+  for (const m of metrics) {
+    html += `
+      <div class="glass-card rounded-2xl p-5 stat-glow-${m.color}">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider" data-i18n="${m.label}">${t(m.label) || m.fallback}</span>
+          <div class="w-9 h-9 rounded-xl bg-dark-700/50 flex items-center justify-center">${m.icon}</div>
+        </div>
+        <p class="text-3xl font-bold text-white">${m.value.toLocaleString()}</p>
+        <p class="text-xs text-dark-300 mt-1" data-i18n="${m.desc}">${t(m.desc) || m.descFallback}</p>
+      </div>`;
+  }
+  grid.innerHTML = html;
 }
 
 async function loadAuditLog() {

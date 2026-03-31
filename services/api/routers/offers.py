@@ -163,11 +163,12 @@ def _build_explanation(product: dict, reasons: list[str], f: dict,
 
 
 def _score_product(product: dict, life_stage: str, risk_score: float,
-                   income: float, f: dict, sensitive_consent: bool = True) -> dict:
+                   income: float, f: dict, sensitive_consent: bool = True,
+                   family_consent: bool = True) -> dict:
     """Rule-based scoring for a single product using customer signals.
 
     NOTE: city is deliberately excluded from scoring (AI Act compliance).
-    marital_status is excluded unless sensitive_data_consent is granted.
+    marital_status & dependents excluded unless family_context_consent granted (GDPR Art. 9).
     """
     pid = product["id"]
     ptype = product["type"]
@@ -178,8 +179,8 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     reasons = []
 
     age = _safe_int(f.get("age"), 30)
-    # dependents: only use if sensitive_data_consent granted
-    dependents = _safe_int(f.get("dependents"), 0) if sensitive_consent else 0
+    # dependents: only use if family_context_consent granted (GDPR Art. 9)
+    dependents = _safe_int(f.get("dependents"), 0) if family_consent else 0
     idle_cash = _safe_float(f.get("idle_cash"))
     savings_rate = _safe_float(f.get("savings_rate"))
     dti = _safe_float(f.get("debt_to_income"))
@@ -291,8 +292,8 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
     elif homeowner == "owner" and pid == "prod_mortgage" and "mortgage" not in existing:
         boost += 0.05
 
-    # Dependents (only when sensitive_data_consent is active)
-    if sensitive_consent:
+    # Dependents (only when family_context_consent is active — GDPR Art. 9)
+    if family_consent:
         if dependents >= 2:
             if pid == "prod_life_insurance":
                 boost += 0.30
@@ -409,16 +410,44 @@ async def get_offers(
         logger.error("Failed to fetch features for %s: %s", customer_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve customer data")
 
-    # ===== Requirement 5: Check profiling consent =====
-    consent_snapshot = {"profiling_consent": True, "sensitive_data_consent": True}
+    # ===== AI Act Art. 14: Check kill-switch =====
+    try:
+        async with session_factory() as session:
+            ks_result = await session.execute(
+                text("SELECT active FROM model_kill_switch ORDER BY id DESC LIMIT 1")
+            )
+            ks_row = ks_result.mappings().fetchone()
+            if ks_row and ks_row["active"]:
+                return OfferResponse(
+                    customer_id=customer_id,
+                    recommendation_id=recommendation_id,
+                    offers=[],
+                    excluded_products=[{"product_id": "all", "product_name": "All Products",
+                                        "product_type": "system", "reason": "Model suspended via kill-switch (AI Act Art. 14)"}],
+                    generated_at=datetime.utcnow(),
+                    model_version="rules-1.0.0",
+                    consent_valid=True,
+                )
+    except Exception as e:
+        logger.warning("Failed to check kill-switch: %s", e)
+
+    # ===== Requirement 5: Check granular consent =====
+    consent_snapshot = {
+        "profiling_consent": True, "automated_decision_consent": True,
+        "family_context_consent": True, "sensitive_data_consent": True,
+        "marketing_push": False, "marketing_email": False, "marketing_sms": False,
+    }
     external_id = ""
     financial_health = "stable"
     try:
         async with session_factory() as session:
             result = await session.execute(
-                text("""SELECT external_id, profiling_consent, profiling_consent_ts,
+                text("""SELECT external_id, financial_health,
+                        profiling_consent, profiling_consent_ts,
+                        automated_decision_consent, automated_decision_consent_ts,
+                        family_context_consent, family_context_consent_ts,
                         sensitive_data_consent, sensitive_data_consent_ts,
-                        financial_health
+                        marketing_push, marketing_email, marketing_sms
                  FROM customers WHERE customer_id = :cid"""),
                 {"cid": customer_id},
             )
@@ -429,13 +458,20 @@ async def get_offers(
                 consent_snapshot = {
                     "profiling_consent": bool(cust_row["profiling_consent"]),
                     "profiling_consent_ts": str(cust_row["profiling_consent_ts"] or ""),
+                    "automated_decision_consent": bool(cust_row["automated_decision_consent"]),
+                    "automated_decision_consent_ts": str(cust_row["automated_decision_consent_ts"] or ""),
+                    "family_context_consent": bool(cust_row["family_context_consent"]),
+                    "family_context_consent_ts": str(cust_row["family_context_consent_ts"] or ""),
                     "sensitive_data_consent": bool(cust_row["sensitive_data_consent"]),
                     "sensitive_data_consent_ts": str(cust_row["sensitive_data_consent_ts"] or ""),
+                    "marketing_push": bool(cust_row["marketing_push"]),
+                    "marketing_email": bool(cust_row["marketing_email"]),
+                    "marketing_sms": bool(cust_row["marketing_sms"]),
                 }
     except Exception as e:
         logger.warning("Failed to fetch consent for %s: %s", customer_id, e)
 
-    # If no profiling consent, return empty with flag
+    # Consent #1: If no profiling consent, return empty — pipeline cannot process
     if not consent_snapshot["profiling_consent"]:
         return OfferResponse(
             customer_id=external_id or customer_id,
@@ -447,13 +483,18 @@ async def get_offers(
             consent_valid=False,
         )
 
-    sensitive_consent = consent_snapshot["sensitive_data_consent"]
+    # Consent #2: Without automated_decision_consent, offers need human review
+    human_review_required = not consent_snapshot["automated_decision_consent"]
+    # Consent #4: Family context gates marital_status & dependents
+    family_consent = consent_snapshot["family_context_consent"]
+    # Legacy compat: also check sensitive_data_consent
+    sensitive_consent = consent_snapshot["sensitive_data_consent"] or family_consent
 
     # ===== Build profile =====
     profiler_input = {
         "age": features.get("age", 30),
         "annual_income": max(1.0, _safe_float(features.get("annual_income"), 50000)),
-        "dependents": features.get("dependents", 0) if sensitive_consent else 0,
+        "dependents": features.get("dependents", 0) if family_consent else 0,
         "account_tenure_years": features.get("account_tenure_years", 0),
         "investment_balance": features.get("investment_balance", 0),
         "savings_ratio": min(1.0, max(0.0, _safe_float(features.get("savings_rate"), 0.1))),
@@ -501,7 +542,8 @@ async def get_offers(
     # ===== Score only suitable products =====
     income = _safe_float(features.get("annual_income"), 50000)
     scored = [
-        _score_product(p, profile.life_stage, profile.risk_score, income, features, sensitive_consent)
+        _score_product(p, profile.life_stage, profile.risk_score, income, features,
+                       sensitive_consent, family_consent)
         for p in suitable_products
     ]
     scored.sort(key=lambda x: x["relevance_score"], reverse=True)
@@ -509,8 +551,10 @@ async def get_offers(
     ranked = rank_offers(scored)
 
     # ===== Build response =====
+    INVESTMENT_TYPES = {"investment", "bond"}
     offers = []
     for r in ranked[:top_n]:
+        requires_suitability = r.product_type in INVESTMENT_TYPES
         offers.append(Offer(
             offer_id=r.offer_id,
             product_name=r.product_name,
@@ -523,6 +567,8 @@ async def get_offers(
                  if s["product_id"] == r.product_id), ""
             ),
             suitability_status="passed",
+            human_review_required=human_review_required,
+            requires_suitability_confirmation=requires_suitability,
             cta_url=f"/products/{r.product_id}/apply?customer={customer_id}",
         ))
 
