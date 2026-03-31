@@ -954,33 +954,44 @@ async function loadConsentOverview() {
   let profilingCount = 0, sensitiveCount = 0, withdrawnCount = 0;
   const rows = [];
 
-  for (let i = 1; i <= 50; i++) {
-    try {
-      const prof = profileCache[i] || await fetch(`${API}/profiles/${i}`).then(r => r.ok ? r.json() : null);
-      if (prof) {
-        profileCache[i] = prof;
-        const d = prof.data || prof;
-        const consent = d.consent || {};
-        const profilingConsent = consent.profiling !== false;
-        const sensitiveConsent = consent.sensitive_data === true;
-        const withdrawn = consent.withdrawn === true || consent.profiling === false;
+  // Fetch consent + profile data in parallel batches
+  const batchSize = 10;
+  for (let batch = 0; batch < 50; batch += batchSize) {
+    const promises = [];
+    for (let i = batch + 1; i <= Math.min(batch + batchSize, 50); i++) {
+      promises.push((async (cid) => {
+        try {
+          const [consentResp, profResp] = await Promise.all([
+            fetch(`${API}/compliance/consent/${cid}`),
+            profileCache[cid] ? Promise.resolve(null) : fetch(`${API}/profiles/${cid}`)
+          ]);
+          const consent = consentResp.ok ? await consentResp.json() : {};
+          if (profResp && profResp.ok) { profileCache[cid] = await profResp.json(); }
+          const d = profileCache[cid] ? (profileCache[cid].data || profileCache[cid]) : {};
 
-        if (profilingConsent && !withdrawn) profilingCount++;
-        if (sensitiveConsent) sensitiveCount++;
-        if (withdrawn) withdrawnCount++;
+          const profilingConsent = consent.profiling_consent === true;
+          const sensitiveConsent = consent.sensitive_data_consent === true;
+          const withdrawn = !profilingConsent;
 
-        const ls = (d.life_stage || '').replace(/_/g, ' ');
-        const risk = d.risk_score ? parseFloat(d.risk_score).toFixed(1) : '--';
+          if (profilingConsent) profilingCount++;
+          if (sensitiveConsent) sensitiveCount++;
+          if (withdrawn) withdrawnCount++;
 
-        rows.push(`<tr class="table-row border-b border-dark-600/20">
-          <td class="py-3 px-4 font-medium text-white">${i}</td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${profilingConsent && !withdrawn ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red'}">${profilingConsent && !withdrawn ? 'Active' : 'Inactive'}</span></td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${sensitiveConsent ? 'bg-neon-green/10 text-neon-green' : 'bg-dark-700 text-dark-300'}">${sensitiveConsent ? 'Granted' : 'Not Granted'}</span></td>
-          <td class="py-3 px-4 text-dark-200 capitalize text-xs">${ls}</td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${d.risk_score<4?'bg-neon-green/10 text-neon-green':d.risk_score<7?'bg-neon-amber/10 text-neon-amber':'bg-neon-red/10 text-neon-red'}">${risk}</span></td>
-        </tr>`);
-      }
-    } catch (e) { console.error(e); }
+          const ls = (d.life_stage || '').replace(/_/g, ' ');
+          const risk = d.risk_score ? parseFloat(d.risk_score).toFixed(1) : '--';
+
+          return `<tr class="table-row border-b border-dark-600/20">
+            <td class="py-3 px-4 font-medium text-white">${cid}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${profilingConsent ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-red/10 text-neon-red'}">${profilingConsent ? 'Active' : 'Inactive'}</span></td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${sensitiveConsent ? 'bg-neon-green/10 text-neon-green' : 'bg-dark-700 text-dark-300'}">${sensitiveConsent ? 'Granted' : 'Not Granted'}</span></td>
+            <td class="py-3 px-4 text-dark-200 capitalize text-xs">${ls}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${d.risk_score<4?'bg-neon-green/10 text-neon-green':d.risk_score<7?'bg-neon-amber/10 text-neon-amber':'bg-neon-red/10 text-neon-red'}">${risk}</span></td>
+          </tr>`;
+        } catch (e) { console.error(e); return ''; }
+      })(i));
+    }
+    const batchRows = await Promise.all(promises);
+    rows.push(...batchRows.filter(Boolean));
   }
 
   document.getElementById('consentProfilingCount').textContent = profilingCount;
