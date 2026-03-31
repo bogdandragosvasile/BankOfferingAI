@@ -42,12 +42,12 @@ tailwind.config = {
   .nav-link { transition: all 0.2s; }
   .nav-link:hover { color: #818cf8; background: rgba(99,102,241,0.08); }
   .nav-link.active { color: #818cf8; background: rgba(99,102,241,0.12); border-bottom: 2px solid #6366f1; }
-  .toggle-track { width: 44px; height: 24px; border-radius: 12px; transition: background 0.3s; cursor: pointer; position: relative; }
-  .toggle-track.on { background: #6366f1; }
-  .toggle-track.off { background: #334155; }
-  .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: white; position: absolute; top: 2px; transition: left 0.3s; }
-  .toggle-track.on .toggle-thumb { left: 22px; }
-  .toggle-track.off .toggle-thumb { left: 2px; }
+  .toggle-track { width: 44px; height: 24px; border-radius: 12px; transition: background 0.3s; cursor: pointer; position: relative; display: block; }
+  .toggle-track.on { background: #6366f1 !important; }
+  .toggle-track.off { background: #334155 !important; }
+  .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: white !important; position: absolute; top: 2px; transition: left 0.3s; pointer-events: none; }
+  .toggle-track.on .toggle-thumb { left: 22px !important; }
+  .toggle-track.off .toggle-thumb { left: 2px !important; }
   .table-row { transition: background 0.15s; }
   .table-row:hover { background: rgba(99,102,241,0.06); }
   .consent-banner { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); }
@@ -315,7 +315,7 @@ tailwind.config = {
               <p class="text-dark-400 text-xs mt-2" id="profiling-timestamp"></p>
             </div>
             <div class="flex-shrink-0 pt-1">
-              <div id="toggle-profiling" class="toggle-track off" onclick="toggleConsent('profiling')">
+              <div id="toggle-profiling" class="toggle-track off" data-consent="profiling">
                 <div class="toggle-thumb"></div>
               </div>
             </div>
@@ -336,7 +336,7 @@ tailwind.config = {
               <p class="text-dark-400 text-xs mt-2" id="automated-decision-timestamp"></p>
             </div>
             <div class="flex-shrink-0 pt-1">
-              <div id="toggle-automated-decision" class="toggle-track off" onclick="toggleConsent('automated_decision')">
+              <div id="toggle-automated-decision" class="toggle-track off" data-consent="automated_decision">
                 <div class="toggle-thumb"></div>
               </div>
             </div>
@@ -363,7 +363,7 @@ tailwind.config = {
                     <p class="text-dark-400 text-xs mt-1" id="marketing-push-timestamp"></p>
                   </div>
                 </div>
-                <div id="toggle-marketing-push" class="toggle-track off" onclick="toggleConsent('marketing_push')">
+                <div id="toggle-marketing-push" class="toggle-track off" data-consent="marketing_push">
                   <div class="toggle-thumb"></div>
                 </div>
               </div>
@@ -377,7 +377,7 @@ tailwind.config = {
                     <p class="text-dark-400 text-xs mt-1" id="marketing-email-timestamp"></p>
                   </div>
                 </div>
-                <div id="toggle-marketing-email" class="toggle-track off" onclick="toggleConsent('marketing_email')">
+                <div id="toggle-marketing-email" class="toggle-track off" data-consent="marketing_email">
                   <div class="toggle-thumb"></div>
                 </div>
               </div>
@@ -391,7 +391,7 @@ tailwind.config = {
                     <p class="text-dark-400 text-xs mt-1" id="marketing-sms-timestamp"></p>
                   </div>
                 </div>
-                <div id="toggle-marketing-sms" class="toggle-track off" onclick="toggleConsent('marketing_sms')">
+                <div id="toggle-marketing-sms" class="toggle-track off" data-consent="marketing_sms">
                   <div class="toggle-thumb"></div>
                 </div>
               </div>
@@ -416,7 +416,7 @@ tailwind.config = {
               <p class="text-dark-400 text-xs mt-2" id="family-context-timestamp"></p>
             </div>
             <div class="flex-shrink-0 pt-1">
-              <div id="toggle-family-context" class="toggle-track off" onclick="toggleConsent('family_context')">
+              <div id="toggle-family-context" class="toggle-track off" data-consent="family_context">
                 <div class="toggle-thumb"></div>
               </div>
             </div>
@@ -1038,12 +1038,17 @@ function formatTrend(trend) {
 function setToggleState(toggleId, isOn) {
   const el = document.getElementById(toggleId);
   if (!el) return;
+  const thumb = el.querySelector('.toggle-thumb');
   if (isOn) {
     el.classList.remove('off');
     el.classList.add('on');
+    el.style.background = '#6366f1';
+    if (thumb) thumb.style.left = '22px';
   } else {
     el.classList.remove('on');
     el.classList.add('off');
+    el.style.background = '#334155';
+    if (thumb) thumb.style.left = '2px';
   }
 }
 
@@ -1317,6 +1322,15 @@ document.addEventListener('languageChanged', () => {
     if (state.currentSection === 'consent') renderConsentSection();
     if (state.currentSection === 'history') renderHistorySection();
   }
+});
+
+// ==================== CONSENT TOGGLE LISTENERS ====================
+document.querySelectorAll('.toggle-track[data-consent]').forEach(el => {
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const type = this.dataset.consent;
+    if (type) toggleConsent(type);
+  });
 });
 
 // ==================== START ====================
