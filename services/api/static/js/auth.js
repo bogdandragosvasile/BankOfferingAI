@@ -66,7 +66,9 @@
     try {
       const authenticated = await _keycloak.init({
         pkceMethod: 'S256',
-        checkLoginIframe: false
+        checkLoginIframe: false,
+        responseMode: 'query',
+        enableLogging: true
       });
       _kcReady = true;
 
@@ -103,14 +105,17 @@
   }
 
   function keycloakLogin() {
+    // Use clean URL (no query params) as redirect URI
+    const redirectUri = window.location.origin + window.location.pathname;
+    console.log('[Auth] keycloakLogin redirectUri=' + redirectUri);
     if (_keycloak) {
-      _keycloak.login({ redirectUri: window.location.href });
+      _keycloak.login({ redirectUri: redirectUri });
       return;
     }
     // Fallback if keycloak-js didn't load at all
     var params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
-      redirect_uri: window.location.href,
+      redirect_uri: redirectUri,
       response_type: 'code',
       scope: 'openid email profile',
     });
@@ -350,12 +355,40 @@
 
   // Initialize: try restoring session, then try Keycloak
   async function init() {
-    const restored = _restoreSession();
-    if (restored && _demoMode) {
+    let restored = _restoreSession();
+
+    // If we have a ?code= in the URL, Keycloak is redirecting back after login.
+    // We MUST call initKeycloak() to exchange the code for tokens, regardless
+    // of any previously saved session.
+    const hasAuthCode = window.location.search.includes('code=');
+    console.log('[Auth] init: restored=' + restored + ' demoMode=' + _demoMode + ' hasAuthCode=' + hasAuthCode);
+
+    if (restored && _demoMode && !hasAuthCode) {
       _notifyChange();
       return;
     }
+
+    // Clear any stale session before processing SSO callback
+    if (hasAuthCode) {
+      console.log('[Auth] SSO callback detected, clearing stale session');
+      localStorage.removeItem(STORAGE_KEY);
+      _currentUser = null;
+      _demoMode = true;
+      restored = false;
+    }
+
     const kcOk = await initKeycloak();
+    console.log('[Auth] initKeycloak result: ' + kcOk + ' user=' + (_currentUser ? _currentUser.email : 'null'));
+
+    if (kcOk) {
+      // Clean the URL of auth params after successful login
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      url.searchParams.delete('session_state');
+      url.searchParams.delete('iss');
+      window.history.replaceState({}, '', url.pathname + url.hash);
+    }
     if (!kcOk && !restored) {
       _notifyChange();
     }
