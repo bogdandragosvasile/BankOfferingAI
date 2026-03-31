@@ -170,6 +170,10 @@ tailwind.config = {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         <span data-i18n="admin.products">Product Catalog</span>
       </button>
+      <button onclick="showSection('consent')" data-section="consent" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span data-i18n="admin.consent_registry">Consent Registry</span>
+      </button>
       <button onclick="showSection('config')" data-section="config" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span data-i18n="admin.config">System Config</span>
@@ -831,6 +835,146 @@ tailwind.config = {
       </div>
     </section>
 
+    <!-- ===== CONSENT REGISTRY SECTION ===== -->
+    <section id="section-consent" class="p-4 md:p-8 space-y-6 hidden">
+
+      <!-- Sync Status -->
+      <div id="consent-sync-card" class="glass-card rounded-2xl p-6 fade-in border border-dark-600/30">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-neon-green/10 flex items-center justify-center">
+              <svg class="w-6 h-6 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white" data-i18n="admin.consent_sync_status">Sync Status</h3>
+              <p class="text-xs text-dark-300" data-i18n="admin.consent_sync_desc">Regulatory consent data synchronized from audit workbook</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="triggerConsentSync(false)" class="px-4 py-2 bg-accent hover:bg-accent-dark text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-2">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span data-i18n="admin.consent_sync_now">Sync Now</span>
+            </button>
+            <button onclick="triggerConsentSync(true)" class="px-4 py-2 border border-dark-500/50 hover:border-accent/30 text-dark-200 rounded-xl text-xs font-medium transition-all" title="Force re-sync even if file unchanged">
+              <span data-i18n="admin.consent_force_sync">Force Sync</span>
+            </button>
+          </div>
+        </div>
+        <div id="consent-sync-info" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-3 rounded-xl bg-dark-800/50 border border-dark-700/30">
+            <p class="text-[10px] text-dark-400 uppercase tracking-wider mb-1" data-i18n="admin.consent_version">Version</p>
+            <p class="text-lg font-bold text-white" id="consent-version">—</p>
+          </div>
+          <div class="p-3 rounded-xl bg-dark-800/50 border border-dark-700/30">
+            <p class="text-[10px] text-dark-400 uppercase tracking-wider mb-1" data-i18n="admin.consent_last_sync">Last Sync</p>
+            <p class="text-sm font-medium text-white" id="consent-last-sync">—</p>
+          </div>
+          <div class="p-3 rounded-xl bg-dark-800/50 border border-dark-700/30">
+            <p class="text-[10px] text-dark-400 uppercase tracking-wider mb-1" data-i18n="admin.consent_records">Records</p>
+            <p class="text-lg font-bold text-white" id="consent-records">—</p>
+          </div>
+          <div class="p-3 rounded-xl bg-dark-800/50 border border-dark-700/30">
+            <p class="text-[10px] text-dark-400 uppercase tracking-wider mb-1" data-i18n="admin.consent_next_sync">Next Sync</p>
+            <p class="text-sm font-medium text-white" id="consent-next-sync">—</p>
+          </div>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-dark-400">
+          <span>File: <span id="consent-file" class="text-dark-200">—</span></span>
+          <span>SHA-256: <span id="consent-hash" class="font-mono text-dark-300">—</span></span>
+          <span>By: <span id="consent-synced-by" class="text-dark-200">—</span></span>
+        </div>
+      </div>
+
+      <!-- Sync History -->
+      <div class="glass-card rounded-2xl p-6">
+        <h3 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-dark-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span data-i18n="admin.consent_sync_history">Sync History</span>
+        </h3>
+        <div id="consent-history-container">
+          <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Official Consent Texts -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleConsentPanel('consent-texts-body')">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span data-i18n="admin.consent_official_texts">Official Consent Texts</span>
+          </h3>
+          <svg class="w-5 h-5 text-dark-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div id="consent-texts-body" class="hidden">
+          <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Product Consent Matrix -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleConsentPanel('consent-products-body')">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            <span data-i18n="admin.consent_product_matrix">Product Consent Matrix</span>
+          </h3>
+          <svg class="w-5 h-5 text-dark-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div id="consent-products-body" class="hidden">
+          <div class="mb-3">
+            <select id="consent-product-filter" onchange="renderConsentProductMap()"
+              class="px-4 py-2 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors">
+              <option value="">All Products</option>
+            </select>
+          </div>
+          <div id="consent-product-table">
+            <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Consent Rules -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleConsentPanel('consent-ai-body')">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span data-i18n="admin.consent_ai_rules">AI Consent Rules</span>
+          </h3>
+          <svg class="w-5 h-5 text-dark-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div id="consent-ai-body" class="hidden">
+          <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Implementation Map -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleConsentPanel('consent-impl-body')">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            <span data-i18n="admin.consent_impl_map">Implementation Map</span>
+          </h3>
+          <svg class="w-5 h-5 text-dark-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div id="consent-impl-body" class="hidden">
+          <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Regulatory Sources -->
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleConsentPanel('consent-sources-body')">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            <span data-i18n="admin.consent_sources">Regulatory Sources</span>
+          </h3>
+          <svg class="w-5 h-5 text-dark-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div id="consent-sources-body" class="hidden">
+          <p class="text-dark-400 text-sm" data-i18n="common.loading">Loading...</p>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== CONFIG SECTION ===== -->
     <section id="section-config" class="p-4 md:p-8 space-y-6 hidden">
       <div class="glass-card rounded-2xl p-6">
@@ -1092,7 +1236,7 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', config: 'admin.system_config', audit: 'admin.audit_log' };
   const titleEl = document.getElementById('sectionTitle');
   titleEl.dataset.i18n = titleKeys[name] || '';
   titleEl.textContent = t(titleKeys[name] || name);
@@ -1101,6 +1245,7 @@ function showSection(name) {
   if (name === 'aiact') loadAiActCompliance();
   if (name === 'tokens') loadApiTokens();
   if (name === 'products') loadProducts();
+  if (name === 'consent') loadConsentRegistry();
 }
 
 async function loadOverview() {
@@ -1582,6 +1727,312 @@ async function revokeApiToken(id, name) {
     await loadApiTokens();
   } catch (e) {
     alert((t('admin.token_error') || 'Error: ') + e.message);
+  }
+}
+
+// ===== CONSENT REGISTRY =====
+let consentData = {};
+
+async function loadConsentRegistry() {
+  try {
+    const [statusResp, textsResp, mapResp, productsResp, aiResp, implResp, sourcesResp] = await Promise.all([
+      fetch(`${API}/consent-registry/sync-status`),
+      fetch(`${API}/consent-registry/texts`),
+      fetch(`${API}/consent-registry/product-map`),
+      fetch(`${API}/consent-registry/product-map/products`),
+      fetch(`${API}/consent-registry/ai-rules`),
+      fetch(`${API}/consent-registry/implementation-map`),
+      fetch(`${API}/consent-registry/sources`),
+    ]);
+    const status = await statusResp.json();
+    consentData.texts = await textsResp.json();
+    consentData.productMap = await mapResp.json();
+    consentData.products = await productsResp.json();
+    consentData.aiRules = await aiResp.json();
+    consentData.implMap = await implResp.json();
+    consentData.sources = await sourcesResp.json();
+
+    renderConsentSyncStatus(status);
+    renderConsentHistory(status.history || []);
+    renderConsentTexts(consentData.texts);
+    populateConsentProductFilter(consentData.products);
+    renderConsentProductMap();
+    renderConsentAiRules(consentData.aiRules);
+    renderConsentImplMap(consentData.implMap);
+    renderConsentSources(consentData.sources);
+  } catch (e) {
+    console.error('Consent registry load error:', e);
+  }
+}
+
+function renderConsentSyncStatus(status) {
+  const cur = status.current;
+  if (!cur) {
+    document.getElementById('consent-version').textContent = '—';
+    document.getElementById('consent-last-sync').textContent = 'Never synced';
+    document.getElementById('consent-records').textContent = '0';
+    document.getElementById('consent-next-sync').textContent = `~${status.next_sync_hours}h`;
+    document.getElementById('consent-file').textContent = status.source_file || '—';
+    document.getElementById('consent-hash').textContent = '—';
+    document.getElementById('consent-synced-by').textContent = '—';
+    return;
+  }
+
+  document.getElementById('consent-version').textContent = `v${cur.version}`;
+  const syncDate = cur.synced_at ? new Date(cur.synced_at) : null;
+  document.getElementById('consent-last-sync').textContent = syncDate ? syncDate.toLocaleString() : '—';
+
+  const sheets = cur.sheets_synced || {};
+  const total = Object.values(sheets).reduce((a, b) => a + b, 0);
+  document.getElementById('consent-records').textContent = total;
+
+  // Next sync estimate
+  if (syncDate) {
+    const next = new Date(syncDate.getTime() + status.next_sync_hours * 3600000);
+    document.getElementById('consent-next-sync').textContent = next > new Date()
+      ? `~${next.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+      : 'Due now';
+  } else {
+    document.getElementById('consent-next-sync').textContent = `~${status.next_sync_hours}h`;
+  }
+
+  document.getElementById('consent-file').textContent = cur.source_file || status.source_file || '—';
+  document.getElementById('consent-hash').textContent = cur.file_hash ? cur.file_hash.slice(0, 16) + '...' : '—';
+  document.getElementById('consent-synced-by').textContent = cur.synced_by || 'system';
+
+  // Color the card border based on status
+  const card = document.getElementById('consent-sync-card');
+  card.classList.remove('border-neon-green/30', 'border-neon-red/30');
+  card.classList.add(cur.status === 'success' ? 'border-neon-green/30' : 'border-neon-red/30');
+}
+
+function renderConsentHistory(history) {
+  const container = document.getElementById('consent-history-container');
+  if (!history.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_history') || 'No sync history yet.'}</p>`;
+    return;
+  }
+
+  let html = `<div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-xs text-dark-300 uppercase tracking-wider border-b border-dark-600/30">
+      <th class="pb-3 pr-4">${t('admin.consent_version') || 'Version'}</th>
+      <th class="pb-3 pr-4">${t('admin.consent_last_sync') || 'Synced At'}</th>
+      <th class="pb-3 pr-4">${t('admin.consent_records') || 'Records'}</th>
+      <th class="pb-3 pr-4">SHA-256</th>
+      <th class="pb-3 pr-4">${t('common.status') || 'Status'}</th>
+      <th class="pb-3">${t('admin.consent_synced_by') || 'By'}</th>
+    </tr></thead><tbody>`;
+
+  history.forEach(h => {
+    const sheets = h.sheets_synced || {};
+    const total = typeof sheets === 'object' ? Object.values(sheets).reduce((a, b) => a + b, 0) : 0;
+    const statusBadge = h.status === 'success'
+      ? '<span class="px-2 py-0.5 rounded text-xs bg-neon-green/10 text-neon-green font-medium">OK</span>'
+      : `<span class="px-2 py-0.5 rounded text-xs bg-neon-red/10 text-neon-red font-medium">${h.status}</span>`;
+
+    html += `<tr class="table-row border-b border-dark-700/30">
+      <td class="py-2.5 pr-4 text-white font-semibold">v${h.version}</td>
+      <td class="py-2.5 pr-4 text-dark-200 text-xs">${h.synced_at ? new Date(h.synced_at).toLocaleString() : '—'}</td>
+      <td class="py-2.5 pr-4 text-white">${total}</td>
+      <td class="py-2.5 pr-4 font-mono text-xs text-dark-300">${h.file_hash ? h.file_hash.slice(0, 12) + '...' : '—'}</td>
+      <td class="py-2.5 pr-4">${statusBadge}</td>
+      <td class="py-2.5 text-dark-300 text-xs">${h.synced_by || 'system'}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderConsentTexts(texts) {
+  const container = document.getElementById('consent-texts-body');
+  if (!texts || !texts.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_data') || 'No consent texts loaded. Run a sync first.'}</p>`;
+    return;
+  }
+
+  let html = '<div class="space-y-3">';
+  texts.forEach(ct => {
+    html += `
+      <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-700/30">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2 py-0.5 rounded text-xs font-mono bg-accent/10 text-accent-light">${ct.code}</span>
+          <span class="text-sm font-medium text-white">${ct.checkbox_name}</span>
+          ${ct.mandatory_to_tick && ct.mandatory_to_tick.toLowerCase().startsWith('da')
+            ? '<span class="px-2 py-0.5 rounded text-[10px] bg-neon-red/10 text-neon-red">Mandatory</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] bg-dark-600/50 text-dark-300">Optional</span>'}
+        </div>
+        <div class="p-3 rounded-lg bg-dark-900/50 border border-dark-700/20 mb-2">
+          <p class="text-sm text-neon-cyan italic">"${ct.ui_text}"</p>
+        </div>
+        ${ct.help_text ? `<p class="text-xs text-dark-300 mb-1"><span class="text-dark-400">Help text:</span> ${ct.help_text}</p>` : ''}
+        ${ct.location ? `<p class="text-xs text-dark-300"><span class="text-dark-400">Location:</span> ${ct.location}</p>` : ''}
+        ${ct.when_applicable ? `<p class="text-xs text-dark-300"><span class="text-dark-400">When:</span> ${ct.when_applicable}</p>` : ''}
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function populateConsentProductFilter(products) {
+  const select = document.getElementById('consent-product-filter');
+  select.innerHTML = `<option value="">${t('admin.consent_all_products') || 'All Products'}</option>`;
+  (products || []).forEach(p => {
+    select.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+}
+
+function renderConsentProductMap() {
+  const filter = document.getElementById('consent-product-filter').value;
+  const data = filter
+    ? consentData.productMap.filter(r => r.product_name === filter)
+    : consentData.productMap;
+  const container = document.getElementById('consent-product-table');
+
+  if (!data || !data.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_data') || 'No data.'}</p>`;
+    return;
+  }
+
+  let html = `<div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-xs text-dark-300 uppercase tracking-wider border-b border-dark-600/30">
+      <th class="pb-3 pr-3">Product</th>
+      <th class="pb-3 pr-3">Code</th>
+      <th class="pb-3 pr-3">Required</th>
+      <th class="pb-3 pr-3">Mandatory</th>
+      <th class="pb-3 pr-3">Location</th>
+      <th class="pb-3 pr-3">AI Consent</th>
+      <th class="pb-3">Regulatory</th>
+    </tr></thead><tbody>`;
+
+  let lastProduct = '';
+  data.forEach(r => {
+    const showProduct = r.product_name !== lastProduct;
+    lastProduct = r.product_name;
+    const codeColor = r.checkbox_code.startsWith('MKT_') ? 'neon-amber' :
+      r.checkbox_code.includes('AI') || r.checkbox_code.includes('PROFILING') ? 'neon-cyan' :
+      r.checkbox_code.includes('CONFIRM') ? 'neon-green' : 'accent-light';
+
+    html += `<tr class="table-row border-b border-dark-700/30${showProduct ? ' border-t border-dark-600/40' : ''}">
+      <td class="py-2.5 pr-3 text-white text-xs font-medium">${showProduct ? r.product_name : ''}</td>
+      <td class="py-2.5 pr-3"><span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-${codeColor}/10 text-${codeColor}">${r.checkbox_code}</span></td>
+      <td class="py-2.5 pr-3 text-xs text-dark-200">${r.required_in_ui || '—'}</td>
+      <td class="py-2.5 pr-3 text-xs">${r.mandatory_to_tick && r.mandatory_to_tick.toLowerCase().startsWith('da') ? '<span class="text-neon-red">Yes</span>' : '<span class="text-dark-400">No</span>'}</td>
+      <td class="py-2.5 pr-3 text-xs text-dark-300 max-w-[200px] truncate" title="${(r.location || '').replace(/"/g, '&quot;')}">${r.location || '—'}</td>
+      <td class="py-2.5 pr-3 text-xs text-neon-cyan">${r.ai_consent_needed || '—'}</td>
+      <td class="py-2.5 text-xs text-dark-300 max-w-[180px] truncate" title="${(r.regulatory_note || '').replace(/"/g, '&quot;')}">${r.regulatory_note || '—'}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderConsentAiRules(rules) {
+  const container = document.getElementById('consent-ai-body');
+  if (!rules || !rules.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_data') || 'No AI rules loaded.'}</p>`;
+    return;
+  }
+
+  let html = '<div class="space-y-3">';
+  rules.forEach(r => {
+    const canRun = r.can_ai_run_without && r.can_ai_run_without.toLowerCase().startsWith('da');
+    html += `
+      <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-700/30">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-sm font-medium text-white">${r.ai_use_case}</span>
+          ${canRun
+            ? '<span class="px-2 py-0.5 rounded text-[10px] bg-neon-amber/10 text-neon-amber">Can run without consent</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] bg-neon-red/10 text-neon-red">Consent required</span>'}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+          <div><span class="text-dark-400">Consent needed:</span> <span class="text-neon-cyan font-mono">${r.consent_needed || '—'}</span></div>
+          <div><span class="text-dark-400">Location:</span> <span class="text-dark-200">${r.location || '—'}</span></div>
+          <div><span class="text-dark-400">Fallback:</span> <span class="text-neon-amber">${r.fallback || '—'}</span></div>
+          <div><span class="text-dark-400">Products:</span> <span class="text-dark-200">${r.products || '—'}</span></div>
+        </div>
+        ${r.notes ? `<p class="text-xs text-dark-400 mt-2 italic">${r.notes}</p>` : ''}
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderConsentImplMap(map) {
+  const container = document.getElementById('consent-impl-body');
+  if (!map || !map.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_data') || 'No implementation data.'}</p>`;
+    return;
+  }
+
+  let html = '<div class="space-y-3">';
+  map.forEach(m => {
+    html += `
+      <div class="p-4 rounded-xl bg-dark-800/50 border border-dark-700/30">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2 py-0.5 rounded text-xs font-mono bg-accent/10 text-accent-light">${m.checkbox_code}</span>
+          <span class="text-xs text-dark-400">Owner: <span class="text-dark-200">${m.owner || '—'}</span></span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+          <div><span class="text-dark-400">DB fields:</span> <span class="text-neon-green font-mono">${m.db_fields || '—'}</span></div>
+          <div><span class="text-dark-400">Capture point:</span> <span class="text-dark-200">${m.capture_point || '—'}</span></div>
+          <div><span class="text-dark-400">Withdrawal:</span> <span class="text-dark-200">${m.withdrawal_location || '—'}</span></div>
+          <div><span class="text-dark-400">Enforcement:</span> <span class="text-neon-amber">${m.enforcement_rule || '—'}</span></div>
+          <div class="md:col-span-2"><span class="text-dark-400">Audit evidence:</span> <span class="text-dark-200">${m.audit_evidence || '—'}</span></div>
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderConsentSources(sources) {
+  const container = document.getElementById('consent-sources-body');
+  if (!sources || !sources.length) {
+    container.innerHTML = `<p class="text-dark-400 text-sm">${t('admin.consent_no_data') || 'No sources.'}</p>`;
+    return;
+  }
+
+  let html = '<div class="space-y-2">';
+  sources.forEach(s => {
+    html += `
+      <div class="flex items-center gap-4 p-3 rounded-xl bg-dark-800/50 border border-dark-700/30">
+        <div class="w-8 h-8 rounded-lg bg-neon-green/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-white">${s.instrument}</p>
+          <a href="${s.url}" target="_blank" rel="noopener" class="text-xs text-accent-light hover:text-accent underline truncate block">${s.url}</a>
+          ${s.notes ? `<p class="text-xs text-dark-400 mt-0.5">${s.notes}</p>` : ''}
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function toggleConsentPanel(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+}
+
+async function triggerConsentSync(force) {
+  const label = force ? 'Force syncing...' : 'Syncing...';
+  try {
+    const resp = await fetch(`${API}/consent-registry/sync?force=${force}`, { method: 'POST' });
+    if (!resp.ok) throw new Error('Sync failed');
+    const result = await resp.json();
+    if (result.status === 'no_change') {
+      alert(t('admin.consent_sync_no_change') || 'No changes detected — file is identical to last sync.');
+    } else if (result.status === 'synced') {
+      alert((t('admin.consent_sync_success') || 'Sync complete!') + ` Version v${result.version}, ${result.records} records.`);
+    } else {
+      alert(result.message || result.reason || 'Sync completed.');
+    }
+    await loadConsentRegistry();
+  } catch (e) {
+    alert((t('admin.consent_sync_error') || 'Sync error: ') + e.message);
   }
 }
 

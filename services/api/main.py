@@ -11,7 +11,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from services.api.routers import api_tokens, compliance, customer_auth, offers, products, profiles, staff_auth
+import asyncio
+
+from services.api.routers import api_tokens, compliance, consent_registry, customer_auth, offers, products, profiles, staff_auth
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +50,16 @@ async def lifespan(app: FastAPI):
 
     logger.info("Database and Redis connections established.")
 
+    # Start consent registry background sync
+    sync_task = asyncio.create_task(
+        consent_registry.start_background_sync(session_factory)
+    )
+    app.state.consent_sync_task = sync_task
+
     yield
+
+    # Cancel background sync
+    sync_task.cancel()
 
     # Shutdown: close connections
     logger.info("Shutting down API service...")
@@ -90,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(staff_auth.router, prefix="/staff-auth", tags=["staff-auth"])
     app.include_router(api_tokens.router, prefix="/api-tokens", tags=["api-tokens"])
     app.include_router(products.router, prefix="/products-catalog", tags=["products"])
+    app.include_router(consent_registry.router, prefix="/consent-registry", tags=["consent-registry"])
 
     if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
         from services.api.routers import webhooks
