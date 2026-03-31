@@ -39,15 +39,19 @@ tailwind.config = {
   .offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
   .score-bar { background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 999px; height: 6px; transition: width 0.8s ease; }
   .score-bar-bg { background: rgba(99,102,241,0.1); border-radius: 999px; height: 6px; }
-  .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+  .fade-in { animation: fadeIn 0.4s ease forwards; opacity: 0; }
   @keyframes fadeIn { to { opacity: 1; } }
   .pulse-dot { animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  .gradient-text { background: linear-gradient(135deg, #818cf8, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .customer-btn { transition: all 0.15s; }
   .customer-btn:hover { background: rgba(99,102,241,0.15); }
   .customer-btn.active { background: rgba(99,102,241,0.2); border-color: #6366f1; }
-  .txn-row:hover { background: rgba(99,102,241,0.05); }
+  .product-item { cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+  .product-item:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.15); }
+  .slideout { transform: translateX(100%); transition: transform 0.3s ease; }
+  .slideout.open { transform: translateX(0); }
+  .table-row { transition: background 0.15s; }
+  .table-row:hover { background: rgba(99,102,241,0.06); }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -57,28 +61,26 @@ tailwind.config = {
 
 <!-- Sidebar -->
 <aside class="w-[72px] hover:w-[240px] transition-all duration-300 bg-dark-900 border-r border-dark-600/50 flex flex-col items-center py-6 fixed h-full z-50 overflow-hidden group">
-  <!-- Logo -->
-  <div class="flex items-center gap-3 mb-10 px-4 w-full">
+  <div class="flex items-center gap-3 mb-10 px-4 w-full cursor-pointer" onclick="navigateTo('dashboard')">
     <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 glow-accent">
       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
     </div>
     <span class="text-lg font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">BankOffer<span class="text-accent-light">AI</span></span>
   </div>
-
   <nav class="flex flex-col w-full gap-1 px-3 flex-1">
-    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="dashboard">
+    <a href="#" onclick="navigateTo('dashboard');return false" class="sidebar-link active flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="dashboard">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm0 7a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5zM4 13a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2z"/></svg>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Dashboard</span>
     </a>
-    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="offers">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Offers</span>
+    <a href="#" onclick="navigateTo('products');return false" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="products">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Products</span>
     </a>
-    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="customers">
+    <a href="#" onclick="navigateTo('customers');return false" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="customers">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Customers</span>
     </a>
-    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="analytics">
+    <a href="#" onclick="navigateTo('analytics');return false" class="sidebar-link flex items-center gap-3 px-3 py-3 rounded-lg text-dark-200" data-section="analytics">
       <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">Analytics</span>
     </a>
@@ -87,12 +89,9 @@ tailwind.config = {
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-sm font-medium">API Docs</span>
     </a>
   </nav>
-
   <div class="px-3 w-full mt-auto">
     <div class="flex items-center gap-3 px-3 py-3">
-      <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
-        <span class="text-accent-light text-xs font-bold">AI</span>
-      </div>
+      <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0"><span class="text-accent-light text-xs font-bold">AI</span></div>
       <span class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-xs text-dark-300">v1.0 rules</span>
     </div>
   </div>
@@ -103,159 +102,77 @@ tailwind.config = {
   <!-- Top Bar -->
   <header class="sticky top-0 z-40 bg-dark-950/80 backdrop-blur-xl border-b border-dark-600/30 px-8 py-4 flex items-center justify-between">
     <div>
-      <h1 class="text-xl font-semibold text-white">Dashboard</h1>
-      <p class="text-xs text-dark-300 mt-0.5">AI-powered personalization engine</p>
+      <h1 class="text-xl font-semibold text-white" id="pageTitle">Dashboard</h1>
+      <p class="text-xs text-dark-300 mt-0.5" id="pageSubtitle">AI-powered personalization engine</p>
     </div>
     <div class="flex items-center gap-4">
       <div class="relative">
-        <input type="text" id="searchInput" placeholder="Search customer ID..." class="bg-dark-800 border border-dark-600/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-56 transition-all focus:w-72" />
+        <input type="text" id="searchInput" placeholder="Search customer ID..." class="bg-dark-800 border border-dark-600/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-dark-100 placeholder-dark-400 focus:outline-none focus:border-accent/50 w-56 transition-all focus:w-72"/>
         <svg class="w-4 h-4 text-dark-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
       </div>
-      <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-neon-green pulse-dot"></div>
-        <span class="text-xs text-dark-300">System Online</span>
-      </div>
+      <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-neon-green pulse-dot"></div><span class="text-xs text-dark-300">System Online</span></div>
     </div>
   </header>
 
-  <div class="p-8">
-    <!-- Stat Cards -->
+  <!-- ==================== DASHBOARD SECTION ==================== -->
+  <section id="page-dashboard" class="p-8">
     <div class="grid grid-cols-4 gap-5 mb-8">
-      <div class="glass-card rounded-2xl p-5 stat-glow-green fade-in" style="animation-delay:0.1s">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Total Customers</span>
-          <div class="w-9 h-9 rounded-xl bg-neon-green/10 flex items-center justify-center">
-            <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </div>
-        </div>
-        <p class="text-3xl font-bold text-white" id="statCustomers">--</p>
-        <p class="text-xs text-neon-green mt-1 flex items-center gap-1">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>
-          Active profiles
-        </p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 stat-glow-purple fade-in" style="animation-delay:0.2s">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Products Available</span>
-          <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-            <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-          </div>
-        </div>
-        <p class="text-3xl font-bold text-white" id="statProducts">12</p>
-        <p class="text-xs text-accent-light mt-1">Across 6 categories</p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 stat-glow-cyan fade-in" style="animation-delay:0.3s">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Avg Relevance</span>
-          <div class="w-9 h-9 rounded-xl bg-neon-cyan/10 flex items-center justify-center">
-            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-          </div>
-        </div>
-        <p class="text-3xl font-bold text-white" id="statAvgScore">--</p>
-        <p class="text-xs text-neon-cyan mt-1">Model confidence</p>
-      </div>
-      <div class="glass-card rounded-2xl p-5 stat-glow-amber fade-in" style="animation-delay:0.4s">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Scoring Model</span>
-          <div class="w-9 h-9 rounded-xl bg-neon-amber/10 flex items-center justify-center">
-            <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-          </div>
-        </div>
-        <p class="text-3xl font-bold text-white">Rules</p>
-        <p class="text-xs text-neon-amber mt-1">v1.0 &middot; 20 profiling rules</p>
-      </div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-green fade-in" style="animation-delay:0.1s"><div class="flex items-center justify-between mb-3"><span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Total Customers</span><div class="w-9 h-9 rounded-xl bg-neon-green/10 flex items-center justify-center"><svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div></div><p class="text-3xl font-bold text-white" id="statCustomers">50</p><p class="text-xs text-neon-green mt-1">Active profiles</p></div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-purple fade-in" style="animation-delay:0.2s"><div class="flex items-center justify-between mb-3"><span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Products Available</span><div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center"><svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div></div><p class="text-3xl font-bold text-white">12</p><p class="text-xs text-accent-light mt-1 cursor-pointer hover:underline" onclick="navigateTo('products')">Browse catalog &rarr;</p></div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-cyan fade-in" style="animation-delay:0.3s"><div class="flex items-center justify-between mb-3"><span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Avg Relevance</span><div class="w-9 h-9 rounded-xl bg-neon-cyan/10 flex items-center justify-center"><svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div></div><p class="text-3xl font-bold text-white" id="statAvgScore">--</p><p class="text-xs text-neon-cyan mt-1">Model confidence</p></div>
+      <div class="glass-card rounded-2xl p-5 stat-glow-amber fade-in" style="animation-delay:0.4s"><div class="flex items-center justify-between mb-3"><span class="text-xs font-medium text-dark-300 uppercase tracking-wider">Scoring Model</span><div class="w-9 h-9 rounded-xl bg-neon-amber/10 flex items-center justify-center"><svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg></div></div><p class="text-3xl font-bold text-white">Rules</p><p class="text-xs text-neon-amber mt-1">v1.0 &middot; 20 profiling rules</p></div>
     </div>
-
-    <!-- Main Grid -->
     <div class="grid grid-cols-12 gap-6">
-      <!-- Customer Selector + Offers (Left) -->
       <div class="col-span-8 space-y-6">
-        <!-- Customer Selector -->
-        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.5s">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-semibold text-white flex items-center gap-2">
-              <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              Select Customer
-            </h2>
-            <span class="text-xs text-dark-300" id="selectedCustomerInfo">Click a customer to view offers</span>
-          </div>
-          <div class="flex flex-wrap gap-2" id="customerGrid">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- Customer Profile Card -->
-        <div class="glass-card rounded-2xl p-6 fade-in hidden" id="profileCard" style="animation-delay:0.6s">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-base font-semibold text-white flex items-center gap-2">
-              <svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Customer Profile
-            </h2>
-            <span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-light" id="profileLifeStage">--</span>
-          </div>
-          <div class="grid grid-cols-4 gap-4" id="profileDetails">
-          </div>
-        </div>
-
-        <!-- Offers -->
-        <div class="glass-card rounded-2xl p-6 fade-in" id="offersSection" style="animation-delay:0.7s">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-base font-semibold text-white flex items-center gap-2">
-              <svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-              Personalized Offers
-            </h2>
-            <span class="text-xs text-dark-300" id="offersCount">Select a customer</span>
-          </div>
-          <div id="offersGrid" class="space-y-3">
-            <div class="flex items-center justify-center py-16 text-dark-400">
-              <div class="text-center">
-                <svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                <p class="text-sm">Select a customer above to generate AI-powered offers</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Select Customer</h2><span class="text-xs text-dark-300" id="selectedCustomerInfo">Click a customer to view offers</span></div><div class="flex flex-wrap gap-2" id="customerGrid"></div></div>
+        <div class="glass-card rounded-2xl p-6 hidden" id="profileCard"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Customer Profile</h2><span class="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-light" id="profileLifeStage">--</span></div><div class="grid grid-cols-4 gap-4" id="profileDetails"></div></div>
+        <div class="glass-card rounded-2xl p-6"><div class="flex items-center justify-between mb-5"><h2 class="text-base font-semibold text-white flex items-center gap-2"><svg class="w-5 h-5 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>Personalized Offers</h2><span class="text-xs text-dark-300" id="offersCount">Select a customer</span></div><div id="offersGrid" class="space-y-3"><div class="flex items-center justify-center py-16 text-dark-400"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><p class="text-sm">Select a customer above to generate AI-powered offers</p></div></div></div></div>
       </div>
-
-      <!-- Right Column -->
       <div class="col-span-4 space-y-6">
-        <!-- Spending Distribution -->
-        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.6s">
-          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-            Offer Distribution
-          </h2>
-          <div class="relative" style="height:220px">
-            <canvas id="distributionChart"></canvas>
-          </div>
-          <div id="chartLegend" class="mt-4 space-y-2"></div>
-        </div>
-
-        <!-- Product Catalog Quick View -->
-        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.7s">
-          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-            Product Catalog
-          </h2>
-          <div class="space-y-2" id="productCatalog">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
-
-        <!-- Risk Distribution -->
-        <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.8s">
-          <h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            Score Breakdown
-          </h2>
-          <div class="relative" style="height:200px">
-            <canvas id="scoreChart"></canvas>
-          </div>
-        </div>
+        <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>Offer Distribution</h2><div class="relative" style="height:220px"><canvas id="distributionChart"></canvas></div><div id="chartLegend" class="mt-4 space-y-2"></div></div>
+        <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>Product Catalog</h2><div id="productCatalogSidebar" class="space-y-1"></div></div>
+        <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-neon-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Score Breakdown</h2><div class="relative" style="height:200px"><canvas id="scoreChart"></canvas></div></div>
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- ==================== PRODUCTS SECTION ==================== -->
+  <section id="page-products" class="p-8 hidden">
+    <div class="grid grid-cols-3 gap-5" id="productGrid"></div>
+  </section>
+
+  <!-- ==================== CUSTOMERS SECTION ==================== -->
+  <section id="page-customers" class="p-8 hidden">
+    <div class="glass-card rounded-2xl p-6">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead><tr class="border-b border-dark-600/50 text-dark-300 text-xs uppercase tracking-wider">
+            <th class="py-3 px-4">ID</th><th class="py-3 px-4">Age</th><th class="py-3 px-4">City</th><th class="py-3 px-4">Income/mo</th><th class="py-3 px-4">Risk</th><th class="py-3 px-4">Life Stage</th><th class="py-3 px-4">Segments</th><th class="py-3 px-4">Top Offer</th><th class="py-3 px-4"></th>
+          </tr></thead>
+          <tbody id="customersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ANALYTICS SECTION ==================== -->
+  <section id="page-analytics" class="p-8 hidden">
+    <div class="grid grid-cols-2 gap-6">
+      <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4">Life Stage Distribution</h2><div style="height:300px"><canvas id="analyticsLifeStage"></canvas></div></div>
+      <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4">Risk Profile Distribution</h2><div style="height:300px"><canvas id="analyticsRisk"></canvas></div></div>
+      <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4">Income Bracket Distribution</h2><div style="height:300px"><canvas id="analyticsIncome"></canvas></div></div>
+      <div class="glass-card rounded-2xl p-6"><h2 class="text-base font-semibold text-white mb-4">Top Recommended Products (all customers)</h2><div style="height:300px"><canvas id="analyticsProducts"></canvas></div></div>
+    </div>
+  </section>
 </main>
+
+<!-- Product Detail Slideout -->
+<div id="productSlideout" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/50" onclick="closeProductDetail()"></div>
+  <div class="slideout absolute right-0 top-0 h-full w-[520px] bg-dark-900 border-l border-dark-600/50 overflow-y-auto" id="slideoutPanel">
+    <div class="p-8" id="productDetailContent"></div>
+  </div>
+</div>
 
 <!-- Loading overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-dark-950/90 z-[100] flex items-center justify-center transition-opacity duration-500">
@@ -269,8 +186,8 @@ tailwind.config = {
 </div>
 
 <script>
-const API_BASE = '';
-const PRODUCT_ICONS = {
+const API = '';
+const ICONS = {
   investment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
   bond: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
   savings: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
@@ -280,71 +197,229 @@ const PRODUCT_ICONS = {
   credit_card: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
   insurance: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
 };
-const TYPE_COLORS = {
-  investment: { bg: 'bg-accent/10', text: 'text-accent-light', bar: '#6366f1' },
-  bond: { bg: 'bg-neon-cyan/10', text: 'text-neon-cyan', bar: '#06b6d4' },
-  savings: { bg: 'bg-neon-green/10', text: 'text-neon-green', bar: '#10b981' },
-  retirement: { bg: 'bg-neon-amber/10', text: 'text-neon-amber', bar: '#f59e0b' },
-  personal_loan: { bg: 'bg-neon-red/10', text: 'text-neon-red', bar: '#ef4444' },
-  mortgage: { bg: 'bg-neon-purple/10', text: 'text-neon-purple', bar: '#a78bfa' },
-  credit_card: { bg: 'bg-pink-500/10', text: 'text-pink-400', bar: '#ec4899' },
-  insurance: { bg: 'bg-teal-500/10', text: 'text-teal-400', bar: '#14b8a6' },
+const COLORS = {
+  investment: { bg:'bg-accent/10', text:'text-accent-light', bar:'#6366f1', hex:'#6366f1' },
+  bond: { bg:'bg-neon-cyan/10', text:'text-neon-cyan', bar:'#06b6d4', hex:'#06b6d4' },
+  savings: { bg:'bg-neon-green/10', text:'text-neon-green', bar:'#10b981', hex:'#10b981' },
+  retirement: { bg:'bg-neon-amber/10', text:'text-neon-amber', bar:'#f59e0b', hex:'#f59e0b' },
+  personal_loan: { bg:'bg-neon-red/10', text:'text-neon-red', bar:'#ef4444', hex:'#ef4444' },
+  mortgage: { bg:'bg-neon-purple/10', text:'text-neon-purple', bar:'#a78bfa', hex:'#a78bfa' },
+  credit_card: { bg:'bg-pink-500/10', text:'text-pink-400', bar:'#ec4899', hex:'#ec4899' },
+  insurance: { bg:'bg-teal-500/10', text:'text-teal-400', bar:'#14b8a6', hex:'#14b8a6' },
 };
 
 const PRODUCTS = [
-  { name: 'ETF Starter', type: 'investment', cat: 'Investment' },
-  { name: 'ETF Growth', type: 'investment', cat: 'Investment' },
-  { name: 'Mutual Funds', type: 'investment', cat: 'Investment' },
-  { name: 'Managed Portfolio', type: 'investment', cat: 'Investment' },
-  { name: 'State Bonds', type: 'bond', cat: 'Investment' },
-  { name: 'Savings Deposit', type: 'savings', cat: 'Savings' },
-  { name: 'Private Pension', type: 'retirement', cat: 'Retirement' },
-  { name: 'Personal Loan', type: 'personal_loan', cat: 'Lending' },
-  { name: 'Mortgage', type: 'mortgage', cat: 'Lending' },
-  { name: 'Credit Card', type: 'credit_card', cat: 'Credit' },
-  { name: 'Life Insurance', type: 'insurance', cat: 'Insurance' },
-  { name: 'Travel Insurance', type: 'insurance', cat: 'Insurance' },
+  { id:'prod_etf_starter', name:'ETF Starter Portfolio', type:'investment', cat:'Investments', channel:'app', priority:'high', stage:'onboarding',
+    desc:'Entry-level investing with diversified ETFs. Ideal for first-time investors seeking broad market exposure with low fees.',
+    target:'First-time investors', eligibility:'Age >= 18, income > 3,000, active account',
+    suitability:'Savings > 5,000, monthly savings > 300, debt-to-income < 1, risk = moderate/high',
+    triggers:'idle_cash_high, salary_increase, monthly_savings_consistent' },
+  { id:'prod_etf_growth', name:'ETF Growth Portfolio', type:'investment', cat:'Investments', channel:'app', priority:'high', stage:'growth',
+    desc:'High-return investment strategy targeting capital appreciation through growth-oriented ETFs.',
+    target:'Experienced investors', eligibility:'Income > 5,000, investment experience > 1 year',
+    suitability:'High idle cash, high income, investment gap detected',
+    triggers:'high_idle_cash, high_income, investment_gap' },
+  { id:'prod_mutual_funds', name:'Mutual Funds', type:'investment', cat:'Investments', channel:'app', priority:'medium', stage:'growth',
+    desc:'Actively managed funds providing diversified exposure across asset classes with professional management.',
+    target:'Moderate-risk investors', eligibility:'Age >= 18, income > 3,000',
+    suitability:'Moderate risk profile, some savings, stable income',
+    triggers:'idle_cash_high, salary_increase, investment_gap' },
+  { id:'prod_managed_portfolio', name:'Managed Portfolio', type:'investment', cat:'Investments', channel:'advisor', priority:'high', stage:'growth',
+    desc:'Premium professional portfolio management service with personalized asset allocation and quarterly rebalancing.',
+    target:'High-net-worth clients', eligibility:'Income > 8,000, savings > 20,000',
+    suitability:'High income, substantial savings, growth-oriented',
+    triggers:'high_income, high_savings, investment_gap' },
+  { id:'prod_state_bonds', name:'State Bonds', type:'bond', cat:'Investments', channel:'app', priority:'medium', stage:'retention',
+    desc:'Government-backed fixed-income securities offering stable, predictable returns with minimal risk.',
+    target:'Conservative investors', eligibility:'Age >= 18, active account',
+    suitability:'Low/moderate risk, savings available, seeking stability',
+    triggers:'idle_cash_high, monthly_savings_consistent, risk_averse' },
+  { id:'prod_savings_deposit', name:'Savings Deposit', type:'savings', cat:'Savings', channel:'app', priority:'high', stage:'onboarding',
+    desc:'High-yield savings account with competitive interest rates and flexible access to your funds.',
+    target:'All customers', eligibility:'Active account',
+    suitability:'Any financial health, ideal for building emergency fund',
+    triggers:'idle_cash_high, no_savings, monthly_savings_consistent' },
+  { id:'prod_private_pension', name:'Private Pension', type:'retirement', cat:'Retirement', channel:'advisor', priority:'high', stage:'retention',
+    desc:'Tax-advantaged retirement savings plan with employer matching and diversified fund options.',
+    target:'Working professionals 30+', eligibility:'Age >= 25, stable employment',
+    suitability:'Stable income, long-term planning mindset, tax optimization needed',
+    triggers:'monthly_savings_consistent, age_approaching_retirement, salary_increase' },
+  { id:'prod_personal_loan', name:'Personal Loan', type:'personal_loan', cat:'Lending', channel:'app', priority:'medium', stage:'growth',
+    desc:'Flexible personal financing with competitive rates for debt consolidation, home improvement, or major purchases.',
+    target:'Employed individuals', eligibility:'Income > 2,500, employment verified',
+    suitability:'Moderate debt-to-income, good payment history',
+    triggers:'debt_high, large_expense_detected, salary_increase' },
+  { id:'prod_mortgage', name:'Mortgage', type:'mortgage', cat:'Lending', channel:'advisor', priority:'high', stage:'growth',
+    desc:'Home purchase or refinancing with fixed or variable rates, up to 30-year terms, and competitive LTV ratios.',
+    target:'Home buyers / refinancers', eligibility:'Income > 3,500, stable employment 2+ years',
+    suitability:'Renter status, stable income, savings for down payment',
+    triggers:'rent_as_top_expense, salary_increase, savings_milestone' },
+  { id:'prod_credit_card', name:'Credit Card', type:'credit_card', cat:'Credit', channel:'app', priority:'medium', stage:'onboarding',
+    desc:'Rewards-based credit card with cashback on everyday purchases, travel perks, and purchase protection.',
+    target:'Active spenders', eligibility:'Age >= 18, income > 2,000',
+    suitability:'Regular spending patterns, good credit history',
+    triggers:'travel_spike, shopping_dominant, first_time_credit' },
+  { id:'prod_life_insurance', name:'Life Insurance', type:'insurance', cat:'Insurance', channel:'email', priority:'high', stage:'retention',
+    desc:'Term life coverage providing financial protection for your family with flexible coverage amounts and terms.',
+    target:'Parents / breadwinners', eligibility:'Age 18-65, dependents >= 1',
+    suitability:'Has dependents, is primary income earner',
+    triggers:'new_dependent, salary_increase, mortgage_taken' },
+  { id:'prod_travel_insurance', name:'Travel Insurance', type:'insurance', cat:'Insurance', channel:'app', priority:'low', stage:'growth',
+    desc:'Comprehensive travel protection covering trip cancellation, medical emergencies, and lost luggage worldwide.',
+    target:'Frequent travelers', eligibility:'Active account',
+    suitability:'Travel spending pattern detected, frequent trips',
+    triggers:'travel_spike, travel_booking_detected' },
 ];
 
-let distributionChart = null;
-let scoreChart = null;
-let selectedCustomerId = null;
+let distributionChart=null, scoreChart=null, selectedCustomerId=null;
+let analyticsCharts = {};
+let profileCache = {};
 
-// Initialize
-async function init() {
-  renderCustomerGrid();
-  renderProductCatalog();
-  initDistributionChart();
-  initScoreChart();
-  await loadStats();
-  document.getElementById('loadingOverlay').style.opacity = '0';
-  setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 500);
+// ===== NAVIGATION =====
+function navigateTo(section) {
+  document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(`page-${section}`).classList.remove('hidden');
+  document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
+  const link = document.querySelector(`.sidebar-link[data-section="${section}"]`);
+  if (link) link.classList.add('active');
+  const titles = { dashboard:['Dashboard','AI-powered personalization engine'], products:['Product Catalog','12 financial products across 6 categories'], customers:['Customer Directory','50 profiled customers with AI scoring'], analytics:['Analytics','Aggregate insights across all customers'] };
+  const t = titles[section] || titles.dashboard;
+  document.getElementById('pageTitle').textContent = t[0];
+  document.getElementById('pageSubtitle').textContent = t[1];
+  if (section === 'products') renderProductsPage();
+  if (section === 'customers') renderCustomersPage();
+  if (section === 'analytics') renderAnalyticsPage();
 }
 
-function renderCustomerGrid() {
-  const grid = document.getElementById('customerGrid');
-  let html = '';
+// ===== PRODUCT DETAIL SLIDEOUT =====
+function openProductDetail(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+  const c = COLORS[p.type];
+  document.getElementById('productDetailContent').innerHTML = `
+    <button onclick="closeProductDetail()" class="absolute top-6 right-6 text-dark-400 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    <div class="w-14 h-14 rounded-2xl ${c.bg} ${c.text} flex items-center justify-center mb-5">${ICONS[p.type]}</div>
+    <h2 class="text-2xl font-bold text-white mb-1">${p.name}</h2>
+    <div class="flex items-center gap-2 mb-5">
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-medium ${c.bg} ${c.text}">${p.cat}</span>
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-dark-700 text-dark-200">${p.priority} priority</span>
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-dark-700 text-dark-200">${p.channel}</span>
+    </div>
+    <p class="text-sm text-dark-200 leading-relaxed mb-8">${p.desc}</p>
+    <div class="space-y-5">
+      <div><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">Target Customer</p><p class="text-sm text-dark-100">${p.target}</p></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">Eligibility Criteria</p><p class="text-sm text-dark-100">${p.eligibility}</p></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">Suitability Criteria</p><p class="text-sm text-dark-100">${p.suitability}</p></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">Lifecycle Stage</p><p class="text-sm text-dark-100 capitalize">${p.stage}</p></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">Trigger Signals</p><div class="flex flex-wrap gap-1.5">${p.triggers.split(', ').map(t=>`<span class="px-2 py-0.5 rounded text-[11px] bg-dark-700 text-dark-200">${t}</span>`).join('')}</div></div>
+    </div>
+    <div class="mt-8 pt-6 border-t border-dark-600/50"><p class="text-xs text-dark-400 mb-3">Try this product for a customer:</p><div class="flex gap-2"><input type="number" id="detailCustId" min="1" max="50" value="1" class="bg-dark-800 border border-dark-600/50 rounded-lg px-3 py-2 text-sm text-dark-100 w-24 focus:outline-none focus:border-accent/50"/><button onclick="tryProductForCustomer('${p.id}')" class="bg-accent hover:bg-accent-dark text-white text-sm font-medium px-4 py-2 rounded-lg transition">View Offers</button></div></div>`;
+  const overlay = document.getElementById('productSlideout');
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => document.getElementById('slideoutPanel').classList.add('open'));
+}
+function closeProductDetail() {
+  document.getElementById('slideoutPanel').classList.remove('open');
+  setTimeout(() => document.getElementById('productSlideout').classList.add('hidden'), 300);
+}
+function tryProductForCustomer(pid) {
+  const cid = parseInt(document.getElementById('detailCustId').value);
+  if (cid >= 1 && cid <= 50) { closeProductDetail(); navigateTo('dashboard'); selectCustomer(cid); }
+}
+
+// ===== PRODUCTS PAGE =====
+function renderProductsPage() {
+  const el = document.getElementById('productGrid');
+  el.innerHTML = PRODUCTS.map(p => {
+    const c = COLORS[p.type];
+    return `<div class="glass-card rounded-2xl p-6 cursor-pointer offer-card" onclick="openProductDetail('${p.id}')">
+      <div class="flex items-start gap-4 mb-4"><div class="w-12 h-12 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${ICONS[p.type]}</div><div><h3 class="text-base font-semibold text-white">${p.name}</h3><span class="text-xs ${c.text}">${p.cat} &middot; ${p.priority} priority</span></div></div>
+      <p class="text-xs text-dark-300 leading-relaxed mb-4">${p.desc}</p>
+      <div class="flex flex-wrap gap-1.5 mb-3">${p.triggers.split(', ').slice(0,3).map(t=>`<span class="px-2 py-0.5 rounded text-[10px] bg-dark-700 text-dark-300">${t}</span>`).join('')}</div>
+      <div class="flex items-center justify-between pt-3 border-t border-dark-600/30"><span class="text-[10px] text-dark-400">Channel: ${p.channel}</span><span class="text-[10px] text-dark-400">Stage: ${p.stage}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== CUSTOMERS PAGE =====
+async function renderCustomersPage() {
+  const tbody = document.getElementById('customersTableBody');
+  if (tbody.children.length > 0) return;
+  tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-dark-400"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mx-auto"></div></td></tr>';
+  const rows = [];
   for (let i = 1; i <= 50; i++) {
-    html += `<button onclick="selectCustomer(${i})" id="custBtn${i}" class="customer-btn w-10 h-10 rounded-xl border border-dark-600/50 bg-dark-800/50 text-sm font-medium text-dark-200 hover:text-white transition-all flex items-center justify-center">${i}</button>`;
+    try {
+      const [profResp, offResp] = await Promise.all([fetch(`${API}/profiles/${i}`), fetch(`${API}/offers/${i}?top_n=1`)]);
+      const prof = profResp.ok ? await profResp.json() : null;
+      const off = offResp.ok ? await offResp.json() : null;
+      if (prof) profileCache[i] = prof;
+      const topOffer = off?.offers?.[0]?.product_name || '--';
+      const ls = (prof?.life_stage||'').replace(/_/g,' ');
+      const segs = (prof?.segments||[]).join(', ');
+      rows.push(`<tr class="table-row border-b border-dark-600/20 cursor-pointer" onclick="navigateTo('dashboard');selectCustomer(${i})">
+        <td class="py-3 px-4 font-medium text-white">${i}</td>
+        <td class="py-3 px-4 text-dark-200">--</td>
+        <td class="py-3 px-4 text-dark-200">--</td>
+        <td class="py-3 px-4 text-dark-200">--</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${prof?.risk_score<4?'bg-neon-green/10 text-neon-green':prof?.risk_score<7?'bg-neon-amber/10 text-neon-amber':'bg-neon-red/10 text-neon-red'}">${prof?.risk_score?.toFixed(1)||'--'}</span></td>
+        <td class="py-3 px-4 text-dark-200 capitalize">${ls}</td>
+        <td class="py-3 px-4 text-dark-300 text-xs">${segs}</td>
+        <td class="py-3 px-4 text-accent-light text-xs">${topOffer}</td>
+        <td class="py-3 px-4"><span class="text-xs text-accent-light hover:underline">View &rarr;</span></td>
+      </tr>`);
+      if (i % 10 === 0) { tbody.innerHTML = rows.join(''); }
+    } catch(e) { console.error(e); }
   }
-  grid.innerHTML = html;
+  tbody.innerHTML = rows.join('');
 }
 
-function renderProductCatalog() {
-  const el = document.getElementById('productCatalog');
-  const categories = {};
-  PRODUCTS.forEach(p => {
-    if (!categories[p.cat]) categories[p.cat] = [];
-    categories[p.cat].push(p);
-  });
+// ===== ANALYTICS PAGE =====
+async function renderAnalyticsPage() {
+  if (analyticsCharts.built) return;
+  analyticsCharts.built = true;
+  const profiles = [];
+  const allOffers = {};
+  for (let i = 1; i <= 50; i++) {
+    try {
+      const [pr, of] = await Promise.all([
+        profileCache[i] ? Promise.resolve(profileCache[i]) : fetch(`${API}/profiles/${i}`).then(r=>r.json()),
+        fetch(`${API}/offers/${i}?top_n=3`).then(r=>r.json())
+      ]);
+      profiles.push(pr);
+      (of.offers||[]).forEach(o => { allOffers[o.product_name] = (allOffers[o.product_name]||0) + 1; });
+    } catch(e) {}
+  }
+  // Life stage chart
+  const lsCounts = {};
+  profiles.forEach(p => { const ls = (p.life_stage||'unknown'); lsCounts[ls]=(lsCounts[ls]||0)+1; });
+  new Chart(document.getElementById('analyticsLifeStage'),{type:'doughnut',data:{labels:Object.keys(lsCounts).map(s=>s.replace(/_/g,' ')),datasets:[{data:Object.values(lsCounts),backgroundColor:['#6366f1','#10b981','#f59e0b','#06b6d4','#a78bfa','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},padding:12}}}}});
+  // Risk distribution
+  const riskBuckets = {'1-3':0,'3-5':0,'5-7':0,'7-10':0};
+  profiles.forEach(p => { const r=p.risk_score||0; if(r<3) riskBuckets['1-3']++; else if(r<5) riskBuckets['3-5']++; else if(r<7) riskBuckets['5-7']++; else riskBuckets['7-10']++; });
+  new Chart(document.getElementById('analyticsRisk'),{type:'bar',data:{labels:Object.keys(riskBuckets),datasets:[{label:'Customers',data:Object.values(riskBuckets),backgroundColor:['#10b981','#f59e0b','#ef4444','#dc2626'],borderRadius:8,barThickness:40}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid:{color:'rgba(51,65,85,0.3)'},ticks:{color:'#64748b'}},x:{grid:{display:false},ticks:{color:'#94a3b8'}}},plugins:{legend:{display:false}}}});
+  // Income
+  const incCounts = {};
+  profiles.forEach(p => { const b=p.income_bracket||'unknown'; incCounts[b]=(incCounts[b]||0)+1; });
+  new Chart(document.getElementById('analyticsIncome'),{type:'doughnut',data:{labels:Object.keys(incCounts),datasets:[{data:Object.values(incCounts),backgroundColor:['#ef4444','#f59e0b','#10b981','#6366f1'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11},padding:12}}}}});
+  // Top products
+  const sorted = Object.entries(allOffers).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  new Chart(document.getElementById('analyticsProducts'),{type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{label:'Times recommended',data:sorted.map(s=>s[1]),backgroundColor:'rgba(99,102,241,0.6)',borderRadius:6,barThickness:20}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{grid:{color:'rgba(51,65,85,0.3)'},ticks:{color:'#64748b'}},y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}},plugins:{legend:{display:false}}}});
+}
+
+// ===== SIDEBAR PRODUCT CATALOG =====
+function renderProductCatalogSidebar() {
+  const el = document.getElementById('productCatalogSidebar');
+  const cats = {};
+  PRODUCTS.forEach(p => { if(!cats[p.cat]) cats[p.cat]=[]; cats[p.cat].push(p); });
   let html = '';
-  Object.entries(categories).forEach(([cat, products]) => {
-    html += `<div class="mb-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1.5">${cat}</p>`;
-    products.forEach(p => {
-      const c = TYPE_COLORS[p.type] || TYPE_COLORS.investment;
-      html += `<div class="flex items-center gap-2.5 py-1.5">
-        <div class="w-7 h-7 rounded-lg ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${PRODUCT_ICONS[p.type] || ''}</div>
-        <span class="text-xs text-dark-100">${p.name}</span>
+  Object.entries(cats).forEach(([cat, prods]) => {
+    html += `<div class="mb-2"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">${cat}</p>`;
+    prods.forEach(p => {
+      const c = COLORS[p.type];
+      html += `<div class="product-item flex items-center gap-2.5 py-1.5 px-2 rounded-lg" onclick="openProductDetail('${p.id}')">
+        <div class="w-7 h-7 rounded-lg ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0">${ICONS[p.type]}</div>
+        <span class="text-xs text-dark-100">${p.name.replace(' Portfolio','')}</span>
+        <svg class="w-3 h-3 text-dark-500 ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </div>`;
     });
     html += '</div>';
@@ -352,223 +427,99 @@ function renderProductCatalog() {
   el.innerHTML = html;
 }
 
-async function loadStats() {
-  try {
-    const resp = await fetch(`${API_BASE}/offers/1?top_n=5`);
-    if (resp.ok) {
-      const data = await resp.json();
-      const avg = data.offers.reduce((a, o) => a + o.relevance_score, 0) / Math.max(data.offers.length, 1);
-      document.getElementById('statAvgScore').textContent = (avg * 100).toFixed(0) + '%';
-    }
-  } catch(e) { console.error(e); }
-  document.getElementById('statCustomers').textContent = '50';
+// ===== DASHBOARD LOGIC =====
+function renderCustomerGrid() {
+  const grid = document.getElementById('customerGrid');
+  let html = '';
+  for (let i=1;i<=50;i++) html+=`<button onclick="selectCustomer(${i})" id="custBtn${i}" class="customer-btn w-10 h-10 rounded-xl border border-dark-600/50 bg-dark-800/50 text-sm font-medium text-dark-200 hover:text-white transition-all flex items-center justify-center">${i}</button>`;
+  grid.innerHTML = html;
 }
 
 async function selectCustomer(id) {
-  if (selectedCustomerId) {
-    const prev = document.getElementById(`custBtn${selectedCustomerId}`);
-    if (prev) prev.classList.remove('active');
-  }
+  if (selectedCustomerId) { const prev=document.getElementById(`custBtn${selectedCustomerId}`); if(prev) prev.classList.remove('active'); }
   selectedCustomerId = id;
   const btn = document.getElementById(`custBtn${id}`);
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   document.getElementById('selectedCustomerInfo').textContent = `Customer #${id} selected`;
-
-  // Load offers
   const offersGrid = document.getElementById('offersGrid');
   offersGrid.innerHTML = '<div class="flex items-center justify-center py-8"><div class="w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin"></div></div>';
-
   try {
-    const [offersResp, profileResp] = await Promise.all([
-      fetch(`${API_BASE}/offers/${id}?top_n=8`),
-      fetch(`${API_BASE}/profiles/${id}`),
-    ]);
-
-    if (offersResp.ok) {
-      const data = await offersResp.json();
-      renderOffers(data.offers);
-      updateDistributionChart(data.offers);
-      updateScoreChart(data.offers);
-      document.getElementById('offersCount').textContent = `${data.offers.length} offers generated`;
-      const avg = data.offers.reduce((a, o) => a + o.relevance_score, 0) / Math.max(data.offers.length, 1);
-      document.getElementById('statAvgScore').textContent = (avg * 100).toFixed(0) + '%';
-    } else {
-      offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
-    }
-
-    if (profileResp.ok) {
-      const profile = await profileResp.json();
-      renderProfile(profile);
-    }
-  } catch(e) {
-    console.error(e);
-    offersGrid.innerHTML = '<p class="text-center text-neon-red py-8 text-sm">Error connecting to API</p>';
-  }
+    const [offResp, profResp] = await Promise.all([fetch(`${API}/offers/${id}?top_n=8`), fetch(`${API}/profiles/${id}`)]);
+    if (offResp.ok) { const data=await offResp.json(); renderOffers(data.offers); updateDistributionChart(data.offers); updateScoreChart(data.offers); document.getElementById('offersCount').textContent=`${data.offers.length} offers`; const avg=data.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(data.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%'; }
+    else offersGrid.innerHTML='<p class="text-center text-neon-red py-8 text-sm">Failed to load offers</p>';
+    if (profResp.ok) { const prof=await profResp.json(); profileCache[id]=prof; renderProfile(prof); }
+  } catch(e) { console.error(e); offersGrid.innerHTML='<p class="text-center text-neon-red py-8 text-sm">Error connecting to API</p>'; }
 }
 
 function renderProfile(profile) {
-  const card = document.getElementById('profileCard');
-  card.classList.remove('hidden');
-  const data = profile.data || profile;
-  document.getElementById('profileLifeStage').textContent = (data.life_stage || '').replace('_', ' ');
-
-  const details = document.getElementById('profileDetails');
-  const fields = [
-    { label: 'Risk Score', value: data.risk_score ? parseFloat(data.risk_score).toFixed(1) + '/10' : '--', color: 'text-neon-amber' },
-    { label: 'Income', value: data.income_bracket || '--', color: 'text-neon-green' },
-    { label: 'Segments', value: (data.segments || []).length, color: 'text-accent-light' },
-    { label: 'Life Stage', value: (data.life_stage || '').replace('_', ' '), color: 'text-neon-cyan' },
-  ];
-  details.innerHTML = fields.map(f => `
-    <div class="bg-dark-800/50 rounded-xl p-3">
-      <p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">${f.label}</p>
-      <p class="text-sm font-semibold ${f.color}">${f.value}</p>
-    </div>
-  `).join('');
+  document.getElementById('profileCard').classList.remove('hidden');
+  const d = profile.data||profile;
+  document.getElementById('profileLifeStage').textContent=(d.life_stage||'').replace(/_/g,' ');
+  document.getElementById('profileDetails').innerHTML = [
+    {l:'Risk Score',v:d.risk_score?parseFloat(d.risk_score).toFixed(1)+'/10':'--',c:'text-neon-amber'},
+    {l:'Income',v:d.income_bracket||'--',c:'text-neon-green'},
+    {l:'Segments',v:(d.segments||[]).length,c:'text-accent-light'},
+    {l:'Life Stage',v:(d.life_stage||'').replace(/_/g,' '),c:'text-neon-cyan'},
+  ].map(f=>`<div class="bg-dark-800/50 rounded-xl p-3"><p class="text-[10px] uppercase tracking-wider text-dark-400 mb-1">${f.l}</p><p class="text-sm font-semibold ${f.c}">${f.v}</p></div>`).join('');
 }
 
 function renderOffers(offers) {
   const grid = document.getElementById('offersGrid');
-  if (!offers.length) {
-    grid.innerHTML = '<p class="text-center text-dark-400 py-8 text-sm">No offers matched for this customer</p>';
-    return;
-  }
-  grid.innerHTML = offers.map((offer, i) => {
-    const c = TYPE_COLORS[offer.product_type] || TYPE_COLORS.investment;
-    const pct = (offer.relevance_score * 100).toFixed(0);
-    const conf = (offer.confidence_score * 100).toFixed(0);
-    return `
-    <div class="offer-card glass-card rounded-xl p-4 fade-in" style="animation-delay:${i * 0.08}s">
+  if (!offers.length) { grid.innerHTML='<p class="text-center text-dark-400 py-8 text-sm">No offers matched</p>'; return; }
+  grid.innerHTML = offers.map((o,i) => {
+    const c=COLORS[o.product_type]||COLORS.investment, pct=(o.relevance_score*100).toFixed(0), conf=(o.confidence_score*100).toFixed(0);
+    const prod = PRODUCTS.find(p => p.name.startsWith(o.product_name) || o.product_name.startsWith(p.name.replace(' Portfolio','')));
+    const onclick = prod ? `onclick="openProductDetail('${prod.id}')"` : '';
+    return `<div class="offer-card glass-card rounded-xl p-4 fade-in cursor-pointer" style="animation-delay:${i*0.06}s" ${onclick}>
       <div class="flex items-start gap-4">
-        <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">
-          ${PRODUCT_ICONS[offer.product_type] || ''}
-        </div>
+        <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} flex items-center justify-center flex-shrink-0 mt-0.5">${ICONS[o.product_type]||''}</div>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="text-sm font-semibold text-white">${offer.product_name}</h3>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold ${c.text}">${pct}%</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i + 1}</span>
-            </div>
-          </div>
-          <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${offer.personalization_reason}</p>
-          <div class="flex items-center gap-3">
-            <div class="flex-1">
-              <div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div>
-            </div>
-            <span class="text-[10px] text-dark-400">conf: ${conf}%</span>
-          </div>
+          <div class="flex items-center justify-between mb-1"><h3 class="text-sm font-semibold text-white">${o.product_name}</h3><div class="flex items-center gap-2"><span class="text-xs font-bold ${c.text}">${pct}%</span><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${c.bg} ${c.text}">#${i+1}</span></div></div>
+          <p class="text-xs text-dark-300 mb-2.5 leading-relaxed">${o.personalization_reason}</p>
+          <div class="flex items-center gap-3"><div class="flex-1"><div class="score-bar-bg"><div class="score-bar" style="width:${pct}%"></div></div></div><span class="text-[10px] text-dark-400">conf: ${conf}%</span></div>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
+// ===== CHARTS =====
 function initDistributionChart() {
-  const ctx = document.getElementById('distributionChart').getContext('2d');
-  distributionChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Investment', 'Savings', 'Insurance', 'Lending', 'Credit'],
-      datasets: [{
-        data: [4, 1, 2, 2, 1],
-        backgroundColor: ['#6366f1', '#10b981', '#14b8a6', '#a78bfa', '#ec4899'],
-        borderWidth: 0,
-        hoverOffset: 8,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '72%',
-      plugins: {
-        legend: { display: false },
-      }
-    }
-  });
-  updateChartLegend(['Investment', 'Savings', 'Insurance', 'Lending', 'Credit'], [4,1,2,2,1], ['#6366f1','#10b981','#14b8a6','#a78bfa','#ec4899']);
+  distributionChart = new Chart(document.getElementById('distributionChart'),{type:'doughnut',data:{labels:['Investment','Savings','Insurance','Lending','Credit'],datasets:[{data:[4,1,2,2,1],backgroundColor:['#6366f1','#10b981','#14b8a6','#a78bfa','#ec4899'],borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false}}}});
+  updateChartLegend(['Investment','Savings','Insurance','Lending','Credit'],[4,1,2,2,1],['#6366f1','#10b981','#14b8a6','#a78bfa','#ec4899']);
 }
-
 function updateDistributionChart(offers) {
-  const typeCount = {};
-  offers.forEach(o => {
-    const t = o.product_type;
-    typeCount[t] = (typeCount[t] || 0) + 1;
-  });
-  const labels = Object.keys(typeCount);
-  const data = Object.values(typeCount);
-  const colors = labels.map(l => (TYPE_COLORS[l] || {}).bar || '#6366f1');
-  distributionChart.data.labels = labels;
-  distributionChart.data.datasets[0].data = data;
-  distributionChart.data.datasets[0].backgroundColor = colors;
-  distributionChart.update();
-  updateChartLegend(labels, data, colors);
+  const tc={}; offers.forEach(o=>{tc[o.product_type]=(tc[o.product_type]||0)+1;});
+  const l=Object.keys(tc),d=Object.values(tc),c=l.map(x=>(COLORS[x]||{}).bar||'#6366f1');
+  distributionChart.data.labels=l; distributionChart.data.datasets[0].data=d; distributionChart.data.datasets[0].backgroundColor=c; distributionChart.update(); updateChartLegend(l,d,c);
 }
-
-function updateChartLegend(labels, data, colors) {
-  const total = data.reduce((a, b) => a + b, 0);
-  document.getElementById('chartLegend').innerHTML = labels.map((l, i) => `
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-2.5 h-2.5 rounded-full" style="background:${colors[i]}"></div>
-        <span class="text-xs text-dark-200 capitalize">${l.replace('_', ' ')}</span>
-      </div>
-      <span class="text-xs font-medium text-dark-100">${data[i]}</span>
-    </div>
-  `).join('');
+function updateChartLegend(labels,data,colors) {
+  document.getElementById('chartLegend').innerHTML=labels.map((l,i)=>`<div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full" style="background:${colors[i]}"></div><span class="text-xs text-dark-200 capitalize">${l.replace(/_/g,' ')}</span></div><span class="text-xs font-medium text-dark-100">${data[i]}</span></div>`).join('');
 }
-
 function initScoreChart() {
-  const ctx = document.getElementById('scoreChart').getContext('2d');
-  scoreChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [],
-      datasets: [{
-        label: 'Relevance',
-        data: [],
-        backgroundColor: 'rgba(99,102,241,0.6)',
-        borderRadius: 6,
-        barThickness: 14,
-      }, {
-        label: 'Confidence',
-        data: [],
-        backgroundColor: 'rgba(129,140,248,0.3)',
-        borderRadius: 6,
-        barThickness: 14,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      scales: {
-        x: { max: 1, grid: { color: 'rgba(51,65,85,0.3)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => (v*100)+'%' } },
-        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-      },
-      plugins: {
-        legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10, padding: 15 } },
-      }
-    }
-  });
+  scoreChart = new Chart(document.getElementById('scoreChart'),{type:'bar',data:{labels:[],datasets:[{label:'Relevance',data:[],backgroundColor:'rgba(99,102,241,0.6)',borderRadius:6,barThickness:14},{label:'Confidence',data:[],backgroundColor:'rgba(129,140,248,0.3)',borderRadius:6,barThickness:14}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{max:1,grid:{color:'rgba(51,65,85,0.3)'},ticks:{color:'#64748b',font:{size:10},callback:v=>(v*100)+'%'}},y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}}}},plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:15}}}}});
 }
-
 function updateScoreChart(offers) {
-  const top5 = offers.slice(0, 5);
-  scoreChart.data.labels = top5.map(o => o.product_name.length > 12 ? o.product_name.slice(0,12)+'...' : o.product_name);
-  scoreChart.data.datasets[0].data = top5.map(o => o.relevance_score);
-  scoreChart.data.datasets[1].data = top5.map(o => o.confidence_score);
-  scoreChart.update();
+  const t=offers.slice(0,5);
+  scoreChart.data.labels=t.map(o=>o.product_name.length>14?o.product_name.slice(0,14)+'...':o.product_name);
+  scoreChart.data.datasets[0].data=t.map(o=>o.relevance_score); scoreChart.data.datasets[1].data=t.map(o=>o.confidence_score); scoreChart.update();
 }
 
-// Search
-document.getElementById('searchInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const val = parseInt(e.target.value);
-    if (val >= 1 && val <= 50) selectCustomer(val);
-  }
+// ===== SEARCH =====
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') { const v=parseInt(e.target.value); if(v>=1&&v<=50){navigateTo('dashboard');selectCustomer(v);} }
 });
 
+// ===== INIT =====
+async function init() {
+  renderCustomerGrid();
+  renderProductCatalogSidebar();
+  initDistributionChart();
+  initScoreChart();
+  try { const r=await fetch(`${API}/offers/1?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
+  document.getElementById('loadingOverlay').style.opacity='0';
+  setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',500);
+}
 init();
 </script>
 </body>
