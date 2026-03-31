@@ -95,6 +95,9 @@
     html.light-theme .nav-link { color: #475569 !important; }
     html.light-theme .nav-link:hover { color: #4f46e5 !important; background: rgba(99,102,241,0.06) !important; }
     html.light-theme .nav-link.active { color: #4f46e5 !important; background: rgba(99,102,241,0.1) !important; border-color: #6366f1 !important; }
+
+    /* Auth gate / login screens */
+    html.light-theme #auth-gate, html.light-theme #screen-auth { background: #f1f5f9 !important; }
   `;
 
   // Inject stylesheet
