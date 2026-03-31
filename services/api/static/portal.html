@@ -66,23 +66,134 @@ tailwind.config = {
 <script src="/static/js/theme.js"></script>
 <script src="/static/js/auth.js"></script>
 
-<!-- Auth gate (shown when not logged in) -->
-<div id="auth-gate"></div>
-
-<!-- ==================== CUSTOMER SELECTOR SCREEN ==================== -->
-<div id="screen-selector" class="min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-4xl w-full">
-    <div class="text-center mb-10 fade-in">
+<!-- ==================== CUSTOMER LOGIN/REGISTER SCREEN ==================== -->
+<div id="screen-auth" class="min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-md w-full">
+    <!-- Header -->
+    <div class="text-center mb-8 fade-in">
       <div class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center mx-auto mb-4 glow-accent">
-        <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <svg class="w-9 h-9 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </div>
       <h1 class="text-3xl font-bold text-white mb-2">BankOffer <span class="text-accent-light">AI</span></h1>
-      <p class="text-dark-200 text-base" data-i18n="portal.title">Customer Portal</p>
-      <p class="text-dark-300 text-sm mt-2" data-i18n="portal.select_customer_id">Select your customer ID to view personalized offers</p>
-      <p class="text-dark-400 text-xs mt-1" data-i18n="portal.demo_note">(Demo mode -- in production this would be a secure login)</p>
+      <div class="flex items-center justify-center gap-3 mt-2">
+        <div id="auth-lang-selector"></div>
+        <div id="auth-theme-toggle"></div>
+      </div>
     </div>
-    <div class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s">
-      <div class="grid grid-cols-5 sm:grid-cols-10 gap-2" id="customer-grid"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="auth-login-form" class="glass-card rounded-2xl p-6 fade-in" style="animation-delay:0.1s">
+      <h2 class="text-xl font-semibold text-white mb-1" data-i18n="cauth.login_title">Customer Login</h2>
+      <p class="text-dark-300 text-sm mb-5" data-i18n="cauth.login_subtitle">Sign in to your banking portal</p>
+
+      <div id="login-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.email">Email address</label>
+          <input type="email" id="login-email" autocomplete="email"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="demo@bankofferai.com">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.password">Password</label>
+          <input type="password" id="login-password" autocomplete="current-password"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="********">
+        </div>
+        <button onclick="handleLogin()" id="login-btn"
+          class="w-full py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors">
+          <span data-i18n="cauth.login_btn">Sign In</span>
+        </button>
+      </div>
+
+      <div class="mt-5 text-center text-sm text-dark-300">
+        <span data-i18n="cauth.no_account">Don't have an account?</span>
+        <button onclick="showRegisterForm()" class="text-accent-light hover:text-accent ml-1 font-medium" data-i18n="cauth.sign_up">Register here</button>
+      </div>
+
+      <!-- Demo accounts hint -->
+      <div class="mt-5 pt-5 border-t border-dark-600/30">
+        <p class="text-xs text-dark-400 mb-2 font-medium" data-i18n="cauth.demo_hint">Try these demo credentials:</p>
+        <div class="space-y-1.5">
+          <button onclick="fillDemo('demo@bankofferai.com','Demo1234!')" class="w-full text-left px-3 py-2 rounded-lg bg-dark-800/50 hover:bg-dark-800 transition-colors group">
+            <span class="text-xs text-dark-200 group-hover:text-white">demo@bankofferai.com</span>
+            <span class="text-xs text-dark-400 ml-2">/ Demo1234!</span>
+          </button>
+          <button onclick="fillDemo('maria.johnson@example.com','Customer1!')" class="w-full text-left px-3 py-2 rounded-lg bg-dark-800/50 hover:bg-dark-800 transition-colors group">
+            <span class="text-xs text-dark-200 group-hover:text-white">maria.johnson@example.com</span>
+            <span class="text-xs text-dark-400 ml-2">/ Customer1!</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Data protection badge -->
+      <div class="mt-5 flex items-center gap-2 p-3 rounded-lg bg-neon-green/5 border border-neon-green/20">
+        <svg class="w-4 h-4 text-neon-green flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span class="text-xs text-dark-300" data-i18n="cauth.anonymization_notice">Your email is stored as an irreversible hash only. Your data will be automatically anonymized after 2 years (GDPR Art. 5(1)(e)).</span>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM (hidden by default) -->
+    <div id="auth-register-form" class="glass-card rounded-2xl p-6 fade-in hidden">
+      <h2 class="text-xl font-semibold text-white mb-1" data-i18n="cauth.register_title">Create Account</h2>
+      <p class="text-dark-300 text-sm mb-5" data-i18n="cauth.register_subtitle">Register for personalized banking offers</p>
+
+      <div id="register-error" class="hidden mb-4 p-3 rounded-lg bg-neon-red/10 border border-neon-red/30 text-neon-red text-sm"></div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.email">Email address</label>
+          <input type="email" id="register-email" autocomplete="email"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="your.email@example.com">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.display_name">Display name (optional)</label>
+          <input type="text" id="register-name" autocomplete="name"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="Your Name">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.password">Password</label>
+          <input type="password" id="register-password" autocomplete="new-password"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="Min. 8 characters">
+        </div>
+        <div>
+          <label class="block text-xs text-dark-200 mb-1.5 font-medium" data-i18n="cauth.confirm_password">Confirm password</label>
+          <input type="password" id="register-confirm" autocomplete="new-password"
+            class="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-600/50 text-white text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 transition-colors"
+            placeholder="Repeat password">
+        </div>
+
+        <!-- GDPR Consent -->
+        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg bg-dark-800/50 border border-dark-600/30">
+          <input type="checkbox" id="register-gdpr" class="mt-0.5 accent-accent w-4 h-4">
+          <span class="text-xs text-dark-200 leading-relaxed" data-i18n="cauth.gdpr_consent">I consent to my data being processed for personalized banking recommendations under GDPR Art. 6(1)(a)</span>
+        </label>
+
+        <button onclick="handleRegister()" id="register-btn"
+          class="w-full py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors">
+          <span data-i18n="cauth.register_btn">Create Account</span>
+        </button>
+      </div>
+
+      <div class="mt-5 text-center text-sm text-dark-300">
+        <span data-i18n="cauth.has_account">Already have an account?</span>
+        <button onclick="showLoginForm()" class="text-accent-light hover:text-accent ml-1 font-medium" data-i18n="cauth.sign_in">Sign in here</button>
+      </div>
+
+      <!-- Data protection detail -->
+      <div class="mt-5 p-4 rounded-xl bg-accent/5 border border-accent/20">
+        <div class="flex items-start gap-2.5">
+          <svg class="w-5 h-5 text-accent-light flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div>
+            <p class="text-sm font-medium text-accent-light mb-1" data-i18n="cauth.data_protection">Data Protection</p>
+            <p class="text-xs text-dark-300 leading-relaxed" data-i18n="cauth.data_protection_detail">We apply automatic data anonymization: your email is SHA-256 hashed before storage, internal IDs are replaced with pseudonymized UUIDs, and a storage limitation timer ensures automatic anonymization.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -584,27 +695,219 @@ const featureDescriptions = {
 
 // ==================== INIT ====================
 function init() {
-  // Build customer grid
-  const grid = document.getElementById('customer-grid');
-  let html = '';
-  for (let i = 1; i <= 50; i++) {
-    html += `<button class="customer-btn rounded-lg border border-dark-600/50 bg-dark-800/50 text-dark-100 text-sm font-medium py-2.5 px-1 hover:text-white" onclick="selectCustomer('${i}')">${i}</button>`;
+  // Render language selector and theme toggle on auth screen
+  const als = document.getElementById('auth-lang-selector');
+  const att = document.getElementById('auth-theme-toggle');
+  if (als && window.BOAI_I18N) als.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+  if (att && window.BOAI_THEME) att.innerHTML = window.BOAI_THEME.renderToggle();
+
+  // Check for existing customer session
+  const session = getCustomerSession();
+  if (session) {
+    enterPortal(session.customer_id, session.display_name, session.external_id);
   }
-  grid.innerHTML = html;
 }
 
-// ==================== CUSTOMER SELECTION ====================
-async function selectCustomer(customerId) {
+// ==================== CUSTOMER AUTH SESSION ====================
+const CUSTOMER_SESSION_KEY = 'boai_customer_session';
+
+function saveCustomerSession(data) {
+  localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify({
+    token: data.token,
+    customer_id: data.customer_id,
+    external_id: data.external_id,
+    display_name: data.display_name,
+    anonymize_after: data.anonymize_after,
+    ts: Date.now()
+  }));
+}
+
+function getCustomerSession() {
+  try {
+    const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Expire after 24 hours
+    if (Date.now() - data.ts > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(CUSTOMER_SESSION_KEY);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearCustomerSession() {
+  localStorage.removeItem(CUSTOMER_SESSION_KEY);
+}
+
+// ==================== LOGIN/REGISTER HANDLERS ====================
+function fillDemo(email, pwd) {
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-password').value = pwd;
+}
+
+function showLoginForm() {
+  document.getElementById('auth-login-form').classList.remove('hidden');
+  document.getElementById('auth-register-form').classList.add('hidden');
+  document.getElementById('login-error').classList.add('hidden');
+}
+
+function showRegisterForm() {
+  document.getElementById('auth-login-form').classList.add('hidden');
+  document.getElementById('auth-register-form').classList.remove('hidden');
+  document.getElementById('register-error').classList.add('hidden');
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if (!email || !password) {
+    errorEl.textContent = t('cauth.login_error');
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  errorEl.classList.add('hidden');
+
+  try {
+    const resp = await fetch(API + '/auth/customer/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || t('cauth.login_error'));
+    }
+
+    const data = await resp.json();
+    saveCustomerSession(data);
+    enterPortal(data.customer_id, data.display_name, data.external_id);
+  } catch (e) {
+    errorEl.textContent = e.message || t('cauth.login_error');
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span data-i18n="cauth.login_btn">${t('cauth.login_btn')}</span>`;
+  }
+}
+
+async function handleRegister() {
+  const email = document.getElementById('register-email').value.trim();
+  const name = document.getElementById('register-name').value.trim();
+  const password = document.getElementById('register-password').value;
+  const confirm = document.getElementById('register-confirm').value;
+  const gdpr = document.getElementById('register-gdpr').checked;
+  const errorEl = document.getElementById('register-error');
+  const btn = document.getElementById('register-btn');
+
+  errorEl.classList.add('hidden');
+
+  if (password.length < 8) {
+    errorEl.textContent = t('cauth.password_min');
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  if (password !== confirm) {
+    errorEl.textContent = t('cauth.password_mismatch');
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  if (!gdpr) {
+    errorEl.textContent = t('cauth.gdpr_consent');
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const resp = await fetch(API + '/auth/customer/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    // If login succeeds, the account already exists — just log them in
+    if (resp.ok) {
+      const data = await resp.json();
+      saveCustomerSession(data);
+      enterPortal(data.customer_id, data.display_name, data.external_id);
+      return;
+    }
+
+    // Otherwise, try to register
+    const regResp = await fetch(API + '/auth/customer/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        display_name: name || null,
+        gdpr_consent: true,
+      }),
+    });
+
+    if (!regResp.ok) {
+      const err = await regResp.json().catch(() => ({}));
+      throw new Error(err.detail || t('cauth.register_error'));
+    }
+
+    const data = await regResp.json();
+    saveCustomerSession(data);
+    enterPortal(data.customer_id, data.display_name, data.external_id);
+  } catch (e) {
+    errorEl.textContent = e.message || t('cauth.register_error');
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span data-i18n="cauth.register_btn">${t('cauth.register_btn')}</span>`;
+  }
+}
+
+// ==================== PORTAL ENTRY ====================
+async function enterPortal(customerId, displayName, externalId) {
   state.customerId = customerId;
   state.feedbackGiven = {};
 
-  // Show portal, hide selector
-  document.getElementById('screen-selector').classList.add('hidden');
+  // Show portal, hide auth screen
+  document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-portal').classList.remove('hidden');
 
   // Set loading state
-  updateBadge('...');
+  updateBadge(displayName || `#${customerId}`);
   navigateTo('offers');
+
+  // Render nav controls
+  const tt = document.getElementById('theme-toggle-portal');
+  const ub = document.getElementById('user-badge-portal');
+  const ls = document.getElementById('lang-selector-portal');
+  if (tt) tt.innerHTML = window.BOAI_THEME ? window.BOAI_THEME.renderToggle() : '';
+  if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
+
+  // Render customer badge with anonymization info
+  if (ub) {
+    const anonBadge = externalId
+      ? `<span class="text-[10px] text-neon-green ml-1" title="${t('cauth.external_id')}: ${externalId}">&#128274;</span>`
+      : '';
+    ub.innerHTML = `<div class="flex items-center gap-2">
+      <span class="text-xs text-dark-200">${escHtml(displayName || 'Customer')}${anonBadge}</span>
+      <button onclick="customerLogout()" class="p-1.5 rounded-lg hover:bg-red-500/10 text-dark-300 hover:text-red-400 transition-colors" title="${t('cauth.logout')}">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+      </button>
+    </div>`;
+  }
 
   // Load all data in parallel
   await Promise.all([
@@ -619,7 +922,8 @@ async function selectCustomer(customerId) {
   renderOffers();
 }
 
-function switchCustomer() {
+function customerLogout() {
+  clearCustomerSession();
   state.customerId = null;
   state.customerData = null;
   state.profileData = null;
@@ -631,7 +935,12 @@ function switchCustomer() {
   state.suitabilityPending = null;
 
   document.getElementById('screen-portal').classList.add('hidden');
-  document.getElementById('screen-selector').classList.remove('hidden');
+  document.getElementById('screen-auth').classList.remove('hidden');
+  showLoginForm();
+}
+
+function switchCustomer() {
+  customerLogout();
 }
 
 // ==================== API CALLS ====================
@@ -1285,32 +1594,8 @@ function escAttr(str) {
 
 // ==================== AUTH GATE ====================
 function setupAuthGate() {
-  const gate = document.getElementById('auth-gate');
-  const selector = document.getElementById('screen-selector');
-  const portal = document.getElementById('screen-portal');
-
-  window.BOAI_AUTH.onAuthChange(user => {
-    if (!user) {
-      selector.classList.add('hidden');
-      portal.classList.add('hidden');
-      gate.innerHTML = window.BOAI_AUTH.renderLoginScreen({
-        title: 'Customer Portal',
-        subtitle: 'Sign in to view your personalized offers',
-        allowedRoles: ['admin', 'employee', 'client']
-      });
-      return;
-    }
-    gate.innerHTML = '';
-    selector.classList.remove('hidden');
-
-    // Render controls
-    const tt = document.getElementById('theme-toggle-portal');
-    const ub = document.getElementById('user-badge-portal');
-    const ls = document.getElementById('lang-selector-portal');
-    if (tt) tt.innerHTML = window.BOAI_THEME.renderToggle();
-    if (ub) ub.innerHTML = window.BOAI_AUTH.renderUserBadge();
-    if (ls && window.BOAI_I18N) ls.innerHTML = window.BOAI_I18N.renderLanguageSelector();
-  });
+  // Customer portal uses its own auth (email/password), not the demo role selector.
+  // Nothing to do here — init() handles session restoration.
 }
 
 // ==================== LANGUAGE CHANGE HANDLER ====================
@@ -1331,6 +1616,17 @@ document.querySelectorAll('.toggle-track[data-consent]').forEach(el => {
     const type = this.dataset.consent;
     if (type) toggleConsent(type);
   });
+});
+
+// ==================== ENTER KEY HANDLERS ====================
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+document.getElementById('login-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-password').focus();
+});
+document.getElementById('register-confirm').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleRegister();
 });
 
 // ==================== START ====================

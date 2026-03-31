@@ -193,6 +193,18 @@ CREATE TABLE recommendation_overrides (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ===== Customer authentication (GDPR-compliant) =====
+CREATE TABLE customer_auth (
+    id SERIAL PRIMARY KEY,
+    email_hash VARCHAR(64) NOT NULL UNIQUE,       -- SHA-256 hash (irreversible, GDPR Art. 5(1)(c))
+    password_hash VARCHAR(200) NOT NULL,           -- PBKDF2-SHA256 with random salt
+    customer_id VARCHAR(50) NOT NULL REFERENCES customers(customer_id),
+    display_name VARCHAR(200),
+    anonymize_after TIMESTAMP NOT NULL,            -- GDPR Art. 5(1)(e) storage limitation
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ===== Indexes =====
 CREATE INDEX idx_customer_features_cid ON customer_features(customer_id);
 CREATE INDEX idx_transactions_cid ON transactions(customer_id);
@@ -208,6 +220,8 @@ CREATE INDEX idx_suitability_product ON suitability_confirmations(product_id);
 CREATE INDEX idx_overrides_rec ON recommendation_overrides(recommendation_id);
 CREATE INDEX idx_overrides_customer ON recommendation_overrides(customer_id);
 CREATE INDEX idx_risk_register_status ON ai_act_risk_register(status);
+CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
+CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');

@@ -1,5 +1,6 @@
 """Seed the BankOfferAI database from the Excel hackathon dataset."""
 
+import hashlib
 import json
 import logging
 import os
@@ -329,6 +330,46 @@ def seed_profiles(conn, customers_data, features_data):
     logger.info("Seeded customer profiles")
 
 
+def seed_customer_auth(conn):
+    """Seed demo customer login accounts with hashed credentials."""
+    import binascii as _ba
+
+    def _hash_email(email):
+        return hashlib.sha256(email.lower().strip().encode()).hexdigest()
+
+    def _hash_password(password):
+        salt = os.urandom(32)
+        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
+        return _ba.hexlify(salt).decode() + ":" + _ba.hexlify(dk).decode()
+
+    demo_accounts = [
+        ("demo@bankofferai.com",     "Demo1234!", "1",  "Demo Customer"),
+        ("maria.johnson@example.com", "Customer1!", "5",  "Maria Johnson"),
+        ("alex.chen@example.com",     "Customer1!", "12", "Alex Chen"),
+        ("sarah.miller@example.com",  "Customer1!", "25", "Sarah Miller"),
+        ("john.doe@example.com",      "Customer1!", "38", "John Doe"),
+    ]
+
+    inserted = 0
+    with conn.cursor() as cur:
+        for email, pwd, cid, name in demo_accounts:
+            # Verify customer exists
+            cur.execute("SELECT 1 FROM customers WHERE customer_id = %s", (cid,))
+            if not cur.fetchone():
+                logger.warning("Skipping auth seed for customer %s (not found)", cid)
+                continue
+            eh = _hash_email(email)
+            ph = _hash_password(pwd)
+            cur.execute("""
+                INSERT INTO customer_auth (email_hash, password_hash, customer_id, display_name, anonymize_after)
+                VALUES (%s, %s, %s, %s, NOW() + INTERVAL '730 days')
+                ON CONFLICT (email_hash) DO NOTHING
+            """, (eh, ph, cid, name))
+            inserted += 1
+    conn.commit()
+    logger.info("Seeded %d demo customer auth accounts", inserted)
+
+
 def main():
     logger.info("Loading Excel dataset from %s", XLSX_PATH)
     wb = load_workbook(XLSX_PATH, read_only=True, data_only=True)
@@ -356,6 +397,7 @@ def main():
         seed_events(conn, events_data)
         seed_products(conn, product_data)
         seed_profiles(conn, customers_data, features_data)
+        seed_customer_auth(conn)
         logger.info("Seeding complete!")
     finally:
         conn.close()
