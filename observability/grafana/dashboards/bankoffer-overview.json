@@ -1,22 +1,13 @@
 {
   "title": "BankOffer AI - Platform Overview",
   "uid": "bankoffer-overview",
-  "version": 2,
+  "version": 3,
   "schemaVersion": 39,
   "tags": ["bankoffer", "production"],
   "editable": true,
   "time": { "from": "now-1h", "to": "now" },
   "refresh": "15s",
-  "templating": {
-    "list": [
-      {
-        "name": "job",
-        "type": "constant",
-        "current": { "value": "bankoffer-api" },
-        "hide": 2
-      }
-    ]
-  },
+  "templating": { "list": [] },
   "panels": [
     {
       "id": 100,
@@ -34,7 +25,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "up{job=\"$job\"}",
+          "expr": "up{job=\"bankoffer-api\"}",
           "legendFormat": "Status"
         }
       ],
@@ -65,7 +56,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "bankoffer_customers_total{job=\"$job\"}",
+          "expr": "bankoffer_customers_total{job=\"bankoffer-api\"}",
           "legendFormat": "Customers"
         }
       ],
@@ -89,7 +80,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "bankoffer_products_active_total{job=\"$job\"}",
+          "expr": "bankoffer_products_active_total{job=\"bankoffer-api\"}",
           "legendFormat": "Products"
         }
       ],
@@ -113,7 +104,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "bankoffer_kill_switch_active{job=\"$job\"}",
+          "expr": "bankoffer_kill_switch_active{job=\"bankoffer-api\"}",
           "legendFormat": "Kill Switch"
         }
       ],
@@ -144,7 +135,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p99"
         }
       ],
@@ -175,7 +166,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"$job\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m]))",
           "legendFormat": "req/s"
         }
       ],
@@ -201,7 +192,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"$job\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"$job\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_requests_total{job=\"$job\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m])) or vector(0)",
           "legendFormat": "Error %"
         }
       ],
@@ -232,7 +223,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(increase(bankoffer_offers_generated_total{job=\"$job\"}[1h]))",
+          "expr": "sum(increase(bankoffer_offers_generated_total{job=\"bankoffer-api\"}[1h]))",
           "legendFormat": "Last 1h"
         }
       ],
@@ -266,7 +257,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"$job\"}[5m])) by (handler)",
+          "expr": "sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m])) by (handler)",
           "legendFormat": "{{ handler }}"
         }
       ],
@@ -296,15 +287,15 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"$job\"}[5m])) by (le, handler)) * 1000",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le, handler)) * 1000",
           "legendFormat": "p50 {{ handler }}"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"$job\"}[5m])) by (le, handler)) * 1000",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le, handler)) * 1000",
           "legendFormat": "p95 {{ handler }}"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"$job\"}[5m])) by (le, handler)) * 1000",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le, handler)) * 1000",
           "legendFormat": "p99 {{ handler }}"
         }
       ],
@@ -333,7 +324,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"$job\"}[5m])) by (status)",
+          "expr": "sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m])) by (status)",
           "legendFormat": "{{ status }}"
         }
       ],
@@ -374,11 +365,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_response_size_bytes_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_response_size_bytes_bucket{job=\"bankoffer-api\"}[5m])) by (le))",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_response_size_bytes_bucket{job=\"$job\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_response_size_bytes_bucket{job=\"bankoffer-api\"}[5m])) by (le))",
           "legendFormat": "p95"
         }
       ],
@@ -413,15 +404,15 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.50, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.95, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.99, sum(rate(bankoffer_offer_scoring_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p99"
         }
       ],
@@ -457,15 +448,15 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.50, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p50"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.95, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p95"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"$job\"}[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.99, sum(rate(bankoffer_profile_build_seconds_bucket{job=\"bankoffer-api\"}[5m])) by (le)) * 1000",
           "legendFormat": "p99"
         }
       ],
@@ -493,7 +484,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(bankoffer_offers_generated_total{job=\"$job\"}[5m])) by (product_type)",
+          "expr": "sum(rate(bankoffer_offers_generated_total{job=\"bankoffer-api\"}[5m])) by (product_type)",
           "legendFormat": "{{ product_type }}"
         }
       ],
@@ -561,7 +552,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(increase(bankoffer_offers_per_request_bucket{job=\"$job\"}[1h])) by (le)",
+          "expr": "sum(increase(bankoffer_offers_per_request_bucket{job=\"bankoffer-api\"}[1h])) by (le)",
           "legendFormat": "{{ le }}",
           "format": "heatmap"
         }
@@ -578,7 +569,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(bankoffer_consent_blocks_total{job=\"$job\"}[5m])) by (consent_type)",
+          "expr": "sum(rate(bankoffer_consent_blocks_total{job=\"bankoffer-api\"}[5m])) by (consent_type)",
           "legendFormat": "{{ consent_type }}"
         }
       ],
@@ -604,7 +595,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(bankoffer_offers_generated_total{job=\"$job\"}) by (product_type)",
+          "expr": "sum(bankoffer_offers_generated_total{job=\"bankoffer-api\"}) by (product_type)",
           "legendFormat": "{{ product_type }}"
         }
       ],
@@ -630,7 +621,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "process_resident_memory_bytes{job=\"$job\"}",
+          "expr": "process_resident_memory_bytes{job=\"bankoffer-api\"}",
           "legendFormat": "RSS"
         }
       ],
@@ -654,7 +645,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{job=\"$job\"}[5m])",
+          "expr": "rate(process_cpu_seconds_total{job=\"bankoffer-api\"}[5m])",
           "legendFormat": "CPU cores"
         }
       ],
@@ -678,11 +669,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "process_open_fds{job=\"$job\"}",
+          "expr": "process_open_fds{job=\"bankoffer-api\"}",
           "legendFormat": "Open FDs"
         },
         {
-          "expr": "process_max_fds{job=\"$job\"}",
+          "expr": "process_max_fds{job=\"bankoffer-api\"}",
           "legendFormat": "Max FDs"
         }
       ],
@@ -708,7 +699,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "rate(python_gc_collections_total{job=\"$job\"}[5m])",
+          "expr": "rate(python_gc_collections_total{job=\"bankoffer-api\"}[5m])",
           "legendFormat": "Gen {{ generation }}"
         }
       ],
