@@ -11,12 +11,202 @@ import os
 import random
 from datetime import datetime, timedelta
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# ════════════════════════════════════════════════════════════════
+# AI Provider Adapters — call real APIs when keys are configured
+# ════════════════════════════════════════════════════════════════
+
+_AI_SYSTEM_PROMPT = """You are a senior banking product strategist AI. You analyze market intelligence data and suggest new banking products.
+
+You MUST respond with valid JSON only — no markdown, no commentary. Return an object with two keys:
+
+{
+  "market_intelligence": [
+    {
+      "category": "exchange_markets|geopolitics|regulations|economic|trends",
+      "title": "Short headline (max 120 chars)",
+      "summary": "2-3 sentence analysis with specific numbers",
+      "impact": "positive|negative|neutral|mixed",
+      "severity": "low|medium|high|critical",
+      "data_points": {"key": "value pairs with real metrics"},
+      "source": "Data source name",
+      "region": "Geographic region"
+    }
+  ],
+  "product_suggestions": [
+    {
+      "product_name": "Product name",
+      "product_type": "investment|savings|lending|mortgage|credit_card|insurance",
+      "description": "2-3 sentence product description with specific terms (rates, minimums, etc.)",
+      "reasoning": "3-4 sentence explanation linking market drivers to product opportunity",
+      "target_segments": ["new_graduate","young_family","mid_career","pre_retirement","retired","high_income"],
+      "market_drivers": ["Names of market intelligence items that drive this suggestion"],
+      "confidence": 0.50 to 0.99,
+      "projected_demand": "low|medium|high|very_high",
+      "risk_level": "low|medium|high"
+    }
+  ]
+}
+
+Generate 12-18 market intelligence items (spread across all 5 categories) and 5-8 product suggestions.
+Focus on the European/Romanian banking market. Use realistic current data."""
+
+_AI_USER_PROMPT = """Analyze the current global financial landscape and generate market intelligence and banking product suggestions.
+
+Consider:
+1. **Exchange Markets** — ECB/NBR interest rates, EUR/RON, EUR/USD, bond yields, equity indices, commodities
+2. **Geopolitics** — trade agreements, conflicts, EU policy, regional developments
+3. **Regulations** — EU AI Act, MiFID, Consumer Credit Directive, GDPR, local NBR regulations
+4. **Economic Indicators** — GDP growth, inflation, unemployment, wage growth, housing market, consumer confidence
+5. **Trends** — ESG investing, digital banking adoption, BNPL, open banking, crypto regulation
+
+Return ONLY the JSON object as specified. No other text."""
+
+
+async def _call_anthropic(config: dict, market_context: str = "") -> dict | None:
+    """Call Anthropic Claude API."""
+    api_key = config.get("api_key", "").strip()
+    if not api_key:
+        return None
+    model = config.get("model", "claude-sonnet-4-6")
+    max_tokens = int(config.get("max_tokens", 4096))
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "max_tokens": max_tokens,
+                    "system": _AI_SYSTEM_PROMPT,
+                    "messages": [{"role": "user", "content": _AI_USER_PROMPT + market_context}],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data.get("content", [{}])[0].get("text", "")
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("Anthropic API error: %s", e)
+        return None
+
+
+async def _call_openai(config: dict, market_context: str = "") -> dict | None:
+    """Call OpenAI ChatCompletion API."""
+    api_key = config.get("api_key", "").strip()
+    if not api_key:
+        return None
+    model = config.get("model", "gpt-4o")
+    temperature = float(config.get("temperature", 0.7))
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "temperature": temperature,
+                    "max_tokens": 4096,
+                    "response_format": {"type": "json_object"},
+                    "messages": [
+                        {"role": "system", "content": _AI_SYSTEM_PROMPT},
+                        {"role": "user", "content": _AI_USER_PROMPT + market_context},
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data["choices"][0]["message"]["content"]
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("OpenAI API error: %s", e)
+        return None
+
+
+async def _call_gemini(config: dict, market_context: str = "") -> dict | None:
+    """Call Google Gemini API."""
+    api_key = config.get("api_key", "").strip()
+    if not api_key:
+        return None
+    model = config.get("model", "gemini-2.0-flash")
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{"parts": [{"text": _AI_SYSTEM_PROMPT + "\n\n" + _AI_USER_PROMPT + market_context}]}],
+                    "generationConfig": {"temperature": 0.7, "maxOutputTokens": 4096, "responseMimeType": "application/json"},
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data["candidates"][0]["content"]["parts"][0]["text"]
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("Gemini API error: %s", e)
+        return None
+
+
+async def _call_huggingface(config: dict, market_context: str = "") -> dict | None:
+    """Call Hugging Face Inference API."""
+    api_token = config.get("api_token", "").strip()
+    if not api_token:
+        return None
+    model_id = config.get("model_id", "mistralai/Mixtral-8x7B-Instruct-v0.1")
+    try:
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            resp = await client.post(
+                f"https://api-inference.huggingface.co/models/{model_id}/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+                json={
+                    "model": model_id,
+                    "max_tokens": 4096,
+                    "messages": [
+                        {"role": "system", "content": _AI_SYSTEM_PROMPT},
+                        {"role": "user", "content": _AI_USER_PROMPT + market_context},
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data["choices"][0]["message"]["content"]
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("Hugging Face API error: %s", e)
+        return None
+
+
+# Provider name → adapter function
+_AI_ADAPTERS = {
+    "Anthropic": _call_anthropic,
+    "OpenAI": _call_openai,
+    "Google": _call_gemini,
+    "Hugging Face": _call_huggingface,
+}
+
+
+async def _call_ai_provider(provider: str, config_values: dict, market_context: str = "") -> dict | None:
+    """Route to the correct AI provider adapter. Returns parsed JSON or None."""
+    adapter = _AI_ADAPTERS.get(provider)
+    if not adapter:
+        logger.warning("No adapter for AI provider: %s", provider)
+        return None
+    return await adapter(config_values, market_context)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -339,45 +529,125 @@ async def get_market_data(
     description="Uses connected AI models + market intelligence to generate product suggestions.",
 )
 async def analyze_and_suggest(request: Request):
-    """Core intelligence engine: refresh market data, analyze with AI, generate suggestions."""
+    """Core intelligence engine: try real AI APIs, fall back to built-in engine."""
     session_factory = request.app.state.db_session_factory
 
     try:
         async with session_factory() as session:
-            # 1. Check which AI connectors are active
+            # 1. Fetch active AI connectors WITH their config
             ai_result = await session.execute(
-                text("SELECT name FROM connectors WHERE category = 'ai' AND status = 'active'")
+                text("""SELECT name, provider, config_values
+                        FROM connectors
+                        WHERE category = 'ai' AND status = 'active'""")
             )
-            active_models = [r[0] for r in ai_result.fetchall()]
+            active_connectors = [
+                {
+                    "name": r[0],
+                    "provider": r[1],
+                    "config": r[2] if isinstance(r[2], dict) else json.loads(r[2]) if r[2] else {},
+                }
+                for r in ai_result.fetchall()
+            ]
+            active_model_names = [c["name"] for c in active_connectors]
 
-            # 2. Refresh market intelligence
-            await session.execute(text("DELETE FROM market_intelligence"))
-            intelligence = _generate_market_intelligence()
+            # 2. Try each active AI connector until one succeeds
+            ai_response = None
+            model_used = "built-in-engine"
+            for conn in active_connectors:
+                has_key = any(v for k, v in conn["config"].items() if "key" in k or "token" in k)
+                if not has_key:
+                    logger.info("Skipping %s — no API key configured", conn["name"])
+                    continue
+                logger.info("Calling AI provider: %s (%s)", conn["name"], conn["provider"])
+                ai_response = await _call_ai_provider(conn["provider"], conn["config"])
+                if ai_response:
+                    model_used = conn["name"]
+                    logger.info("AI response received from %s", conn["name"])
+                    break
+                logger.warning("AI call to %s failed, trying next...", conn["name"])
+
+            # 3. Extract intelligence + suggestions from AI response or fall back
+            if ai_response:
+                intelligence = ai_response.get("market_intelligence", [])
+                suggestions = ai_response.get("product_suggestions", [])
+                # Stamp model name on suggestions
+                for s in suggestions:
+                    s["ai_model_used"] = model_used
+            else:
+                if active_connectors:
+                    logger.info("All AI calls failed or no keys configured — using built-in engine")
+                intelligence = _generate_market_intelligence()
+                suggestions = _generate_product_suggestions(intelligence, active_model_names)
+
+            # 4. Validate and sanitize AI-generated data
+            valid_categories = {"exchange_markets", "geopolitics", "regulations", "economic", "trends"}
+            valid_impacts = {"positive", "negative", "neutral", "mixed"}
+            valid_severities = {"low", "medium", "high", "critical"}
+            valid_prod_types = {"investment", "savings", "lending", "mortgage", "credit_card", "insurance"}
+            valid_demands = {"low", "medium", "high", "very_high"}
+            valid_risks = {"low", "medium", "high"}
+
+            clean_intel = []
             for item in intelligence:
+                if item.get("category") not in valid_categories:
+                    continue
+                item.setdefault("impact", "neutral")
+                item.setdefault("severity", "medium")
+                if item["impact"] not in valid_impacts:
+                    item["impact"] = "neutral"
+                if item["severity"] not in valid_severities:
+                    item["severity"] = "medium"
+                item.setdefault("data_points", {})
+                item.setdefault("source", "AI Analysis")
+                item.setdefault("region", "Global")
+                clean_intel.append(item)
+
+            clean_suggestions = []
+            for s in suggestions:
+                if not s.get("product_name") or not s.get("product_type"):
+                    continue
+                if s["product_type"] not in valid_prod_types:
+                    s["product_type"] = "investment"
+                s.setdefault("description", "")
+                s.setdefault("reasoning", "")
+                s.setdefault("target_segments", [])
+                s.setdefault("market_drivers", [])
+                s.setdefault("confidence", 0.5)
+                s.setdefault("projected_demand", "medium")
+                s.setdefault("risk_level", "medium")
+                s.setdefault("ai_model_used", model_used)
+                if s["projected_demand"] not in valid_demands:
+                    s["projected_demand"] = "medium"
+                if s["risk_level"] not in valid_risks:
+                    s["risk_level"] = "medium"
+                conf = float(s["confidence"])
+                s["confidence"] = max(0.0, min(0.999, conf))
+                clean_suggestions.append(s)
+
+            # 5. Store market intelligence
+            await session.execute(text("DELETE FROM market_intelligence"))
+            for item in clean_intel:
                 await session.execute(
                     text("""INSERT INTO market_intelligence
                         (category, title, summary, impact, severity, data_points, source, region, valid_until)
                         VALUES (:cat, :title, :summary, :impact, :sev, :dp, :src, :reg, :valid)"""),
                     {
                         "cat": item["category"],
-                        "title": item["title"],
+                        "title": item["title"][:300],
                         "summary": item["summary"],
                         "impact": item["impact"],
                         "sev": item["severity"],
                         "dp": json.dumps(item.get("data_points", {})),
-                        "src": item.get("source"),
-                        "reg": item.get("region", "Global"),
+                        "src": (item.get("source") or "AI Analysis")[:200],
+                        "reg": (item.get("region") or "Global")[:100],
                         "valid": datetime.utcnow() + timedelta(days=7),
                     },
                 )
             await session.commit()
 
-            # 3. Generate product suggestions
-            suggestions = _generate_product_suggestions(intelligence, active_models)
-
-            # 4. Store suggestions (skip duplicates by product_name)
+            # 6. Store product suggestions (skip duplicates)
             created = []
-            for s in suggestions:
+            for s in clean_suggestions:
                 exists = await session.execute(
                     text("SELECT id FROM ai_product_suggestions WHERE product_name = :name AND status = 'pending'"),
                     {"name": s["product_name"]},
@@ -391,16 +661,16 @@ async def analyze_and_suggest(request: Request):
                         VALUES (:name, :type, :desc, :reason, :segs, :drivers, :conf, :demand, :risk, :model, :intel, 'pending')
                         RETURNING id, created_at"""),
                     {
-                        "name": s["product_name"],
+                        "name": s["product_name"][:200],
                         "type": s["product_type"],
                         "desc": s["description"],
                         "reason": s["reasoning"],
-                        "segs": json.dumps(s["target_segments"]),
-                        "drivers": json.dumps(s["market_drivers"]),
+                        "segs": json.dumps(s.get("target_segments", [])),
+                        "drivers": json.dumps(s.get("market_drivers", [])),
                         "conf": s["confidence"],
                         "demand": s["projected_demand"],
                         "risk": s["risk_level"],
-                        "model": s["ai_model_used"],
+                        "model": s.get("ai_model_used", model_used),
                         "intel": json.dumps([]),
                     },
                 )
@@ -409,10 +679,11 @@ async def analyze_and_suggest(request: Request):
             await session.commit()
 
             return {
-                "market_intelligence_count": len(intelligence),
+                "market_intelligence_count": len(clean_intel),
                 "suggestions_created": len(created),
-                "active_ai_models": active_models,
-                "model_used": active_models[0] if active_models else "built-in-engine",
+                "active_ai_models": active_model_names,
+                "model_used": model_used,
+                "ai_powered": model_used != "built-in-engine",
                 "suggestions": created,
             }
     except Exception as e:
