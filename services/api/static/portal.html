@@ -1006,7 +1006,7 @@ function saveCustomerSession(data) {
     external_id: data.external_id,
     display_name: data.display_name,
     anonymize_after: data.anonymize_after,
-    onboarding_complete: data.onboarding_complete !== false,
+    onboarding_complete: data.onboarding_complete === true,
     ts: Date.now()
   }));
 }
