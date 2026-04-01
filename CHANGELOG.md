@@ -2,6 +2,25 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.6.0] — 2026-04-01
+
+### Fixed
+
+- **Login always skips onboarding wizard.** The previous `last_login` heuristic failed for
+  seeded demo users (who have `last_login=NULL`). Login and SSO endpoints now unconditionally
+  return `onboarding_complete=true` and auto-update the database. Only `/register` routes
+  new users through the wizard.
+
+### Restored
+
+- **Light/dark theme toggle** on the presentation, removed by mistake in v1.5.0.
+
+### Commit History
+
+- `c3e8d98` fix: login always skips onboarding wizard, restore theme toggle
+
+---
+
 ## [1.5.0] — 2026-04-01
 
 ### Changed
