@@ -2,6 +2,31 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.4.0] — 2026-04-01
+
+### Fixed
+
+- **Existing users no longer see the onboarding wizard on login.** The `onboarding_complete`
+  column (added with `DEFAULT FALSE`) caused all pre-existing customers to be routed into the
+  registration wizard. Login and SSO endpoints now detect returning users via `last_login` and
+  auto-complete their onboarding status.
+- **Frontend session flag tightened** from `!== false` to `=== true` in `saveCustomerSession()`
+  to prevent falsy values (`null`, `undefined`) from being treated as onboarding-complete.
+- **Consent blocks panel** no longer shows `0` instead of a no-data state when there are no
+  consent entries.
+
+### Changed
+
+- Updated Oana Sarlea's role from "Product Owner" to "BizTech Consultant Financial Services"
+  in the presentation.
+
+### Commit History
+
+- `d633402` fix: skip onboarding wizard for existing users on login
+- `cee949e` fix: consent blocks panel shows 0 instead of no-data
+
+---
+
 ## [1.1.0] — 2026-04-01
 
 ### Breaking Changes
