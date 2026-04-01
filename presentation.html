@@ -10,23 +10,32 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #060a14;
-  --bg2: #0b1120;
-  --card: rgba(17,24,39,0.8);
-  --border: rgba(30,58,138,0.12);
-  --accent: #1e3a8a;
-  --accent-light: #3b82f6;
+  --bg: #070b14;
+  --bg-elevated: #0c1221;
+  --card-bg: rgba(15,23,42,0.75);
+  --border: rgba(30,58,138,0.10);
+  --border-hover: rgba(59,130,246,0.20);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-subtle: rgba(59,130,246,0.10);
+  --success: #047857;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: rgba(0,0,0,0.25);
+  --focus-ring: rgba(59,130,246,0.5);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  /* Semantic aliases for backward compat */
   --green: #047857;
   --cyan: #06b6d4;
   --amber: #d97706;
   --purple: #a78bfa;
   --red: #ef4444;
-  --text: #e2e8f0;
-  --text2: #94a3b8;
-  --text3: #64748b;
 }
 html { scroll-behavior: smooth; }
-body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-primary); overflow-x: hidden; }
 
 /* ===== SLIDE SYSTEM ===== */
 .slide {
@@ -48,31 +57,31 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(30,58,138,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30,58,138,0.03) 1px, transparent 1px);
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
   background-size: 60px 60px;
 }
 
 /* ===== TYPOGRAPHY ===== */
-h1 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
-h2 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
-h3 { font-size: 1.25rem; font-weight: 700; }
-.gradient-text { background: linear-gradient(135deg, var(--accent-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.subtitle { font-size: clamp(1rem, 2vw, 1.35rem); color: var(--text2); line-height: 1.6; max-width: 700px; }
-.label { font-size: 0.75rem !important; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+h1 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(2.5rem, 5.5vw, 4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; color: var(--text-primary); }
+h2 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; color: var(--text-primary); }
+h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+.gradient-text { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.subtitle { font-size: clamp(0.95rem, 1.8vw, 1.15rem); color: var(--text-secondary); line-height: 1.6; max-width: 640px; }
+.label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 
 /* ===== CARDS ===== */
 .card {
-  background: var(--card);
-  backdrop-filter: blur(20px);
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px;
-  transition: all 0.3s;
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--card-shadow);
 }
-.card:hover { border-color: rgba(30,58,138,0.3); transform: translateY(-2px); }
-.card-sm { padding: 20px; border-radius: 12px; }
-.card-glow { box-shadow: 0 0 30px rgba(30,58,138,0.08); }
+.card:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow); }
+.card-sm { padding: 16px; border-radius: 10px; }
 
 /* ===== GRID ===== */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
@@ -93,7 +102,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   padding: 4px 12px; border-radius: 999px;
   font-size: 0.7rem; font-weight: 600;
 }
-.badge-accent { background: rgba(30,58,138,0.15); color: var(--accent-light); }
+.badge-accent { background: var(--accent-subtle); color: var(--accent); }
 .badge-green { background: rgba(16,185,129,0.15); color: var(--green); }
 .badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
 .badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
@@ -103,7 +112,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 /* ===== STAT BOX ===== */
 .stat { text-align: center; }
 .stat-value { font-size: 2.5rem; font-weight: 900; line-height: 1; }
-.stat-label { font-size: 0.8rem; color: var(--text3); margin-top: 6px; }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; }
 
 /* ===== ICON CIRCLE ===== */
 .icon-circle {
@@ -129,21 +138,21 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 
 /* ===== TABLE ===== */
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.data-table th { text-align: left; padding: 12px 16px; color: var(--text3); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid rgba(30,58,138,0.15); }
-.data-table td { padding: 12px 16px; border-bottom: 1px solid rgba(30,58,138,0.06); }
-.data-table tr:hover td { background: rgba(30,58,138,0.04); }
-.data-table code { background: rgba(30,58,138,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--accent-light); }
+.data-table th { text-align: left; padding: 12px 16px; color: var(--text-muted); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.data-table tr:hover td { background: var(--accent-subtle); }
+.data-table code { background: var(--accent-subtle); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--accent); }
 
 /* ===== SLIDE COUNTER ===== */
 .slide-counter {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  padding: 10px 24px; min-height: 44px; display: flex; align-items: center;
-  background: rgba(17,24,39,0.9); backdrop-filter: blur(16px);
-  border: 1px solid var(--border); border-radius: 12px;
-  font-size: 0.95rem; font-weight: 600; color: var(--text2);
-  z-index: 100;
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  padding: 6px 16px; min-height: 36px; display: flex; align-items: center;
+  background: var(--card-bg); backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+  z-index: 100; transition: all 0.2s ease;
 }
-.slide-counter span { color: var(--accent-light); margin: 0 2px; }
+.slide-counter span { color: var(--accent); font-weight: 600; margin: 0 2px; }
 
 /* ===== ANIMATIONS ===== */
 .fade-up {
@@ -158,11 +167,11 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .delay-5 { transition-delay: 0.5s; }
 
 /* ===== PULSE RING ===== */
-@keyframes pulseRing { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes pulseRing { 0% { transform: scale(0.95); opacity: 0.3; } 100% { transform: scale(1.6); opacity: 0; } }
 .pulse-ring {
   position: absolute; width: 100%; height: 100%;
-  border: 2px solid var(--accent); border-radius: 50%;
-  animation: pulseRing 2s infinite;
+  border: 1px solid var(--accent); border-radius: 50%;
+  animation: pulseRing 3s ease-out infinite;
 }
 
 /* ===== CTA ===== */
@@ -170,13 +179,14 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   display: inline-flex; align-items: center; gap: 8px;
   padding: 14px 32px; border-radius: 12px;
   font-size: 0.95rem; font-weight: 600;
-  text-decoration: none; transition: all 0.3s;
+  text-decoration: none; transition: all 0.2s ease;
   border: none; cursor: pointer;
 }
-.cta-primary { background: var(--accent); color: white; }
-.cta-primary:hover { background: #1e3a8a; box-shadow: 0 0 30px rgba(30,58,138,0.3); }
-.cta-outline { background: transparent; color: var(--accent-light); border: 1px solid rgba(30,58,138,0.3); }
-.cta-outline:hover { border-color: var(--accent); background: rgba(30,58,138,0.1); }
+.cta-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.cta-primary { background: var(--accent); color: #f8fafc; }
+.cta-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px var(--shadow); }
+.cta-outline { background: transparent; color: var(--accent); border: 1px solid var(--border-hover); }
+.cta-outline:hover { border-color: var(--accent); background: var(--accent-subtle); }
 
 /* ===== MISC ===== */
 .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 40px 0; }
@@ -196,65 +206,71 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .text-center { text-align: center; }
 .text-sm { font-size: 0.85rem; }
 .text-xs { font-size: 0.75rem; }
-.text-muted { color: var(--text2); }
-.text-dim { color: var(--text3); }
+.text-muted { color: var(--text-secondary); }
+.text-dim { color: var(--text-muted); }
 .inline-flex { display: inline-flex; align-items: center; }
 .fw-600 { font-weight: 600; }
 .border-l { border-left: 3px solid var(--accent); padding-left: 20px; }
 
 /* ===== LIGHT THEME ===== */
 [data-theme="light"] {
-  --bg: #f8fafc;
-  --bg2: #f1f5f9;
-  --card: rgba(255,255,255,0.85);
-  --border: rgba(30,58,138,0.15);
-  --text: #1e293b;
-  --text2: #475569;
-  --text3: #94a3b8;
+  --bg: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+  --card-bg: rgba(255,255,255,0.85);
+  --border: rgba(30,58,138,0.10);
+  --border-hover: rgba(30,58,138,0.25);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --accent: #1e3a8a;
+  --accent-hover: #1e40af;
+  --accent-subtle: rgba(30,58,138,0.08);
+  --success: #047857;
+  --warning: #92400e;
+  --danger: #991b1b;
+  --shadow: rgba(0,0,0,0.06);
+  --focus-ring: rgba(30,58,138,0.4);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-[data-theme="light"] body { background: var(--bg); color: var(--text); }
-[data-theme="light"] .bg-grid {
-  background-image:
-    linear-gradient(rgba(30,58,138,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30,58,138,0.06) 1px, transparent 1px);
-}
-[data-theme="light"] .card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-[data-theme="light"] .card:hover { box-shadow: 0 4px 12px rgba(30,58,138,0.1); }
-[data-theme="light"] .slide-counter { background: rgba(255,255,255,0.92); border-color: rgba(30,58,138,0.15); }
-[data-theme="light"] .data-table th { color: var(--text3); border-bottom-color: rgba(30,58,138,0.12); }
-[data-theme="light"] .data-table td { border-bottom-color: rgba(30,58,138,0.06); }
-[data-theme="light"] .data-table tr:hover td { background: rgba(30,58,138,0.04); }
-[data-theme="light"] .data-table code { background: rgba(30,58,138,0.08); color: #1e3a8a; }
-[data-theme="light"] .gradient-text { background: linear-gradient(135deg, #1e3a8a, #3b82f6); -webkit-background-clip: text; background-clip: text; }
 
 /* ===== THEME TOGGLE ===== */
 .theme-toggle {
   position: fixed; top: 20px; right: 20px; z-index: 200;
-  width: 44px; height: 44px; border-radius: 12px;
+  width: 44px; height: 44px; border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--card); backdrop-filter: blur(16px);
+  background: var(--card-bg); backdrop-filter: blur(12px);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s; color: var(--text2);
+  transition: all 0.2s ease; color: var(--text-secondary);
 }
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent-light); transform: scale(1.05); }
+.theme-toggle:hover { border-color: var(--border-hover); color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .theme-toggle svg { width: 20px; height: 20px; }
 .theme-toggle .icon-sun { display: none; }
 [data-theme="light"] .theme-toggle .icon-sun { display: block; }
 [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+/* ===== ACCESSIBILITY ===== */
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-up { transition: none; opacity: 1; transform: none; }
+  .pulse-ring { animation: none; }
+}
 
 </style>
 </head>
 <body>
 
 <!-- THEME TOGGLE -->
-<button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">
+<button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme" aria-label="Toggle light and dark theme">
   <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
   <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
 </button>
 
 <!-- SLIDE COUNTER -->
-<div class="slide-counter" id="slideCounter">Slide <span id="current-slide">1</span> of 14</div>
+<div class="slide-counter" id="slideCounter" role="navigation" aria-label="Slide navigation">Slide <span id="current-slide">1</span> of 14</div>
 
+<main role="main">
 <!-- ============================== SLIDE 1: HERO ============================== -->
 <section class="slide" id="slide-0">
   <div class="bg-grid"></div>
@@ -281,10 +297,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           Live Demo
         </a>
-        <a href="https://bankoffer.lupulup.com/docs" target="_blank" class="cta-btn cta-outline">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-          API Docs
-        </a>
+        <a href="https://bankoffer.lupulup.com/docs" target="_blank" style="color:var(--text-secondary);text-decoration:underline;font-size:0.9rem;margin-left:16px;">API Docs</a>
       </div>
     </div>
   </div>
@@ -299,28 +312,28 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       <h2>Built for Scale,<br>Designed for <span class="gradient-text">Compliance</span></h2>
     </div>
     <div class="grid-4 fade-up delay-1">
-      <div class="card card-glow text-center">
+      <div class="card text-center">
         <div class="stat-value gradient-text">3</div>
         <div class="stat-label">Portals</div>
         <div class="text-xs text-dim mt-24">Employee, Customer, Admin</div>
       </div>
-      <div class="card card-glow text-center">
+      <div class="card text-center">
         <div class="stat-value gradient-text">50+</div>
         <div class="stat-label">API Endpoints</div>
         <div class="text-xs text-dim mt-24">9 router modules</div>
       </div>
-      <div class="card card-glow text-center">
+      <div class="card text-center">
         <div class="stat-value gradient-text">17</div>
         <div class="stat-label">Database Tables</div>
         <div class="text-xs text-dim mt-24">Core + compliance + auth</div>
       </div>
-      <div class="card card-glow text-center">
+      <div class="card text-center">
         <div class="stat-value gradient-text">5</div>
         <div class="stat-label">EU Regulations</div>
         <div class="text-xs text-dim mt-24">GDPR, AI Act, MiFID II, EBA, ePrivacy</div>
       </div>
     </div>
-    <div class="grid-4 mt-24 fade-up delay-2">
+    <div class="grid-2 mt-24 fade-up delay-2">
       <div class="card card-sm text-center">
         <div style="font-size:1.5rem;font-weight:800;color:var(--green);">14</div>
         <div class="text-xs text-dim">Financial Products</div>
@@ -353,17 +366,17 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       <!-- Employee -->
       <div class="card">
         <div class="icon-circle mb-16" style="background:rgba(30,58,138,0.15);">
-          <svg width="24" height="24" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          <svg width="24" height="24" fill="none" stroke="var(--accent)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
         </div>
         <h3 class="mb-8">Employee Portal</h3>
         <p class="text-sm text-muted mb-16">Bank staff dashboard with customer overview, offer generation, compliance monitoring, and human-in-the-loop overrides.</p>
         <ul style="list-style:none;padding:0;" class="text-sm text-muted">
-          <li class="mb-8">&#9656; Dashboard</li>
-          <li class="mb-8">&#9656; Customers</li>
-          <li class="mb-8">&#9656; Analytics</li>
-          <li>&#9656; Compliance</li>
+          <li class="mb-8">&mdash; Dashboard</li>
+          <li class="mb-8">&mdash; Customers</li>
+          <li class="mb-8">&mdash; Analytics</li>
+          <li>&mdash; Compliance</li>
         </ul>
-        <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--accent-light);font-weight:600;"> /</span></div>
+        <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--accent);font-weight:600;"> /</span></div>
       </div>
       <!-- Customer -->
       <div class="card" style="border-color: rgba(16,185,129,0.2);">
@@ -373,10 +386,10 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <h3 class="mb-8">Customer Portal</h3>
         <p class="text-sm text-muted mb-16">Client-facing portal with personalized offers, consent management, data transparency report, and feedback collection.</p>
         <ul style="list-style:none;padding:0;" class="text-sm text-muted">
-          <li class="mb-8">&#9656; My Offers</li>
-          <li class="mb-8">&#9656; My Data</li>
-          <li class="mb-8">&#9656; Consent</li>
-          <li>&#9656; History</li>
+          <li class="mb-8">&mdash; My Offers</li>
+          <li class="mb-8">&mdash; My Data</li>
+          <li class="mb-8">&mdash; Consent</li>
+          <li>&mdash; History</li>
         </ul>
         <div class="mt-24 text-xs text-dim">my-bankoffer.lupulup.com<span style="color:var(--green);font-weight:600;"> /</span></div>
       </div>
@@ -388,10 +401,10 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <h3 class="mb-8">Admin Portal</h3>
         <p class="text-sm text-muted mb-16">System configuration, user management, product catalog, consent registry, regulatory monitoring, and API tokens.</p>
         <ul style="list-style:none;padding:0;" class="text-sm text-muted">
-          <li class="mb-8">&#9656; Products</li>
-          <li class="mb-8">&#9656; Consent Registry</li>
-          <li class="mb-8">&#9656; Users</li>
-          <li>&#9656; Tokens</li>
+          <li class="mb-8">&mdash; Products</li>
+          <li class="mb-8">&mdash; Consent Registry</li>
+          <li class="mb-8">&mdash; Users</li>
+          <li>&mdash; Tokens</li>
         </ul>
         <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--red);font-weight:600;"> /admin</span></div>
       </div>
@@ -406,7 +419,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Core Engine</span>
       <h2>AI-Powered <span class="gradient-text">Personalization</span></h2>
-      <p class="subtitle" style="margin: 16px auto 0;">From raw transactions to hyper-personalized offers in milliseconds</p>
+      <p class="subtitle" style="margin: 16px 0 0;">From raw transactions to hyper-personalized offers in milliseconds</p>
     </div>
     <div class="grid-2 mb-40 fade-up delay-1">
       <div class="flow-step">
@@ -415,7 +428,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <p class="text-xs text-muted">Transaction streams, events, and customer data flow into the feature store</p>
       </div>
       <div class="flow-step">
-        <div class="flow-num" style="background:rgba(30,58,138,0.15);color:var(--accent-light);">2</div>
+        <div class="flow-num" style="background:rgba(30,58,138,0.15);color:var(--accent);">2</div>
         <h3 class="mb-8" style="font-size:0.95rem;">Profile</h3>
         <p class="text-xs text-muted">Customer profiler classifies life stage, risk tolerance, and segments</p>
       </div>
@@ -549,7 +562,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
           <div class="icon-circle" style="background:rgba(30,58,138,0.15);">
-            <svg width="20" height="20" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <svg width="20" height="20" fill="none" stroke="var(--accent)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           </div>
           <div>
             <h3 style="font-size:1rem;">ePrivacy Directive</h3>
@@ -568,7 +581,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Customer Journey</span>
       <h2>Onboarding <span class="gradient-text">Wizard</span></h2>
-      <p class="subtitle" style="margin: 16px auto 0;">Three steps from registration to personalized offers</p>
+      <p class="subtitle" style="margin: 16px 0 0;">Three steps from registration to personalized offers</p>
     </div>
     <div class="grid-3 fade-up delay-1">
       <div class="card">
@@ -577,11 +590,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </div>
         <h3 class="mb-12">Consent &amp; Compliance</h3>
         <p class="text-sm text-muted mb-16">AI Act transparency notice, GDPR consent toggles (profiling, automated decisions, marketing channels, family data), and regulatory disclosures from the consent registry.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
-          <span class="badge badge-cyan">GDPR Art. 6</span>
-          <span class="badge badge-cyan">GDPR Art. 22</span>
-          <span class="badge badge-cyan">AI Act Art. 13</span>
-        </div>
+        <p class="text-xs" style="color:var(--text-muted);margin-top:12px;">GDPR Art. 6 · GDPR Art. 22 · AI Act Art. 13</p>
       </div>
       <div class="card">
         <div class="flex-center mb-16">
@@ -589,11 +598,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </div>
         <h3 class="mb-12">Profile Questionnaire</h3>
         <p class="text-sm text-muted mb-16">Age, annual income, dependents, employment status, risk tolerance, homeowner status, and existing banking products. Used by the profiler to classify life stage and risk score.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
-          <span class="badge badge-purple">Life Stage</span>
-          <span class="badge badge-purple">Risk Score</span>
-          <span class="badge badge-purple">Segments</span>
-        </div>
+        <p class="text-xs" style="color:var(--text-muted);margin-top:12px;">Life Stage · Risk Score · Segments</p>
       </div>
       <div class="card">
         <div class="flex-center mb-16">
@@ -601,14 +606,11 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </div>
         <h3 class="mb-12">Review &amp; Confirm</h3>
         <p class="text-sm text-muted mb-16">Full summary of consent selections and profile data. On confirmation, the system generates a computed profile and the customer immediately receives personalized offers.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
-          <span class="badge badge-green">Auto Profile</span>
-          <span class="badge badge-green">Instant Offers</span>
-        </div>
+        <p class="text-xs" style="color:var(--text-muted);margin-top:12px;">Auto Profile · Instant Offers</p>
       </div>
     </div>
     <div class="card mt-32 fade-up delay-2" style="border-left: 3px solid var(--accent);">
-      <p class="text-sm text-muted"><strong style="color:var(--accent-light);">Privacy by design:</strong> New customers receive auto-increment IDs (51, 52, ...). Email is never stored &mdash; only an irreversible SHA-256 hash. Internal IDs are replaced with pseudonymized UUIDs for external use. Data is automatically anonymized after 2 years.</p>
+      <p class="text-sm text-muted"><strong style="color:var(--accent);">Privacy by design:</strong> New customers receive auto-increment IDs (51, 52, ...). Email is never stored &mdash; only an irreversible SHA-256 hash. Internal IDs are replaced with pseudonymized UUIDs for external use. Data is automatically anonymized after 2 years.</p>
     </div>
   </div>
 </section>
@@ -688,7 +690,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     </div>
     <div class="grid-3 fade-up delay-1">
       <div class="card card-sm">
-        <p class="label mb-12" style="color:var(--accent-light);">Backend</p>
+        <p class="label mb-12" style="color:var(--accent);">Backend</p>
         <p class="text-sm fw-600 mb-8">Python 3.12 + FastAPI</p>
         <p class="text-xs text-muted">Async API with Uvicorn, SQLAlchemy 2.0, Pydantic v2 validation, Prometheus metrics</p>
       </div>
@@ -728,28 +730,27 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-40 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Infrastructure</span>
       <h2>System <span class="gradient-text">Architecture</span></h2>
-      <p class="subtitle" style="margin: 12px auto 0;">End-to-end request flow from browser to database</p>
+      <p class="subtitle" style="margin: 12px 0 0;">End-to-end request flow from browser to database</p>
     </div>
     <div class="fade-up delay-1" style="overflow-x:auto;">
       <svg viewBox="0 0 1100 550" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;margin:0 auto;display:block;" font-family="Inter, system-ui, sans-serif">
         <defs>
-          <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--text3)" stroke-width="1.2"/></marker>
+          <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--text-muted)" stroke-width="1.2"/></marker>
           <marker id="ahG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#10b981" stroke-width="1.2"/></marker>
           <marker id="ahC" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#06b6d4" stroke-width="1.2"/></marker>
-          <marker id="ahA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent-light)" stroke-width="1.2"/></marker>
+          <marker id="ahA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent)" stroke-width="1.2"/></marker>
           <marker id="ahP" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#a78bfa" stroke-width="1.2"/></marker>
-          <filter id="glow"><feGaussianBlur stdDeviation="2" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
 
         <!-- ── LAYER LABELS ── -->
-        <text x="16" y="32" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em">CLIENT</text>
-        <text x="16" y="176" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em">EDGE</text>
-        <text x="16" y="318" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em">APPLICATION</text>
-        <text x="16" y="458" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em">DATA</text>
+        <text x="16" y="32" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">CLIENT</text>
+        <text x="16" y="176" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">EDGE</text>
+        <text x="16" y="318" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">APPLICATION</text>
+        <text x="16" y="458" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">DATA</text>
 
         <!-- ── SECURITY ZONE 1: Employee Domain ── -->
         <rect x="118" y="4" width="370" height="90" rx="14" fill="rgba(30,58,138,0.03)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6,4"/>
-        <text x="303" y="104" fill="var(--accent-light)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">bankoffer.lupulup.com</text>
+        <text x="303" y="104" fill="var(--accent)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">bankoffer.lupulup.com</text>
 
         <!-- ── SECURITY ZONE 2: Customer Domain ── -->
         <rect x="580" y="4" width="210" height="90" rx="14" fill="rgba(16,185,129,0.03)" stroke="#10b981" stroke-width="1" stroke-dasharray="6,4"/>
@@ -757,106 +758,106 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 
         <!-- ── ROW 1: BROWSERS ── -->
         <!-- Employee Portal -->
-        <rect x="130" y="16" width="155" height="52" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.2"/>
-        <text x="208" y="38" fill="var(--accent-light)" font-size="10" font-weight="700" text-anchor="middle">Employee Portal</text>
-        <text x="208" y="54" fill="var(--text3)" font-size="9" text-anchor="middle">/ (index.html)</text>
+        <rect x="130" y="16" width="155" height="52" rx="10" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="208" y="38" fill="var(--accent)" font-size="10" font-weight="700" text-anchor="middle">Employee Portal</text>
+        <text x="208" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/ (index.html)</text>
 
         <!-- Admin Portal -->
-        <rect x="300" y="16" width="175" height="52" rx="10" fill="var(--card)" stroke="#ef4444" stroke-width="1.2"/>
+        <rect x="300" y="16" width="175" height="52" rx="10" fill="var(--card-bg)" stroke="#ef4444" stroke-width="1.2"/>
         <text x="388" y="38" fill="#ef4444" font-size="10" font-weight="700" text-anchor="middle">Admin Portal</text>
-        <text x="388" y="54" fill="var(--text3)" font-size="9" text-anchor="middle">/admin</text>
+        <text x="388" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/admin</text>
 
         <!-- Customer Portal -->
-        <rect x="592" y="16" width="185" height="52" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.2"/>
+        <rect x="592" y="16" width="185" height="52" rx="10" fill="var(--card-bg)" stroke="#10b981" stroke-width="1.2"/>
         <text x="685" y="38" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle">Customer Portal</text>
-        <text x="685" y="54" fill="var(--text3)" font-size="9" text-anchor="middle">/ (portal.html)</text>
+        <text x="685" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/ (portal.html)</text>
 
         <!-- ── ARROWS: Browsers → Cloudflare ── -->
-        <line x1="260" y1="68" x2="380" y2="152" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
-        <line x1="420" y1="68" x2="430" y2="152" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
-        <line x1="685" y1="68" x2="540" y2="152" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="260" y1="68" x2="380" y2="152" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="420" y1="68" x2="430" y2="152" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="685" y1="68" x2="540" y2="152" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
         <!-- ── ROW 2: EDGE ── -->
         <!-- Cloudflare -->
-        <rect x="340" y="150" width="220" height="56" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.2"/>
+        <rect x="340" y="150" width="220" height="56" rx="10" fill="var(--card-bg)" stroke="#f59e0b" stroke-width="1.2"/>
         <text x="450" y="170" fill="#f59e0b" font-size="11" font-weight="700" text-anchor="middle">Cloudflare DNS</text>
-        <text x="450" y="186" fill="var(--text3)" font-size="9" text-anchor="middle">bankoffer.lupulup.com + my-bankoffer.lupulup.com</text>
-        <text x="450" y="199" fill="var(--text3)" font-size="8" text-anchor="middle">A record &rarr; 188.24.124.155</text>
+        <text x="450" y="186" fill="var(--text-muted)" font-size="9" text-anchor="middle">bankoffer.lupulup.com + my-bankoffer.lupulup.com</text>
+        <text x="450" y="199" fill="var(--text-muted)" font-size="8" text-anchor="middle">A record &rarr; 188.24.124.155</text>
 
         <!-- Arrow: Cloudflare → Pangolin -->
-        <line x1="450" y1="206" x2="450" y2="224" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="450" y1="206" x2="450" y2="224" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
         <!-- Pangolin -->
-        <rect x="340" y="226" width="220" height="52" rx="10" fill="var(--card)" stroke="#06b6d4" stroke-width="1.2"/>
+        <rect x="340" y="226" width="220" height="52" rx="10" fill="var(--card-bg)" stroke="#06b6d4" stroke-width="1.2"/>
         <text x="450" y="247" fill="#06b6d4" font-size="11" font-weight="700" text-anchor="middle">Pangolin TLS Proxy</text>
-        <text x="450" y="263" fill="var(--text3)" font-size="9" text-anchor="middle">192.168.1.161 &mdash; Let's Encrypt ACME</text>
-        <text x="450" y="275" fill="var(--text3)" font-size="8" text-anchor="middle">HTTPS termination + cert auto-renewal</text>
+        <text x="450" y="263" fill="var(--text-muted)" font-size="9" text-anchor="middle">192.168.1.161 &mdash; Let's Encrypt ACME</text>
+        <text x="450" y="275" fill="var(--text-muted)" font-size="8" text-anchor="middle">HTTPS termination + cert auto-renewal</text>
 
         <!-- ── ROW 3: APPLICATION (Docker Compose) ── -->
         <!-- Docker boundary box -->
         <rect x="120" y="300" width="730" height="114" rx="14" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
-        <text x="136" y="316" fill="var(--text3)" font-size="9" font-weight="600" letter-spacing="0.05em">DOCKER COMPOSE &mdash; 192.168.1.141</text>
+        <text x="136" y="316" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">DOCKER COMPOSE &mdash; 192.168.1.141</text>
 
         <!-- Arrow: Pangolin → Nginx -->
         <line x1="450" y1="278" x2="270" y2="322" stroke="#06b6d4" stroke-width="1.2" marker-end="url(#ahC)"/>
 
         <!-- Nginx -->
-        <rect x="140" y="324" width="170" height="78" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.2"/>
+        <rect x="140" y="324" width="170" height="78" rx="10" fill="var(--card-bg)" stroke="#10b981" stroke-width="1.2"/>
         <text x="225" y="346" fill="#10b981" font-size="11" font-weight="700" text-anchor="middle">Nginx</text>
-        <text x="225" y="360" fill="var(--text3)" font-size="9" text-anchor="middle">Reverse proxy :80</text>
+        <text x="225" y="360" fill="var(--text-muted)" font-size="9" text-anchor="middle">Reverse proxy :80</text>
         <text x="225" y="374" fill="#10b981" font-size="8" font-weight="600" text-anchor="middle">Hostname-based routing</text>
-        <text x="225" y="388" fill="var(--text3)" font-size="8" text-anchor="middle">Origin isolation per domain</text>
+        <text x="225" y="388" fill="var(--text-muted)" font-size="8" text-anchor="middle">Origin isolation per domain</text>
 
         <!-- Arrow: Nginx → FastAPI -->
         <line x1="310" y1="358" x2="378" y2="358" stroke="#10b981" stroke-width="1.2" marker-end="url(#ahG)"/>
 
         <!-- FastAPI -->
-        <rect x="380" y="322" width="240" height="78" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5" filter="url(#glow)"/>
-        <text x="500" y="344" fill="var(--accent-light)" font-size="12" font-weight="800" text-anchor="middle">FastAPI API</text>
-        <text x="500" y="360" fill="var(--text3)" font-size="9" text-anchor="middle">Uvicorn :8000 &mdash; 9 routers</text>
-        <text x="500" y="374" fill="var(--text3)" font-size="9" text-anchor="middle">Offers &bull; Profiles &bull; Compliance &bull; Auth</text>
-        <text x="500" y="388" fill="var(--text3)" font-size="9" text-anchor="middle">Products &bull; Consent &bull; Tokens</text>
+        <rect x="380" y="322" width="240" height="78" rx="10" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="500" y="344" fill="var(--accent)" font-size="12" font-weight="800" text-anchor="middle">FastAPI API</text>
+        <text x="500" y="360" fill="var(--text-muted)" font-size="9" text-anchor="middle">Uvicorn :8000 &mdash; 9 routers</text>
+        <text x="500" y="374" fill="var(--text-muted)" font-size="9" text-anchor="middle">Offers &bull; Profiles &bull; Compliance &bull; Auth</text>
+        <text x="500" y="388" fill="var(--text-muted)" font-size="9" text-anchor="middle">Products &bull; Consent &bull; Tokens</text>
 
         <!-- Background tasks -->
-        <rect x="660" y="326" width="170" height="64" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="1.2"/>
+        <rect x="660" y="326" width="170" height="64" rx="10" fill="var(--card-bg)" stroke="#a78bfa" stroke-width="1.2"/>
         <text x="745" y="348" fill="#a78bfa" font-size="10" font-weight="700" text-anchor="middle">Background Tasks</text>
-        <text x="745" y="364" fill="var(--text3)" font-size="9" text-anchor="middle">Consent sync (6h)</text>
-        <text x="745" y="378" fill="var(--text3)" font-size="9" text-anchor="middle">Source monitor (24h)</text>
+        <text x="745" y="364" fill="var(--text-muted)" font-size="9" text-anchor="middle">Consent sync (6h)</text>
+        <text x="745" y="378" fill="var(--text-muted)" font-size="9" text-anchor="middle">Source monitor (24h)</text>
 
         <!-- Arrow: FastAPI → Background -->
         <line x1="620" y1="358" x2="658" y2="358" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ahP)"/>
 
         <!-- ── ROW 4: DATA ── -->
         <!-- Arrow: FastAPI → PostgreSQL -->
-        <line x1="450" y1="400" x2="310" y2="450" stroke="var(--accent-light)" stroke-width="1.2" marker-end="url(#ahA)"/>
+        <line x1="450" y1="400" x2="310" y2="450" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
 
         <!-- Arrow: FastAPI → Redis -->
-        <line x1="550" y1="400" x2="610" y2="450" stroke="var(--accent-light)" stroke-width="1.2" marker-end="url(#ahA)"/>
+        <line x1="550" y1="400" x2="610" y2="450" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
 
         <!-- PostgreSQL -->
-        <rect x="180" y="444" width="200" height="68" rx="10" fill="var(--card)" stroke="#06b6d4" stroke-width="1.2"/>
+        <rect x="180" y="444" width="200" height="68" rx="10" fill="var(--card-bg)" stroke="#06b6d4" stroke-width="1.2"/>
         <text x="280" y="468" fill="#06b6d4" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL 16</text>
-        <text x="280" y="484" fill="var(--text3)" font-size="9" text-anchor="middle">17 tables &bull; JSONB profiles</text>
-        <text x="280" y="498" fill="var(--text3)" font-size="9" text-anchor="middle">Async pool (asyncpg)</text>
+        <text x="280" y="484" fill="var(--text-muted)" font-size="9" text-anchor="middle">17 tables &bull; JSONB profiles</text>
+        <text x="280" y="498" fill="var(--text-muted)" font-size="9" text-anchor="middle">Async pool (asyncpg)</text>
 
         <!-- Redis -->
-        <rect x="540" y="444" width="200" height="68" rx="10" fill="var(--card)" stroke="#ef4444" stroke-width="1.2"/>
+        <rect x="540" y="444" width="200" height="68" rx="10" fill="var(--card-bg)" stroke="#ef4444" stroke-width="1.2"/>
         <text x="640" y="468" fill="#ef4444" font-size="11" font-weight="700" text-anchor="middle">Redis 7</text>
-        <text x="640" y="484" fill="var(--text3)" font-size="9" text-anchor="middle">Profile cache (15min TTL)</text>
-        <text x="640" y="498" fill="var(--text3)" font-size="9" text-anchor="middle">Session store</text>
+        <text x="640" y="484" fill="var(--text-muted)" font-size="9" text-anchor="middle">Profile cache (15min TTL)</text>
+        <text x="640" y="498" fill="var(--text-muted)" font-size="9" text-anchor="middle">Session store</text>
 
         <!-- ── EXTERNAL: Keycloak ── -->
-        <text x="930" y="316" fill="var(--text3)" font-size="9" font-weight="600" letter-spacing="0.05em">EXTERNAL</text>
+        <text x="930" y="316" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">EXTERNAL</text>
 
         <!-- Arrow: FastAPI ↔ Keycloak -->
         <line x1="870" y1="358" x2="918" y2="358" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
         <!-- Keycloak -->
-        <rect x="920" y="322" width="168" height="72" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.2"/>
+        <rect x="920" y="322" width="168" height="72" rx="10" fill="var(--card-bg)" stroke="#f59e0b" stroke-width="1.2"/>
         <text x="1004" y="345" fill="#f59e0b" font-size="11" font-weight="700" text-anchor="middle">Keycloak 26.2</text>
-        <text x="1004" y="361" fill="var(--text3)" font-size="9" text-anchor="middle">auth.lupulup.com</text>
-        <text x="1004" y="375" fill="var(--text3)" font-size="9" text-anchor="middle">OIDC + PKCE S256</text>
-        <text x="1004" y="387" fill="var(--text3)" font-size="9" text-anchor="middle">192.168.1.190</text>
+        <text x="1004" y="361" fill="var(--text-muted)" font-size="9" text-anchor="middle">auth.lupulup.com</text>
+        <text x="1004" y="375" fill="var(--text-muted)" font-size="9" text-anchor="middle">OIDC + PKCE S256</text>
+        <text x="1004" y="387" fill="var(--text-muted)" font-size="9" text-anchor="middle">192.168.1.190</text>
 
         <!-- Arrow from browsers to Keycloak (SSO) -->
         <path d="M740,42 Q920,42 1004,120 Q1050,150 1004,320" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
@@ -865,15 +866,15 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <!-- ── SECURITY LABELS ── -->
         <rect x="870" y="150" width="115" height="34" rx="8" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="0.8"/>
         <text x="928" y="164" fill="#10b981" font-size="8" font-weight="700" text-anchor="middle">ORIGIN ISOLATION</text>
-        <text x="928" y="176" fill="var(--text3)" font-size="7" text-anchor="middle">Separate localStorage</text>
+        <text x="928" y="176" fill="var(--text-muted)" font-size="7" text-anchor="middle">Separate localStorage</text>
 
         <rect x="870" y="194" width="115" height="34" rx="8" fill="rgba(6,182,212,0.08)" stroke="#06b6d4" stroke-width="0.8"/>
         <text x="928" y="208" fill="#06b6d4" font-size="8" font-weight="700" text-anchor="middle">TLS PER DOMAIN</text>
-        <text x="928" y="220" fill="var(--text3)" font-size="7" text-anchor="middle">Let's Encrypt certs</text>
+        <text x="928" y="220" fill="var(--text-muted)" font-size="7" text-anchor="middle">Let's Encrypt certs</text>
 
         <rect x="870" y="238" width="115" height="34" rx="8" fill="rgba(30,58,138,0.08)" stroke="var(--accent)" stroke-width="0.8"/>
-        <text x="928" y="252" fill="var(--accent-light)" font-size="8" font-weight="700" text-anchor="middle">CORS ENFORCEMENT</text>
-        <text x="928" y="264" fill="var(--text3)" font-size="7" text-anchor="middle">Per-origin allow list</text>
+        <text x="928" y="252" fill="var(--accent)" font-size="8" font-weight="700" text-anchor="middle">CORS ENFORCEMENT</text>
+        <text x="928" y="264" fill="var(--text-muted)" font-size="7" text-anchor="middle">Per-origin allow list</text>
 
       </svg>
     </div>
@@ -887,7 +888,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Transparency</span>
       <h2>Immutable <span class="gradient-text">Audit Trail</span></h2>
-      <p class="subtitle" style="margin: 16px auto 0;">Every recommendation is fully traceable end-to-end</p>
+      <p class="subtitle" style="margin: 16px 0 0;">Every recommendation is fully traceable end-to-end</p>
     </div>
     <div class="card fade-up delay-1" style="overflow-x:auto;">
       <table class="data-table">
@@ -910,7 +911,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </tbody>
       </table>
     </div>
-    <div class="grid-3 mt-32 fade-up delay-2">
+    <div class="grid-3 fade-up delay-2" style="margin-top:48px;">
       <div class="card card-sm text-center">
         <div style="font-size:1.5rem;font-weight:800;color:var(--green);">&#8734;</div>
         <div class="text-xs text-dim mt-24">Append-only, never deleted</div>
@@ -934,7 +935,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">The People &amp; Agents</span>
       <h2>Meet the <span class="gradient-text">Team</span></h2>
-      <p class="subtitle" style="margin: 16px auto 0;">Two humans and a multi-agent Claude hierarchy building together</p>
+      <p class="subtitle" style="margin: 16px 0 0;">Two humans and a multi-agent Claude hierarchy building together</p>
     </div>
 
     <!-- Humans -->
@@ -985,62 +986,62 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       </div>
       <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;margin:0 auto;display:block;" font-family="Inter, system-ui, sans-serif">
         <!-- Depth 0 -->
-        <rect x="350" y="4" width="200" height="44" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.5"/>
-        <text x="450" y="22" fill="var(--accent-light)" font-size="11" font-weight="800" text-anchor="middle">Orchestrator</text>
-        <text x="450" y="38" fill="var(--text3)" font-size="8" text-anchor="middle">Depth 0 &mdash; audit.yaml owner</text>
+        <rect x="350" y="4" width="200" height="44" rx="10" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="450" y="22" fill="var(--accent)" font-size="11" font-weight="800" text-anchor="middle">Orchestrator</text>
+        <text x="450" y="38" fill="var(--text-muted)" font-size="8" text-anchor="middle">Depth 0 &mdash; audit.yaml owner</text>
 
         <!-- Depth 0 → Depth 1 lines -->
-        <line x1="390" y1="48" x2="100" y2="88" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="420" y1="48" x2="280" y2="88" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="450" y1="48" x2="450" y2="88" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="480" y1="48" x2="620" y2="88" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="510" y1="48" x2="800" y2="88" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="390" y1="48" x2="100" y2="88" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="420" y1="48" x2="280" y2="88" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="450" y1="48" x2="450" y2="88" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="480" y1="48" x2="620" y2="88" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="510" y1="48" x2="800" y2="88" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
 
         <!-- Depth 1: Domain Agents -->
-        <text x="16" y="82" fill="var(--text3)" font-size="8" font-weight="600" letter-spacing="0.08em">DEPTH 1</text>
-        <rect x="30" y="88" width="140" height="40" rx="8" fill="var(--card)" stroke="#06b6d4" stroke-width="1"/>
+        <text x="16" y="82" fill="var(--text-muted)" font-size="8" font-weight="600" letter-spacing="0.08em">DEPTH 1</text>
+        <rect x="30" y="88" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#06b6d4" stroke-width="1"/>
         <text x="100" y="104" fill="#06b6d4" font-size="10" font-weight="700" text-anchor="middle">Infra</text>
-        <text x="100" y="118" fill="var(--text3)" font-size="7" text-anchor="middle">Terraform, Helm, K8s</text>
+        <text x="100" y="118" fill="var(--text-muted)" font-size="7" text-anchor="middle">Terraform, Helm, K8s</text>
 
-        <rect x="200" y="88" width="140" height="40" rx="8" fill="var(--card)" stroke="#10b981" stroke-width="1"/>
+        <rect x="200" y="88" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#10b981" stroke-width="1"/>
         <text x="270" y="104" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle">Data Pipeline</text>
-        <text x="270" y="118" fill="var(--text3)" font-size="7" text-anchor="middle">Kafka, Airflow, dbt</text>
+        <text x="270" y="118" fill="var(--text-muted)" font-size="7" text-anchor="middle">Kafka, Airflow, dbt</text>
 
-        <rect x="380" y="88" width="140" height="40" rx="8" fill="var(--card)" stroke="#a78bfa" stroke-width="1"/>
+        <rect x="380" y="88" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#a78bfa" stroke-width="1"/>
         <text x="450" y="104" fill="#a78bfa" font-size="10" font-weight="700" text-anchor="middle">AI/ML</text>
-        <text x="450" y="118" fill="var(--text3)" font-size="7" text-anchor="middle">Profiler, Scorer, Ranker</text>
+        <text x="450" y="118" fill="var(--text-muted)" font-size="7" text-anchor="middle">Profiler, Scorer, Ranker</text>
 
-        <rect x="550" y="88" width="140" height="40" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="1"/>
-        <text x="620" y="104" fill="var(--accent-light)" font-size="10" font-weight="700" text-anchor="middle">API</text>
-        <text x="620" y="118" fill="var(--text3)" font-size="7" text-anchor="middle">FastAPI, routers, auth</text>
+        <rect x="550" y="88" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1"/>
+        <text x="620" y="104" fill="var(--accent)" font-size="10" font-weight="700" text-anchor="middle">API</text>
+        <text x="620" y="118" fill="var(--text-muted)" font-size="7" text-anchor="middle">FastAPI, routers, auth</text>
 
-        <rect x="720" y="88" width="150" height="40" rx="8" fill="var(--card)" stroke="#f59e0b" stroke-width="1"/>
+        <rect x="720" y="88" width="150" height="40" rx="8" fill="var(--card-bg)" stroke="#f59e0b" stroke-width="1"/>
         <text x="795" y="104" fill="#f59e0b" font-size="10" font-weight="700" text-anchor="middle">Notification</text>
-        <text x="795" y="118" fill="var(--text3)" font-size="7" text-anchor="middle">Push, email, SMS</text>
+        <text x="795" y="118" fill="var(--text-muted)" font-size="7" text-anchor="middle">Push, email, SMS</text>
 
         <!-- Depth 1 → Depth 2 lines -->
-        <line x1="200" y1="128" x2="140" y2="170" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="350" y1="128" x2="340" y2="170" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="550" y1="128" x2="540" y2="170" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
-        <line x1="700" y1="128" x2="740" y2="170" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="200" y1="128" x2="140" y2="170" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="350" y1="128" x2="340" y2="170" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="550" y1="128" x2="540" y2="170" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
+        <line x1="700" y1="128" x2="740" y2="170" stroke="var(--text-muted)" stroke-width="0.8" stroke-dasharray="4,3"/>
 
         <!-- Depth 2: Sub-Agents -->
-        <text x="16" y="164" fill="var(--text3)" font-size="8" font-weight="600" letter-spacing="0.08em">DEPTH 2</text>
-        <rect x="60" y="170" width="140" height="40" rx="8" fill="var(--card)" stroke="var(--text3)" stroke-width="0.8"/>
-        <text x="130" y="186" fill="var(--text2)" font-size="10" font-weight="600" text-anchor="middle">GitOps</text>
-        <text x="130" y="200" fill="var(--text3)" font-size="7" text-anchor="middle">ArgoCD, Kustomize</text>
+        <text x="16" y="164" fill="var(--text-muted)" font-size="8" font-weight="600" letter-spacing="0.08em">DEPTH 2</text>
+        <rect x="60" y="170" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="var(--text-muted)" stroke-width="0.8"/>
+        <text x="130" y="186" fill="var(--text-secondary)" font-size="10" font-weight="600" text-anchor="middle">GitOps</text>
+        <text x="130" y="200" fill="var(--text-muted)" font-size="7" text-anchor="middle">ArgoCD, Kustomize</text>
 
-        <rect x="260" y="170" width="140" height="40" rx="8" fill="var(--card)" stroke="#ef4444" stroke-width="0.8"/>
+        <rect x="260" y="170" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#ef4444" stroke-width="0.8"/>
         <text x="330" y="186" fill="#ef4444" font-size="10" font-weight="600" text-anchor="middle">Security</text>
-        <text x="330" y="200" fill="var(--text3)" font-size="7" text-anchor="middle">OPA, Trivy, Gitleaks</text>
+        <text x="330" y="200" fill="var(--text-muted)" font-size="7" text-anchor="middle">OPA, Trivy, Gitleaks</text>
 
-        <rect x="460" y="170" width="140" height="40" rx="8" fill="var(--card)" stroke="#06b6d4" stroke-width="0.8"/>
+        <rect x="460" y="170" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#06b6d4" stroke-width="0.8"/>
         <text x="530" y="186" fill="#06b6d4" font-size="10" font-weight="600" text-anchor="middle">Observability</text>
-        <text x="530" y="200" fill="var(--text3)" font-size="7" text-anchor="middle">Prometheus, Grafana</text>
+        <text x="530" y="200" fill="var(--text-muted)" font-size="7" text-anchor="middle">Prometheus, Grafana</text>
 
-        <rect x="660" y="170" width="140" height="40" rx="8" fill="var(--card)" stroke="#10b981" stroke-width="0.8"/>
+        <rect x="660" y="170" width="140" height="40" rx="8" fill="var(--card-bg)" stroke="#10b981" stroke-width="0.8"/>
         <text x="730" y="186" fill="#10b981" font-size="10" font-weight="600" text-anchor="middle">Test &amp; QA</text>
-        <text x="730" y="200" fill="var(--text3)" font-size="7" text-anchor="middle">pytest, Cypress, k6</text>
+        <text x="730" y="200" fill="var(--text-muted)" font-size="7" text-anchor="middle">pytest, Cypress, k6</text>
       </svg>
     </div>
   </div>
@@ -1053,60 +1054,60 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Development Lifecycle</span>
       <h2>SDLC GitOps<br><span class="gradient-text">Shifted Left</span></h2>
-      <p class="subtitle" style="margin: 16px auto 0;">Security, compliance, and testing embedded from the first commit</p>
+      <p class="subtitle" style="margin: 16px 0 0;">Security, compliance, and testing embedded from the first commit</p>
     </div>
 
     <!-- Flow diagram -->
     <div class="fade-up delay-1" style="overflow-x:auto;">
       <svg viewBox="0 0 1000 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1000px;margin:0 auto;display:block;" font-family="Inter, system-ui, sans-serif">
         <defs>
-          <marker id="ahFlow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent-light)" stroke-width="1.2"/></marker>
+          <marker id="ahFlow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent)" stroke-width="1.2"/></marker>
         </defs>
 
         <!-- Step 1: Code -->
-        <rect x="10" y="20" width="120" height="60" rx="10" fill="var(--card)" stroke="var(--accent)" stroke-width="1.2"/>
-        <text x="70" y="46" fill="var(--accent-light)" font-size="11" font-weight="700" text-anchor="middle">Code</text>
-        <text x="70" y="62" fill="var(--text3)" font-size="8" text-anchor="middle">Agent writes PR</text>
-        <line x1="130" y1="50" x2="160" y2="50" stroke="var(--accent-light)" stroke-width="1" marker-end="url(#ahFlow)"/>
+        <rect x="10" y="20" width="120" height="60" rx="10" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.2"/>
+        <text x="70" y="46" fill="var(--accent)" font-size="11" font-weight="700" text-anchor="middle">Code</text>
+        <text x="70" y="62" fill="var(--text-muted)" font-size="8" text-anchor="middle">Agent writes PR</text>
+        <line x1="130" y1="50" x2="160" y2="50" stroke="var(--accent)" stroke-width="1" marker-end="url(#ahFlow)"/>
 
         <!-- Step 2: audit.yaml -->
-        <rect x="162" y="20" width="130" height="60" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="1.2"/>
+        <rect x="162" y="20" width="130" height="60" rx="10" fill="var(--card-bg)" stroke="#a78bfa" stroke-width="1.2"/>
         <text x="227" y="46" fill="#a78bfa" font-size="11" font-weight="700" text-anchor="middle">audit.yaml</text>
-        <text x="227" y="62" fill="var(--text3)" font-size="8" text-anchor="middle">State + task tracking</text>
-        <line x1="292" y1="50" x2="322" y2="50" stroke="var(--accent-light)" stroke-width="1" marker-end="url(#ahFlow)"/>
+        <text x="227" y="62" fill="var(--text-muted)" font-size="8" text-anchor="middle">State + task tracking</text>
+        <line x1="292" y1="50" x2="322" y2="50" stroke="var(--accent)" stroke-width="1" marker-end="url(#ahFlow)"/>
 
         <!-- Step 3: Security Scan -->
-        <rect x="324" y="20" width="130" height="60" rx="10" fill="var(--card)" stroke="#ef4444" stroke-width="1.2"/>
+        <rect x="324" y="20" width="130" height="60" rx="10" fill="var(--card-bg)" stroke="#ef4444" stroke-width="1.2"/>
         <text x="389" y="42" fill="#ef4444" font-size="10" font-weight="700" text-anchor="middle">Security Scan</text>
-        <text x="389" y="56" fill="var(--text3)" font-size="8" text-anchor="middle">Trivy, Gitleaks</text>
-        <text x="389" y="68" fill="var(--text3)" font-size="7" text-anchor="middle">OPA policy checks</text>
-        <line x1="454" y1="50" x2="484" y2="50" stroke="var(--accent-light)" stroke-width="1" marker-end="url(#ahFlow)"/>
+        <text x="389" y="56" fill="var(--text-muted)" font-size="8" text-anchor="middle">Trivy, Gitleaks</text>
+        <text x="389" y="68" fill="var(--text-muted)" font-size="7" text-anchor="middle">OPA policy checks</text>
+        <line x1="454" y1="50" x2="484" y2="50" stroke="var(--accent)" stroke-width="1" marker-end="url(#ahFlow)"/>
 
         <!-- Step 4: Test -->
-        <rect x="486" y="20" width="120" height="60" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.2"/>
+        <rect x="486" y="20" width="120" height="60" rx="10" fill="var(--card-bg)" stroke="#10b981" stroke-width="1.2"/>
         <text x="546" y="42" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle">Test &amp; QA</text>
-        <text x="546" y="56" fill="var(--text3)" font-size="8" text-anchor="middle">Unit, e2e, contract</text>
-        <text x="546" y="68" fill="var(--text3)" font-size="7" text-anchor="middle">Compliance validation</text>
-        <line x1="606" y1="50" x2="636" y2="50" stroke="var(--accent-light)" stroke-width="1" marker-end="url(#ahFlow)"/>
+        <text x="546" y="56" fill="var(--text-muted)" font-size="8" text-anchor="middle">Unit, e2e, contract</text>
+        <text x="546" y="68" fill="var(--text-muted)" font-size="7" text-anchor="middle">Compliance validation</text>
+        <line x1="606" y1="50" x2="636" y2="50" stroke="var(--accent)" stroke-width="1" marker-end="url(#ahFlow)"/>
 
         <!-- Step 5: Merge -->
-        <rect x="638" y="20" width="100" height="60" rx="10" fill="var(--card)" stroke="#06b6d4" stroke-width="1.2"/>
+        <rect x="638" y="20" width="100" height="60" rx="10" fill="var(--card-bg)" stroke="#06b6d4" stroke-width="1.2"/>
         <text x="688" y="46" fill="#06b6d4" font-size="11" font-weight="700" text-anchor="middle">Merge</text>
-        <text x="688" y="62" fill="var(--text3)" font-size="8" text-anchor="middle">Git &rarr; main</text>
-        <line x1="738" y1="50" x2="768" y2="50" stroke="var(--accent-light)" stroke-width="1" marker-end="url(#ahFlow)"/>
+        <text x="688" y="62" fill="var(--text-muted)" font-size="8" text-anchor="middle">Git &rarr; main</text>
+        <line x1="738" y1="50" x2="768" y2="50" stroke="var(--accent)" stroke-width="1" marker-end="url(#ahFlow)"/>
 
         <!-- Step 6: Deploy -->
-        <rect x="770" y="20" width="120" height="60" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.2"/>
+        <rect x="770" y="20" width="120" height="60" rx="10" fill="var(--card-bg)" stroke="#f59e0b" stroke-width="1.2"/>
         <text x="830" y="42" fill="#f59e0b" font-size="11" font-weight="700" text-anchor="middle">Deploy</text>
-        <text x="830" y="56" fill="var(--text3)" font-size="8" text-anchor="middle">Docker Compose</text>
-        <text x="830" y="68" fill="var(--text3)" font-size="7" text-anchor="middle">Auto-sync on push</text>
+        <text x="830" y="56" fill="var(--text-muted)" font-size="8" text-anchor="middle">Docker Compose</text>
+        <text x="830" y="68" fill="var(--text-muted)" font-size="7" text-anchor="middle">Auto-sync on push</text>
 
         <!-- Shift Left bracket -->
         <rect x="314" y="90" width="310" height="32" rx="6" fill="rgba(239,68,68,0.06)" stroke="#ef4444" stroke-width="0.8" stroke-dasharray="4,3"/>
         <text x="469" y="110" fill="#ef4444" font-size="9" font-weight="700" text-anchor="middle">SHIFTED LEFT &mdash; happens BEFORE merge, not after</text>
 
         <!-- Traditional label -->
-        <text x="469" y="140" fill="var(--text3)" font-size="8" text-anchor="middle">Traditional: code &rarr; merge &rarr; deploy &rarr; test &rarr; find bugs</text>
+        <text x="469" y="140" fill="var(--text-muted)" font-size="8" text-anchor="middle">Traditional: code &rarr; merge &rarr; deploy &rarr; test &rarr; find bugs</text>
         <text x="469" y="155" fill="var(--green)" font-size="8" font-weight="600" text-anchor="middle">Shifted Left: code &rarr; scan &rarr; test &rarr; validate &rarr; THEN merge</text>
       </svg>
     </div>
@@ -1175,19 +1176,19 @@ h3 { font-size: 1.25rem; font-weight: 700; }
             <td><span class="badge badge-red">Admin</span></td>
             <td><code>admin@bankofferai.com</code></td>
             <td class="text-muted">Admin1234!</td>
-            <td><a href="https://bankoffer.lupulup.com/admin" target="_blank" style="color:var(--accent-light);text-decoration:none;">/admin</a></td>
+            <td><a href="https://bankoffer.lupulup.com/admin" target="_blank" style="color:var(--accent);text-decoration:none;">/admin</a></td>
           </tr>
           <tr>
             <td><span class="badge badge-accent">Employee</span></td>
             <td><code>manager@bankofferai.com</code></td>
             <td class="text-muted">Employee1234!</td>
-            <td><a href="https://bankoffer.lupulup.com/" target="_blank" style="color:var(--accent-light);text-decoration:none;">/</a></td>
+            <td><a href="https://bankoffer.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">/</a></td>
           </tr>
           <tr>
             <td><span class="badge badge-green">Customer</span></td>
             <td><code>demo@bankofferai.com</code></td>
             <td class="text-muted">Demo1234!</td>
-            <td><a href="https://my-bankoffer.lupulup.com/" target="_blank" style="color:var(--accent-light);text-decoration:none;">my-bankoffer.lupulup.com</a></td>
+            <td><a href="https://my-bankoffer.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">my-bankoffer.lupulup.com</a></td>
           </tr>
         </tbody>
       </table>
@@ -1197,7 +1198,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         Open Live Demo
       </a>
-      <a href="https://bankoffer.lupulup.com/docs" target="_blank" style="color:var(--text2);text-decoration:underline;font-size:0.85rem;margin-left:16px;">API Docs</a>
+      <a href="https://bankoffer.lupulup.com/docs" target="_blank" style="color:var(--text-secondary);text-decoration:underline;font-size:0.85rem;margin-left:16px;">API Docs</a>
     </div>
     <p class="text-xs text-dim mt-32 fade-up delay-3">BankOffer AI v1.4.0 &bull; Built with FastAPI, PostgreSQL, Redis, Keycloak &bull; Deployed on OpenStack</p>
   </div>
@@ -1217,7 +1218,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="fade-up delay-1" style="display:inline-block;">
       <div class="card" style="padding:40px; border-color: rgba(16,185,129,0.3); display:inline-block;">
         <svg viewBox="0 0 33 33" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:260px;display:block;">
-          <rect width="33" height="33" fill="white" rx="2"/>
+          <rect width="33" height="33" fill="#f8fafc" rx="2"/>
           <path d="M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM10,2H11V3H10zM11,2H12V3H11zM12,2H13V3H12zM13,2H14V3H13zM14,2H15V3H14zM17,2H18V3H17zM18,2H19V3H18zM21,2H22V3H21zM22,2H23V3H22zM24,2H25V3H24zM25,2H26V3H25zM26,2H27V3H26zM27,2H28V3H27zM28,2H29V3H28zM29,2H30V3H29zM30,2H31V3H30zM2,3H3V4H2zM8,3H9V4H8zM10,3H11V4H10zM12,3H13V4H12zM16,3H17V4H16zM17,3H18V4H17zM19,3H20V4H19zM20,3H21V4H20zM22,3H23V4H22zM24,3H25V4H24zM30,3H31V4H30zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM13,4H14V5H13zM14,4H15V5H14zM15,4H16V5H15zM16,4H17V5H16zM17,4H18V5H17zM20,4H21V5H20zM21,4H22V5H21zM22,4H23V5H22zM24,4H25V5H24zM26,4H27V5H26zM27,4H28V5H27zM28,4H29V5H28zM30,4H31V5H30zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM10,5H11V6H10zM11,5H12V6H11zM13,5H14V6H13zM14,5H15V6H14zM18,5H19V6H18zM19,5H20V6H19zM21,5H22V6H21zM24,5H25V6H24zM26,5H27V6H26zM27,5H28V6H27zM28,5H29V6H28zM30,5H31V6H30zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM11,6H12V7H11zM13,6H14V7H13zM14,6H15V7H14zM15,6H16V7H15zM19,6H20V7H19zM20,6H21V7H20zM21,6H22V7H21zM24,6H25V7H24zM26,6H27V7H26zM27,6H28V7H27zM28,6H29V7H28zM30,6H31V7H30zM2,7H3V8H2zM8,7H9V8H8zM12,7H13V8H12zM13,7H14V8H13zM14,7H15V8H14zM16,7H17V8H16zM21,7H22V8H21zM24,7H25V8H24zM30,7H31V8H30zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM25,8H26V9H25zM26,8H27V9H26zM27,8H28V9H27zM28,8H29V9H28zM29,8H30V9H29zM30,8H31V9H30zM10,9H11V10H10zM11,9H12V10H11zM14,9H15V10H14zM15,9H16V10H15zM16,9H17V10H16zM19,9H20V10H19zM21,9H22V10H21zM2,10H3V11H2zM4,10H5V11H4zM5,10H6V11H5zM7,10H8V11H7zM8,10H9V11H8zM9,10H10V11H9zM15,10H16V11H15zM16,10H17V11H16zM18,10H19V11H18zM19,10H20V11H19zM20,10H21V11H20zM24,10H25V11H24zM27,10H28V11H27zM29,10H30V11H29zM30,10H31V11H30zM4,11H5V12H4zM5,11H6V12H5zM9,11H10V12H9zM13,11H14V12H13zM17,11H18V12H17zM18,11H19V12H18zM21,11H22V12H21zM23,11H24V12H23zM24,11H25V12H24zM25,11H26V12H25zM26,11H27V12H26zM30,11H31V12H30zM2,12H3V13H2zM4,12H5V13H4zM5,12H6V13H5zM6,12H7V13H6zM8,12H9V13H8zM10,12H11V13H10zM14,12H15V13H14zM16,12H17V13H16zM17,12H18V13H17zM19,12H20V13H19zM20,12H21V13H20zM22,12H23V13H22zM25,12H26V13H25zM26,12H27V13H26zM28,12H29V13H28zM29,12H30V13H29zM6,13H7V14H6zM7,13H8V14H7zM9,13H10V14H9zM10,13H11V14H10zM12,13H13V14H12zM14,13H15V14H14zM15,13H16V14H15zM16,13H17V14H16zM17,13H18V14H17zM20,13H21V14H20zM23,13H24V14H23zM24,13H25V14H24zM30,13H31V14H30zM2,14H3V15H2zM3,14H4V15H3zM4,14H5V15H4zM5,14H6V15H5zM6,14H7V15H6zM8,14H9V15H8zM9,14H10V15H9zM10,14H11V15H10zM11,14H12V15H11zM14,14H15V15H14zM19,14H20V15H19zM22,14H23V15H22zM27,14H28V15H27zM28,14H29V15H28zM2,15H3V16H2zM9,15H10V16H9zM10,15H11V16H10zM13,15H14V16H13zM15,15H16V16H15zM21,15H22V16H21zM24,15H25V16H24zM28,15H29V16H28zM29,15H30V16H29zM30,15H31V16H30zM3,16H4V17H3zM4,16H5V17H4zM6,16H7V17H6zM7,16H8V17H7zM8,16H9V17H8zM12,16H13V17H12zM14,16H15V17H14zM16,16H17V17H16zM20,16H21V17H20zM21,16H22V17H21zM22,16H23V17H22zM23,16H24V17H23zM25,16H26V17H25zM28,16H29V17H28zM29,16H30V17H29zM30,16H31V17H30zM6,17H7V18H6zM7,17H8V18H7zM11,17H12V18H11zM14,17H15V18H14zM15,17H16V18H15zM18,17H19V18H18zM20,17H21V18H20zM22,17H23V18H22zM23,17H24V18H23zM24,17H25V18H24zM25,17H26V18H25zM29,17H30V18H29zM3,18H4V19H3zM7,18H8V19H7zM8,18H9V19H8zM13,18H14V19H13zM17,18H18V19H17zM20,18H21V19H20zM22,18H23V19H22zM23,18H24V19H23zM25,18H26V19H25zM26,18H27V19H26zM27,18H28V19H27zM29,18H30V19H29zM5,19H6V20H5zM6,19H7V20H6zM7,19H8V20H7zM9,19H10V20H9zM11,19H12V20H11zM14,19H15V20H14zM15,19H16V20H15zM17,19H18V20H17zM18,19H19V20H18zM20,19H21V20H20zM22,19H23V20H22zM27,19H28V20H27zM28,19H29V20H28zM29,19H30V20H29zM2,20H3V21H2zM5,20H6V21H5zM7,20H8V21H7zM8,20H9V21H8zM10,20H11V21H10zM11,20H12V21H11zM17,20H18V21H17zM18,20H19V21H18zM23,20H24V21H23zM24,20H25V21H24zM25,20H26V21H25zM26,20H27V21H26zM28,20H29V21H28zM6,21H7V22H6zM13,21H14V22H13zM18,21H19V22H18zM19,21H20V22H19zM20,21H21V22H20zM21,21H22V22H21zM23,21H24V22H23zM24,21H25V22H24zM25,21H26V22H25zM26,21H27V22H26zM28,21H29V22H28zM3,22H4V23H3zM4,22H5V23H4zM6,22H7V23H6zM7,22H8V23H7zM8,22H9V23H8zM9,22H10V23H9zM11,22H12V23H11zM12,22H13V23H12zM13,22H14V23H13zM15,22H16V23H15zM17,22H18V23H17zM18,22H19V23H18zM19,22H20V23H19zM20,22H21V23H20zM21,22H22V23H21zM22,22H23V23H22zM23,22H24V23H23zM24,22H25V23H24zM25,22H26V23H25zM26,22H27V23H26zM27,22H28V23H27zM28,22H29V23H28zM10,23H11V24H10zM11,23H12V24H11zM15,23H16V24H15zM16,23H17V24H16zM18,23H19V24H18zM22,23H23V24H22zM26,23H27V24H26zM27,23H28V24H27zM28,23H29V24H28zM29,23H30V24H29zM30,23H31V24H30zM2,24H3V25H2zM3,24H4V25H3zM4,24H5V25H4zM5,24H6V25H5zM6,24H7V25H6zM7,24H8V25H7zM8,24H9V25H8zM10,24H11V25H10zM12,24H13V25H12zM13,24H14V25H13zM15,24H16V25H15zM18,24H19V25H18zM19,24H20V25H19zM21,24H22V25H21zM22,24H23V25H22zM24,24H25V25H24zM26,24H27V25H26zM27,24H28V25H27zM29,24H30V25H29zM2,25H3V26H2zM8,25H9V26H8zM10,25H11V26H10zM11,25H12V26H11zM17,25H18V26H17zM22,25H23V26H22zM26,25H27V26H26zM27,25H28V26H27zM29,25H30V26H29zM30,25H31V26H30zM2,26H3V27H2zM4,26H5V27H4zM5,26H6V27H5zM6,26H7V27H6zM8,26H9V27H8zM12,26H13V27H12zM13,26H14V27H13zM16,26H17V27H16zM19,26H20V27H19zM20,26H21V27H20zM22,26H23V27H22zM23,26H24V27H23zM24,26H25V27H24zM25,26H26V27H25zM26,26H27V27H26zM28,26H29V27H28zM29,26H30V27H29zM2,27H3V28H2zM4,27H5V28H4zM5,27H6V28H5zM6,27H7V28H6zM8,27H9V28H8zM10,27H11V28H10zM11,27H12V28H11zM13,27H14V28H13zM16,27H17V28H16zM17,27H18V28H17zM18,27H19V28H18zM23,27H24V28H23zM26,27H27V28H26zM27,27H28V28H27zM30,27H31V28H30zM2,28H3V29H2zM4,28H5V29H4zM5,28H6V29H5zM6,28H7V29H6zM8,28H9V29H8zM10,28H11V29H10zM11,28H12V29H11zM19,28H20V29H19zM20,28H21V29H20zM25,28H26V29H25zM28,28H29V29H28zM30,28H31V29H30zM2,29H3V30H2zM8,29H9V30H8zM11,29H12V30H11zM12,29H13V30H12zM15,29H16V30H15zM16,29H17V30H16zM20,29H21V30H20zM22,29H23V30H22zM24,29H25V30H24zM25,29H26V30H25zM26,29H27V30H26zM27,29H28V30H27zM29,29H30V30H29zM2,30H3V31H2zM3,30H4V31H3zM4,30H5V31H4zM5,30H6V31H5zM6,30H7V31H6zM7,30H8V31H7zM8,30H9V31H8zM10,30H11V31H10zM12,30H13V31H12zM15,30H16V31H15zM16,30H17V31H16zM20,30H21V31H20zM21,30H22V31H21zM22,30H23V31H22zM23,30H24V31H23zM24,30H25V31H24zM26,30H27V31H26zM29,30H30V31H29z" fill="#1e3a8a"/>
         </svg>
         <div class="mt-24 text-center">
@@ -1236,6 +1237,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <p class="text-xs text-dim mt-32 fade-up delay-3">BankOffer AI &bull; Hackathon 2026 &bull; Bogdan Dragos &amp; Oana Sarlea</p>
   </div>
 </section>
+</main>
 
 <script>
 // ===== SLIDE COUNTER =====
