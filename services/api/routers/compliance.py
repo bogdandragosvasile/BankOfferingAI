@@ -74,6 +74,40 @@ async def submit_feedback(
             row = result.mappings().fetchone()
             await session.commit()
 
+            # Auto-create employee notification when customer accepts/rejects
+            if body.actor_type == "customer" and body.action in ("accepted", "rejected"):
+                try:
+                    # Look up product name from the offer_id or recommendation
+                    product_name = body.product_id or body.offer_id
+                    pn_result = await session.execute(
+                        text("""SELECT final_offers FROM audit_recommendations
+                                WHERE recommendation_id = :rid LIMIT 1"""),
+                        {"rid": body.recommendation_id},
+                    )
+                    pn_row = pn_result.fetchone()
+                    if pn_row and pn_row[0]:
+                        import json
+                        offers_data = pn_row[0] if isinstance(pn_row[0], list) else json.loads(pn_row[0])
+                        for o in offers_data:
+                            if o.get("offer_id") == body.offer_id:
+                                product_name = o.get("product_name", product_name)
+                                break
+                    await session.execute(
+                        text("""INSERT INTO notifications
+                            (customer_id, offer_id, product_name, action, recommendation_id)
+                            VALUES (:cid, :oid, :pname, :action, :rid)"""),
+                        {
+                            "cid": body.customer_id,
+                            "oid": body.offer_id,
+                            "pname": product_name,
+                            "action": body.action,
+                            "rid": body.recommendation_id,
+                        },
+                    )
+                    await session.commit()
+                except Exception as notif_err:
+                    logger.warning("Failed to create notification: %s", notif_err)
+
             return FeedbackResponse(
                 id=row["id"],
                 recommendation_id=body.recommendation_id,

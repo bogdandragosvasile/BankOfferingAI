@@ -1,5 +1,7 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS application_forms CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS staff_auth CASCADE;
 DROP TABLE IF EXISTS customer_auth CASCADE;
 DROP TABLE IF EXISTS recommendation_overrides CASCADE;
@@ -195,6 +197,36 @@ CREATE TABLE recommendation_overrides (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ===== Workflow tables (Employee ↔ Customer) =====
+
+-- Notifications sent to employees when customers act on offers
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    customer_id VARCHAR(50) NOT NULL REFERENCES customers(customer_id),
+    offer_id VARCHAR(100) NOT NULL,
+    product_name VARCHAR(200) NOT NULL,
+    action VARCHAR(20) NOT NULL CHECK (action IN ('accepted', 'rejected', 'submitted')),
+    recommendation_id UUID,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Application forms sent by employees to customers
+CREATE TABLE application_forms (
+    id SERIAL PRIMARY KEY,
+    customer_id VARCHAR(50) NOT NULL REFERENCES customers(customer_id),
+    employee_id VARCHAR(100) NOT NULL,
+    notification_id INTEGER REFERENCES notifications(id),
+    product_name VARCHAR(200) NOT NULL,
+    offer_id VARCHAR(100),
+    form_type VARCHAR(50) NOT NULL DEFAULT 'product_application',
+    fields JSONB NOT NULL DEFAULT '[]',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'submitted', 'approved', 'rejected')),
+    submitted_data JSONB,
+    submitted_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ===== Staff authentication =====
 CREATE TABLE staff_auth (
     id SERIAL PRIMARY KEY,
@@ -251,6 +283,10 @@ CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
 CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_active ON api_tokens(revoked, expires_at);
+CREATE INDEX idx_notifications_read ON notifications(read, created_at DESC);
+CREATE INDEX idx_notifications_customer ON notifications(customer_id);
+CREATE INDEX idx_forms_customer ON application_forms(customer_id);
+CREATE INDEX idx_forms_status ON application_forms(status);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');

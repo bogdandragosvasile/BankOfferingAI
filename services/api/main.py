@@ -15,7 +15,7 @@ import asyncio
 
 from services.api.metrics import CUSTOMERS_TOTAL, PRODUCTS_ACTIVE, KILL_SWITCH_ACTIVE
 
-from services.api.routers import api_tokens, compliance, consent_registry, customer_auth, offers, products, profiles, staff_auth
+from services.api.routers import api_tokens, compliance, consent_registry, customer_auth, offers, products, profiles, staff_auth, workflow
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +133,7 @@ def create_app() -> FastAPI:
     app.include_router(api_tokens.router, prefix="/api-tokens", tags=["api-tokens"])
     app.include_router(products.router, prefix="/products-catalog", tags=["products"])
     app.include_router(consent_registry.router, prefix="/consent-registry", tags=["consent-registry"])
+    app.include_router(workflow.router, prefix="/workflow", tags=["workflow"])
 
     if os.getenv("KAFKA_BOOTSTRAP_SERVERS"):
         from services.api.routers import webhooks

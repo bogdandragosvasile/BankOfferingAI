@@ -297,6 +297,7 @@ tailwind.config = {
           <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.my_data">My Data</button>
           <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.consent">Consent</button>
           <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200" data-i18n="nav.history">History</button>
+          <button onclick="navigateTo('forms')" data-nav="forms" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-dark-200">My Forms</button>
         </div>
         <!-- Controls: language, theme, customer badge, switch -->
         <div class="flex flex-wrap items-center gap-2 md:gap-3">
@@ -314,6 +315,7 @@ tailwind.config = {
         <button onclick="navigateTo('data')" data-nav="data" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.my_data">My Data</button>
         <button onclick="navigateTo('consent')" data-nav="consent" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.consent">Consent</button>
         <button onclick="navigateTo('history')" data-nav="history" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap" data-i18n="nav.history">History</button>
+        <button onclick="navigateTo('forms')" data-nav="forms" class="nav-link px-3 py-1.5 rounded-lg text-xs font-medium text-dark-200 whitespace-nowrap">Forms</button>
       </div>
     </div>
   </nav>
@@ -662,6 +664,26 @@ tailwind.config = {
                 <tr><td colspan="4" class="text-center text-dark-400 py-8" data-i18n="common.loading">Loading...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MY FORMS ===== -->
+    <section id="section-forms" class="hidden">
+      <div class="glass-card rounded-2xl p-5 md:p-6 fade-in mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            My Application Forms
+          </h2>
+          <button onclick="loadCustomerForms()" class="text-xs text-accent-light hover:text-white transition">Refresh</button>
+        </div>
+        <div id="formsContainer">
+          <div class="text-center py-12 text-dark-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p class="text-sm">No application forms yet</p>
+            <p class="text-xs text-dark-500 mt-1">When you accept an offer, your advisor may send you a form to complete.</p>
           </div>
         </div>
       </div>
@@ -1270,6 +1292,15 @@ async function enterPortal(customerId, displayName, externalId, onboardingComple
   // Update UI with loaded data
   renderCustomerInfo();
   renderOffers();
+
+  // Check for pending forms
+  try {
+    const formsResp = await apiGet(`/workflow/forms/customer/${state.customerId}`);
+    if (formsResp && formsResp.length > 0) {
+      const pending = formsResp.filter(f => f.status === 'pending').length;
+      updateFormsBadge(pending);
+    }
+  } catch (e) {}
 }
 
 function customerLogout() {
@@ -1417,6 +1448,7 @@ function navigateTo(section) {
   if (section === 'data') renderDataSection();
   if (section === 'consent') renderConsentSection();
   if (section === 'history') renderHistorySection();
+  if (section === 'forms') loadCustomerForms();
 }
 
 // ==================== BADGE ====================
@@ -2213,6 +2245,155 @@ async function submitOnboarding() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span data-i18n="onboarding.complete">${t('onboarding.complete')}</span>`;
+  }
+}
+
+// ===== MY FORMS (Customer-facing) =====
+async function loadCustomerForms() {
+  const container = document.getElementById('formsContainer');
+  if (!container || !state.customerId) return;
+
+  container.innerHTML = '<div class="text-center py-8"><div class="shimmer w-full h-20 rounded-lg mb-3"></div><div class="shimmer w-full h-20 rounded-lg"></div></div>';
+
+  try {
+    const resp = await apiGet(`/workflow/forms/customer/${state.customerId}`);
+    if (!resp || resp.length === 0) {
+      container.innerHTML = `<div class="text-center py-12 text-dark-400">
+        <svg class="w-12 h-12 mx-auto mb-3 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p class="text-sm">No application forms yet</p>
+        <p class="text-xs text-dark-500 mt-1">When you accept an offer, your advisor may send you a form to complete.</p>
+      </div>`;
+      return;
+    }
+
+    // Update forms badge
+    const pendingCount = resp.filter(f => f.status === 'pending').length;
+    updateFormsBadge(pendingCount);
+
+    container.innerHTML = resp.map(form => renderFormCard(form)).join('');
+  } catch (err) {
+    console.error('Failed to load forms:', err);
+    container.innerHTML = '<div class="text-center py-8 text-neon-red text-sm">Failed to load forms</div>';
+  }
+}
+
+function updateFormsBadge(count) {
+  // Add/update badge on Forms nav buttons
+  document.querySelectorAll('[data-nav="forms"]').forEach(btn => {
+    let badge = btn.querySelector('.forms-badge');
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'forms-badge ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-accent-light';
+        btn.appendChild(badge);
+      }
+      badge.textContent = count;
+    } else if (badge) {
+      badge.remove();
+    }
+  });
+}
+
+function renderFormCard(form) {
+  const statusColors = {
+    pending: 'bg-neon-amber/10 text-neon-amber border-neon-amber/20',
+    submitted: 'bg-accent/10 text-accent-light border-accent/20',
+    approved: 'bg-neon-green/10 text-neon-green border-neon-green/20',
+    rejected: 'bg-neon-red/10 text-neon-red border-neon-red/20',
+  };
+  const statusLabels = { pending: 'Pending', submitted: 'Submitted', approved: 'Approved', rejected: 'Rejected' };
+  const sc = statusColors[form.status] || statusColors.pending;
+  const sl = statusLabels[form.status] || form.status;
+  const created = new Date(form.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  let actionHtml = '';
+  if (form.status === 'pending') {
+    const fields = form.fields || [];
+    actionHtml = `
+      <div id="form-fields-${form.id}" class="mt-4 space-y-3">
+        ${fields.map(f => renderFormField(f, form.id)).join('')}
+        <div class="flex gap-3 mt-4">
+          <button onclick="submitApplicationForm(${form.id})" class="px-5 py-2 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors">Submit Application</button>
+        </div>
+      </div>`;
+  } else if (form.status === 'submitted' && form.submitted_data) {
+    actionHtml = `
+      <div class="mt-4 bg-dark-800/50 rounded-lg p-3">
+        <p class="text-xs text-dark-400 mb-2 font-medium uppercase tracking-wider">Your Submission</p>
+        ${Object.entries(form.submitted_data).map(([k, v]) => `<div class="flex justify-between text-sm py-1 border-b border-dark-600/20 last:border-0"><span class="text-dark-300">${k.replace(/_/g, ' ')}</span><span class="text-dark-100 font-medium">${v}</span></div>`).join('')}
+      </div>`;
+  }
+
+  return `
+    <div class="glass-card rounded-xl p-4 md:p-5 mb-4 fade-in">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <h3 class="text-base font-semibold text-white">${escHtml(form.product_name)}</h3>
+          <p class="text-xs text-dark-400 mt-0.5">Sent by your advisor &middot; ${created}</p>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg text-xs font-medium border ${sc}">${sl}</span>
+      </div>
+      <p class="text-xs text-dark-300">Form type: <span class="text-dark-200 font-medium">${form.form_type.replace(/_/g, ' ')}</span></p>
+      ${actionHtml}
+    </div>`;
+}
+
+function renderFormField(field, formId) {
+  const req = field.required ? '<span class="text-neon-red">*</span>' : '';
+  const id = `formfield-${formId}-${field.name}`;
+
+  if (field.type === 'textarea') {
+    return `<div><label class="block text-xs text-dark-300 mb-1">${escHtml(field.label)} ${req}</label><textarea id="${id}" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50 resize-y" rows="2" placeholder="${escAttr(field.label)}"></textarea></div>`;
+  }
+  if (field.type === 'checkbox') {
+    return `<div class="flex items-center gap-2"><input type="checkbox" id="${id}" class="w-4 h-4 rounded border-dark-600 bg-dark-800 text-accent focus:ring-accent/50"><label for="${id}" class="text-sm text-dark-200">${escHtml(field.label)} ${req}</label></div>`;
+  }
+  return `<div><label class="block text-xs text-dark-300 mb-1">${escHtml(field.label)} ${req}</label><input type="${field.type || 'text'}" id="${id}" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm placeholder-dark-400 focus:outline-none focus:border-accent/50" placeholder="${escAttr(field.label)}"></div>`;
+}
+
+function showPortalNotification(message, type) {
+  const colors = { success: 'bg-neon-green/20 text-neon-green border-neon-green/30', error: 'bg-neon-red/20 text-neon-red border-neon-red/30' };
+  const cls = colors[type] || colors.success;
+  const el = document.createElement('div');
+  el.className = `fixed top-4 right-4 z-[100] px-4 py-3 rounded-xl border text-sm font-medium ${cls} fade-in`;
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+async function submitApplicationForm(formId) {
+  const container = document.getElementById(`form-fields-${formId}`);
+  if (!container) return;
+
+  const inputs = container.querySelectorAll('input, textarea');
+  const data = {};
+
+  inputs.forEach(el => {
+    const name = el.id.replace(`formfield-${formId}-`, '');
+    if (el.type === 'checkbox') {
+      data[name] = el.checked;
+    } else {
+      data[name] = el.value.trim();
+    }
+  });
+
+  try {
+    const resp = await fetch(`${API}/workflow/forms/${formId}/submit`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.token}`,
+      },
+      body: JSON.stringify({ data }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || 'Submission failed');
+    }
+    showPortalNotification('Application submitted successfully!', 'success');
+    loadCustomerForms();
+  } catch (err) {
+    showPortalNotification('Failed to submit: ' + err.message, 'error');
   }
 }
 
