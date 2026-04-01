@@ -2,6 +2,32 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.8.0] — 2026-04-01
+
+### Changed
+
+- **Presentation second-pass refinement** — 14 executive-grade design improvements:
+  - Proper CSS token system (`--card-bg`, `--text-primary`, `--accent-subtle`, etc.)
+    with both dark and light themes sharing the same design language
+  - WCAG-friendly contrast in both themes, no pure black/white
+  - Refined theme toggle with `aria-label`, focus-visible ring, enterprise styling
+  - Reduced decoration: removed card-glow, SVG glow filter, toned down pulse animation
+  - Tighter typographic hierarchy: calmer h2, smaller subtitles, understated labels
+  - Left-aligned explanatory content across non-hero slides
+  - Badge clusters in onboarding slide replaced with compact middle-dot text
+  - CTA hierarchy: single primary button + secondary text link pattern
+  - Layout breathing room: 2-column stat row, whitespace after audit table
+  - Enterprise card design: 12px radius, token-based shadows, subtle hover
+  - Em-dash list bullets replacing triangles for executive readability
+  - Slimmer slide counter (36px, 0.8rem) with navigation role
+  - Semantic HTML: `<main>` wrapper, aria-labels, reduced-motion media query
+
+### Commit History
+
+- `5aa5324` feat: second-pass presentation refinement for executive fintech audience
+
+---
+
 ## [1.7.0] — 2026-04-01
 
 ### Changed
