@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 
+from services.api.audit import write_audit_log, write_consent_history
 from services.api.middleware.auth import get_current_customer_id
 from services.api.models import (
     AuditEntry,
@@ -337,9 +338,16 @@ async def update_consent(
     session_factory = request.app.state.db_session_factory
     try:
         async with session_factory() as session:
+            # Fetch current values for consent history
+            old_result = await session.execute(text(CONSENT_SELECT), {"cid": customer_id})
+            old_row = old_result.mappings().fetchone()
+            if not old_row:
+                raise HTTPException(status_code=404, detail="Customer not found")
+
             updates = []
             params = {"cid": customer_id}
             field_idx = 0
+            changed_fields = {}
 
             for field_name, (col, ts_col) in CONSENT_FIELDS.items():
                 val = getattr(body, field_name, None)
@@ -348,6 +356,9 @@ async def update_consent(
                     updates.append(f"{col} = :{param_key}")
                     updates.append(f"{ts_col} = NOW()")
                     params[param_key] = val
+                    old_val = bool(old_row[col]) if old_row[col] is not None else None
+                    if old_val != val:
+                        changed_fields[field_name] = (old_val, val)
                     field_idx += 1
 
             # Sync family_context_consent → sensitive_data_consent for backward compat
@@ -366,6 +377,27 @@ async def update_consent(
                 params,
             )
             await session.commit()
+
+            # Write consent history for each changed field
+            actor = authenticated_customer or customer_id
+            for field_name, (old_val, new_val) in changed_fields.items():
+                try:
+                    await write_consent_history(
+                        request, customer_id=customer_id, consent_type=field_name,
+                        old_value=old_val, new_value=new_val, changed_by=actor,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to write consent history for %s.%s: %s", customer_id, field_name, e)
+
+            # Audit log entry
+            try:
+                await write_audit_log(
+                    request, action="consent_change", resource_type="consent",
+                    resource_id=customer_id, actor=actor, actor_type="customer",
+                    changes={k: {"old": v[0], "new": v[1]} for k, v in changed_fields.items()},
+                )
+            except Exception:
+                pass
 
             result = await session.execute(text(CONSENT_SELECT), {"cid": customer_id})
             row = result.mappings().fetchone()
@@ -521,6 +553,16 @@ async def toggle_kill_switch(
                     {"by": body.activated_by, "reason": body.reason},
                 )
             await session.commit()
+
+            try:
+                await write_audit_log(
+                    request, action="kill_switch_toggle", resource_type="kill_switch",
+                    resource_id="global",
+                    actor=body.activated_by or "admin", actor_type="staff",
+                    changes={"active": body.active, "reason": body.reason},
+                )
+            except Exception:
+                pass
 
             return KillSwitchStatus(
                 active=body.active,

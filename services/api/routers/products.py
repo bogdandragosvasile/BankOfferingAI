@@ -12,6 +12,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
+from services.api.audit import write_audit_log
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -230,6 +232,14 @@ async def create_product(body: ProductCreate, request: Request):
             {"pid": body.product_id},
         )
         row = result.mappings().fetchone()
+        try:
+            await write_audit_log(
+                request, action="create", resource_type="product",
+                resource_id=body.product_id,
+                changes={"name": body.name, "type": body.type, "risk_level": body.risk_level, "active": body.active},
+            )
+        except Exception:
+            pass
         return _row_to_product(row)
 
 
@@ -291,6 +301,14 @@ async def update_product(product_id: str, body: ProductUpdate, request: Request)
             {"pid": product_id},
         )
         row = result.mappings().fetchone()
+        try:
+            await write_audit_log(
+                request, action="update", resource_type="product",
+                resource_id=product_id,
+                changes={k: v for k, v in updates.items() if k != "pid"},
+            )
+        except Exception:
+            pass
         return _row_to_product(row)
 
 
@@ -310,4 +328,12 @@ async def delete_product(product_id: str, request: Request):
         await session.commit()
         if not row:
             raise HTTPException(status_code=404, detail="Product not found")
+        try:
+            await write_audit_log(
+                request, action="delete", resource_type="product",
+                resource_id=product_id,
+                changes={"deleted_name": row[0]},
+            )
+        except Exception:
+            pass
         return {"status": "deleted", "product_id": product_id, "name": row[0]}

@@ -15,6 +15,7 @@ import asyncio
 
 from services.api.metrics import CUSTOMERS_TOTAL, PRODUCTS_ACTIVE, KILL_SWITCH_ACTIVE
 
+from services.api.audit import AuditMiddleware
 from services.api.routers import api_tokens, compliance, connectors, consent_registry, customer_auth, intelligence, offers, products, profiles, staff_auth, workflow
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,9 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
+
+    # Audit middleware — logs every POST/PUT/DELETE to audit_log
+    app.add_middleware(AuditMiddleware)
 
     # Prometheus metrics
     Instrumentator(

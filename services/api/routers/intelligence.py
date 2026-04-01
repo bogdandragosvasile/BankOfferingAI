@@ -8,16 +8,73 @@ Uses connected AI models when available, falls back to built-in engine.
 import json
 import logging
 import os
+import re
 import random
+import time
 from datetime import datetime, timedelta
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import text
 
+from services.api.audit import write_audit_log, write_ai_api_log
+from services.api.metrics import (
+    AI_API_CALLS, AI_API_LATENCY, AI_SUGGESTIONS_FILTERED,
+    AI_ANALYSIS_RATE_LIMITED,
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# ════════════════════════════════════════════════════════════════
+# Guardrail constants
+# ════════════════════════════════════════════════════════════════
+
+CONFIDENCE_THRESHOLD = 0.60          # Guardrail #1: reject suggestions below this
+RATE_LIMIT_MAX_CALLS = 5             # Guardrail #2: max /analyze calls per window
+RATE_LIMIT_WINDOW_SECONDS = 3600     # 1 hour window
+STALE_SUGGESTION_DAYS = 30           # Guardrail #4: auto-expire after this many days
+PRODUCT_CATALOG_CAP = 50             # Guardrail #6: max active products
+COOLDOWN_HOURS = 24                  # Guardrail #7: staging period before AI products go live
+
+
+# ════════════════════════════════════════════════════════════════
+# Guardrail #5: AI Output Content Filter
+# ════════════════════════════════════════════════════════════════
+
+# PII patterns to strip
+_PII_PATTERNS = [
+    (re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'), '[EMAIL_REDACTED]'),
+    (re.compile(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'), '[PHONE_REDACTED]'),
+    (re.compile(r'\b\d{3}-\d{2}-\d{4}\b'), '[SSN_REDACTED]'),
+    (re.compile(r'\b\d{13,19}\b'), '[CARD_REDACTED]'),           # credit card numbers
+    (re.compile(r'\bRO\d{2}[A-Z]{4}\d{16}\b'), '[IBAN_REDACTED]'),  # Romanian IBAN
+]
+
+# Prompt injection patterns
+_INJECTION_PATTERNS = re.compile(
+    r'(ignore previous|ignore above|disregard|forget your|you are now|new instructions|system prompt|<\|im_start\|>|<\|endoftext\|>)',
+    re.IGNORECASE,
+)
+
+
+def _sanitize_ai_text(text_val: str) -> tuple[str, list[str]]:
+    """Strip PII and detect prompt injection in AI-generated text. Returns (clean_text, warnings)."""
+    if not text_val:
+        return text_val, []
+    warnings = []
+    clean = text_val
+    # Strip PII
+    for pattern, replacement in _PII_PATTERNS:
+        if pattern.search(clean):
+            warnings.append(f"PII detected and redacted: {replacement}")
+            clean = pattern.sub(replacement, clean)
+    # Detect prompt injection
+    if _INJECTION_PATTERNS.search(clean):
+        warnings.append("Possible prompt injection detected in AI output")
+        clean = _INJECTION_PATTERNS.sub('[FILTERED]', clean)
+    return clean, warnings
 
 # ════════════════════════════════════════════════════════════════
 # AI Provider Adapters — call real APIs when keys are configured
@@ -276,13 +333,67 @@ _AI_ADAPTERS = {
 }
 
 
-async def _call_ai_provider(provider: str, config_values: dict, market_context: str = "") -> dict | None:
-    """Route to the correct AI provider adapter. Returns parsed JSON or None."""
+async def _call_ai_provider(provider: str, config_values: dict, market_context: str = "", request=None) -> dict | None:
+    """Route to the correct AI provider adapter. Returns parsed JSON or None.
+    Tracks metrics for every call (Guardrail #10) and logs to ai_api_call_log."""
     adapter = _AI_ADAPTERS.get(provider)
+    model_name = config_values.get("model", "unknown")
     if not adapter:
         logger.warning("No adapter for AI provider: %s", provider)
+        AI_API_CALLS.labels(provider=provider, result="skipped").inc()
         return None
-    return await adapter(config_values, market_context)
+    start = time.monotonic()
+    try:
+        result = await adapter(config_values, market_context)
+        elapsed = time.monotonic() - start
+        latency_ms = int(elapsed * 1000)
+        AI_API_LATENCY.labels(provider=provider).observe(elapsed)
+        if result:
+            AI_API_CALLS.labels(provider=provider, result="success").inc()
+            logger.info("AI call to %s succeeded in %.1fs", provider, elapsed)
+            # Log to ai_api_call_log
+            if request:
+                try:
+                    import json as _json
+                    await write_ai_api_log(
+                        request, provider=provider, model=model_name,
+                        request_prompt=market_context[:4000],
+                        response_text=_json.dumps(result)[:4000],
+                        latency_ms=latency_ms, http_status=200,
+                        outcome="success", guardrail_action="accepted",
+                    )
+                except Exception:
+                    pass
+        else:
+            AI_API_CALLS.labels(provider=provider, result="failure").inc()
+            if request:
+                try:
+                    await write_ai_api_log(
+                        request, provider=provider, model=model_name,
+                        request_prompt=market_context[:4000],
+                        latency_ms=latency_ms, http_status=200,
+                        outcome="failure", error_message="Empty response from provider",
+                    )
+                except Exception:
+                    pass
+        return result
+    except Exception as e:
+        elapsed = time.monotonic() - start
+        latency_ms = int(elapsed * 1000)
+        AI_API_CALLS.labels(provider=provider, result="failure").inc()
+        AI_API_LATENCY.labels(provider=provider).observe(elapsed)
+        logger.error("AI provider %s error: %s", provider, e)
+        if request:
+            try:
+                await write_ai_api_log(
+                    request, provider=provider, model=model_name,
+                    request_prompt=market_context[:4000],
+                    latency_ms=latency_ms, http_status=0,
+                    outcome="failure", error_message=str(e)[:2000],
+                )
+            except Exception:
+                pass
+        return None
 
 
 # ════════════════════════════════════════════════════════════════
@@ -605,8 +716,27 @@ async def get_market_data(
     description="Uses connected AI models + market intelligence to generate product suggestions.",
 )
 async def analyze_and_suggest(request: Request):
-    """Core intelligence engine: try real AI APIs, fall back to built-in engine."""
+    """Core intelligence engine with guardrails: rate limit, content filter, confidence gate, auto-expiry."""
     session_factory = request.app.state.db_session_factory
+    redis = request.app.state.redis
+
+    # ── Guardrail #2: Rate limiting (Redis-backed) ──
+    rate_key = "guardrail:analyze_rate"
+    try:
+        current = await redis.incr(rate_key)
+        if current == 1:
+            await redis.expire(rate_key, RATE_LIMIT_WINDOW_SECONDS)
+        if current > RATE_LIMIT_MAX_CALLS:
+            AI_ANALYSIS_RATE_LIMITED.inc()
+            ttl = await redis.ttl(rate_key)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded: {RATE_LIMIT_MAX_CALLS} analyses per hour. Try again in {ttl}s.",
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning("Redis rate-limit check failed (proceeding): %s", e)
 
     try:
         async with session_factory() as session:
@@ -635,7 +765,7 @@ async def analyze_and_suggest(request: Request):
                     logger.info("Skipping %s — no API key configured", conn["name"])
                     continue
                 logger.info("Calling AI provider: %s (%s)", conn["name"], conn["provider"])
-                ai_response = await _call_ai_provider(conn["provider"], conn["config"])
+                ai_response = await _call_ai_provider(conn["provider"], conn["config"], request=request)
                 if ai_response:
                     model_used = conn["name"]
                     logger.info("AI response received from %s", conn["name"])
@@ -678,7 +808,23 @@ async def analyze_and_suggest(request: Request):
                 item.setdefault("region", "Global")
                 clean_intel.append(item)
 
+            # ── Guardrail #4: Auto-expire stale pending suggestions ──
+            expired_result = await session.execute(
+                text("""UPDATE ai_product_suggestions
+                        SET status = 'expired'
+                        WHERE status = 'pending'
+                          AND created_at < NOW() - INTERVAL ':days days'
+                        RETURNING id""".replace(":days", str(STALE_SUGGESTION_DAYS)))
+            )
+            expired_count = len(expired_result.fetchall())
+            if expired_count:
+                logger.info("Guardrail: expired %d stale suggestions (>%dd old)", expired_count, STALE_SUGGESTION_DAYS)
+                AI_SUGGESTIONS_FILTERED.labels(reason="expired").inc(expired_count)
+            await session.commit()
+
             clean_suggestions = []
+            content_warnings = []
+            low_confidence_rejected = 0
             for s in suggestions:
                 if not s.get("product_name") or not s.get("product_type"):
                     continue
@@ -698,11 +844,32 @@ async def analyze_and_suggest(request: Request):
                     s["risk_level"] = "medium"
                 conf = float(s["confidence"])
                 s["confidence"] = max(0.0, min(0.999, conf))
+
+                # ── Guardrail #1: Confidence threshold ──
+                if s["confidence"] < CONFIDENCE_THRESHOLD:
+                    low_confidence_rejected += 1
+                    AI_SUGGESTIONS_FILTERED.labels(reason="low_confidence").inc()
+                    logger.info("Guardrail: rejected '%s' — confidence %.0f%% < %.0f%% threshold",
+                                s["product_name"], s["confidence"] * 100, CONFIDENCE_THRESHOLD * 100)
+                    continue
+
+                # ── Guardrail #5: Content filter (PII, injection) ──
+                for field in ("product_name", "description", "reasoning"):
+                    if s.get(field):
+                        cleaned, warns = _sanitize_ai_text(s[field])
+                        s[field] = cleaned
+                        if warns:
+                            content_warnings.extend(warns)
+                            AI_SUGGESTIONS_FILTERED.labels(reason="content_filter").inc()
+
                 clean_suggestions.append(s)
 
-            # 5. Store market intelligence
+            # 5. Store market intelligence (with content filter on text fields)
             await session.execute(text("DELETE FROM market_intelligence"))
             for item in clean_intel:
+                for field in ("title", "summary"):
+                    if item.get(field):
+                        item[field], _ = _sanitize_ai_text(item[field])
                 await session.execute(
                     text("""INSERT INTO market_intelligence
                         (category, title, summary, impact, severity, data_points, source, region, valid_until)
@@ -729,6 +896,7 @@ async def analyze_and_suggest(request: Request):
                     {"name": s["product_name"]},
                 )
                 if exists.fetchone():
+                    AI_SUGGESTIONS_FILTERED.labels(reason="duplicate").inc()
                     continue
                 result = await session.execute(
                     text("""INSERT INTO ai_product_suggestions
@@ -757,11 +925,24 @@ async def analyze_and_suggest(request: Request):
             return {
                 "market_intelligence_count": len(clean_intel),
                 "suggestions_created": len(created),
+                "suggestions_rejected_low_confidence": low_confidence_rejected,
+                "suggestions_expired": expired_count,
+                "content_warnings": content_warnings,
                 "active_ai_models": active_model_names,
                 "model_used": model_used,
                 "ai_powered": model_used != "built-in-engine",
+                "guardrails": {
+                    "confidence_threshold": CONFIDENCE_THRESHOLD,
+                    "rate_limit": f"{RATE_LIMIT_MAX_CALLS}/hour",
+                    "stale_expiry_days": STALE_SUGGESTION_DAYS,
+                    "catalog_cap": PRODUCT_CATALOG_CAP,
+                    "cooldown_hours": COOLDOWN_HOURS,
+                    "content_filter": "active",
+                },
                 "suggestions": created,
             }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Analysis error: %s", e)
         raise HTTPException(status_code=500, detail="Analysis failed: " + str(e))
@@ -829,6 +1010,15 @@ async def approve_suggestion(suggestion_id: int, request: Request, action: str =
             if not row:
                 raise HTTPException(status_code=404, detail="Suggestion not found")
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="approve" if action == "approve" else "reject",
+                    resource_type="ai_suggestion", resource_id=str(suggestion_id),
+                    actor=approved_by, actor_type="staff",
+                    changes={"product_name": row[1], "new_status": row[2]},
+                )
+            except Exception:
+                pass
             return {"id": row[0], "product_name": row[1], "status": row[2]}
     except HTTPException:
         raise
@@ -842,14 +1032,14 @@ async def approve_suggestion(suggestion_id: int, request: Request, action: str =
     summary="Implement an approved suggestion — publish to the live product catalog",
 )
 async def implement_suggestion(suggestion_id: int, request: Request, implemented_by: str = Query(...)):
-    """Push an approved AI suggestion into the products table so the offer engine can score it."""
+    """Push an approved AI suggestion into the products table — with guardrails."""
     session_factory = request.app.state.db_session_factory
     try:
         async with session_factory() as session:
-            # 1. Fetch the suggestion (must be approved)
+            # 1. Fetch the suggestion
             result = await session.execute(
                 text("""SELECT id, product_name, product_type, description, risk_level,
-                            target_segments, confidence
+                            target_segments, confidence, approved_by
                      FROM ai_product_suggestions WHERE id = :sid"""),
                 {"sid": suggestion_id},
             )
@@ -873,6 +1063,31 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
             description = row[3]
             risk_level = row[4] or "moderate"
             target_segments = row[5] if isinstance(row[5], list) else json.loads(row[5]) if row[5] else []
+            original_approver = row[7] or ""
+
+            # ── Guardrail #3: Dual approval for high-risk products ──
+            if risk_level == "high":
+                if implemented_by.lower() == original_approver.lower():
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"High-risk product requires dual approval. "
+                               f"Originally approved by {original_approver} — "
+                               f"a different admin must publish to catalog.",
+                    )
+                logger.info("Guardrail: dual approval satisfied for high-risk product '%s' "
+                            "(approved by %s, implemented by %s)", product_name, original_approver, implemented_by)
+
+            # ── Guardrail #6: Product catalog cap ──
+            count_result = await session.execute(
+                text("SELECT count(*) FROM products WHERE active = TRUE")
+            )
+            active_count = count_result.scalar() or 0
+            if active_count >= PRODUCT_CATALOG_CAP:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Product catalog cap reached ({active_count}/{PRODUCT_CATALOG_CAP}). "
+                           f"Deactivate existing products before adding new ones.",
+                )
 
             # Map AI product types to scoring-compatible types
             type_map = {
@@ -889,13 +1104,12 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
             # Generate a product_id from the name
             product_id = "prod_ai_" + product_name.lower().replace(" ", "_").replace("—", "").replace("(", "").replace(")", "").replace("%", "pct").replace(".", "")[:60]
 
-            # 2. Check if already in catalog
+            # Check if already in catalog
             exists = await session.execute(
                 text("SELECT product_id FROM products WHERE product_id = :pid OR product_name = :pname"),
                 {"pid": product_id, "pname": product_name},
             )
             if exists.fetchone():
-                # Already exists — just mark as implemented
                 await session.execute(
                     text("UPDATE ai_product_suggestions SET status = 'implemented' WHERE id = :sid"),
                     {"sid": suggestion_id},
@@ -903,12 +1117,15 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
                 await session.commit()
                 return {"id": suggestion_id, "product_id": product_id, "status": "implemented", "message": "Product already in catalog"}
 
-            # 3. Insert into products table
+            # ── Guardrail #7: 24h cool-down staging ──
+            # Insert with active=FALSE and go_live_at timestamp
+            go_live_at = datetime.utcnow() + timedelta(hours=COOLDOWN_HOURS)
+
             await session.execute(
                 text("""INSERT INTO products
                     (product_name, product_id, type, risk_level, short_description,
                      category, lifecycle_stage, when_to_recommend, is_credit_product, active)
-                    VALUES (:name, :pid, :type, :risk, :desc, :cat, :lifecycle, :recommend, :credit, TRUE)"""),
+                    VALUES (:name, :pid, :type, :risk, :desc, :cat, :lifecycle, :recommend, :credit, FALSE)"""),
                 {
                     "name": product_name,
                     "pid": product_id,
@@ -917,12 +1134,13 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
                     "desc": description,
                     "cat": product_type,
                     "lifecycle": ", ".join(target_segments) if target_segments else "all",
-                    "recommend": f"AI-suggested product. Target segments: {', '.join(target_segments)}. Risk: {risk_level}.",
+                    "recommend": f"AI-suggested. Segments: {', '.join(target_segments)}. Risk: {risk_level}. "
+                                 f"Staging until {go_live_at.strftime('%Y-%m-%d %H:%M UTC')}.",
                     "credit": is_credit,
                 },
             )
 
-            # 4. Mark suggestion as implemented
+            # Mark suggestion as implemented
             await session.execute(
                 text("""UPDATE ai_product_suggestions
                         SET status = 'implemented', approved_by = :by, approved_at = NOW()
@@ -931,7 +1149,7 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
             )
             await session.commit()
 
-            return {
+            resp = {
                 "id": suggestion_id,
                 "product_id": product_id,
                 "product_name": product_name,
@@ -939,13 +1157,79 @@ async def implement_suggestion(suggestion_id: int, request: Request, implemented
                 "risk_level": risk_level,
                 "is_credit_product": is_credit,
                 "status": "implemented",
-                "message": "Product published to catalog — now active in the offer engine",
+                "active": False,
+                "go_live_at": go_live_at.isoformat(),
+                "message": f"Product in {COOLDOWN_HOURS}h staging — goes live {go_live_at.strftime('%Y-%m-%d %H:%M UTC')}. "
+                           f"Compliance team can review before activation.",
             }
+            try:
+                await write_audit_log(
+                    request, action="implement", resource_type="ai_suggestion",
+                    resource_id=str(suggestion_id),
+                    actor=implemented_by, actor_type="staff",
+                    changes={"product_id": product_id, "product_name": product_name,
+                             "risk_level": risk_level, "go_live_at": go_live_at.isoformat(),
+                             "original_approver": original_approver},
+                )
+            except Exception:
+                pass
+            return resp
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Implement error: %s", e)
         raise HTTPException(status_code=500, detail="Failed to implement suggestion: " + str(e))
+
+
+@router.post(
+    "/activate-staged",
+    summary="Activate AI products that have passed their cool-down staging period",
+)
+async def activate_staged_products(request: Request):
+    """Guardrail #7: Activate products whose cool-down has elapsed. Called periodically or manually."""
+    session_factory = request.app.state.db_session_factory
+    try:
+        async with session_factory() as session:
+            # Find AI products still inactive whose staging period has passed
+            # Products created > COOLDOWN_HOURS ago that are still inactive
+            result = await session.execute(
+                text("""UPDATE products
+                        SET active = TRUE, updated_at = NOW()
+                        WHERE product_id LIKE 'prod_ai_%%'
+                          AND active = FALSE
+                          AND updated_at < NOW() - INTERVAL '1 hour' * :hours
+                        RETURNING product_id, product_name"""),
+                {"hours": COOLDOWN_HOURS},
+            )
+            activated = [{"product_id": r[0], "product_name": r[1]} for r in result.fetchall()]
+            await session.commit()
+            if activated:
+                logger.info("Cool-down complete: activated %d AI products: %s",
+                            len(activated), [a["product_id"] for a in activated])
+            return {"activated": activated, "count": len(activated)}
+    except Exception as e:
+        logger.error("Activate staged error: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to activate staged products")
+
+
+@router.get(
+    "/guardrails",
+    summary="Get current guardrail configuration",
+)
+async def get_guardrails():
+    """Return the active guardrail settings for transparency (AI Act Art. 13)."""
+    return {
+        "confidence_threshold": CONFIDENCE_THRESHOLD,
+        "rate_limit_per_hour": RATE_LIMIT_MAX_CALLS,
+        "stale_expiry_days": STALE_SUGGESTION_DAYS,
+        "product_catalog_cap": PRODUCT_CATALOG_CAP,
+        "cooldown_staging_hours": COOLDOWN_HOURS,
+        "content_filter": "active (PII redaction, prompt injection detection)",
+        "dual_approval": "required for high-risk products",
+        "audit_log_immutability": "PostgreSQL trigger prevents UPDATE/DELETE on audit_recommendations",
+        "fairness_monitoring": "Prometheus histograms by age bracket and income tier",
+        "ai_api_tracking": "success/failure/latency metrics per provider",
+    }
 
 
 @router.delete(
@@ -963,6 +1247,14 @@ async def delete_suggestion(suggestion_id: int, request: Request):
             if not result.fetchone():
                 raise HTTPException(status_code=404, detail="Suggestion not found")
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="delete", resource_type="ai_suggestion",
+                    resource_id=str(suggestion_id),
+                    changes={"deleted": True},
+                )
+            except Exception:
+                pass
             return {"ok": True}
     except HTTPException:
         raise

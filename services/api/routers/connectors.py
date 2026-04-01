@@ -8,6 +8,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import text
 
+from services.api.audit import write_audit_log
 from services.api.models import ConnectorApproval, ConnectorCreate, ConnectorOut, ConnectorUpdate
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,15 @@ async def create_connector(body: ConnectorCreate, request: Request):
             )
             row = result.fetchone()
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="create", resource_type="connector",
+                    resource_id=str(row[0]),
+                    actor=body.suggested_by or "admin", actor_type="staff",
+                    changes={"name": body.name, "category": body.category, "provider": body.provider, "status": initial_status},
+                )
+            except Exception:
+                pass
             return _row_to_connector(row)
     except Exception as e:
         logger.error("Failed to create connector: %s", e)
@@ -145,6 +155,14 @@ async def configure_connector(connector_id: int, body: ConnectorUpdate, request:
             if not row:
                 raise HTTPException(status_code=404, detail="Connector not found")
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="update", resource_type="connector",
+                    resource_id=str(connector_id),
+                    changes={"action": "configure", "fields_updated": list(body.config_values.keys())},
+                )
+            except Exception:
+                pass
             return _row_to_connector(row)
     except HTTPException:
         raise
@@ -175,6 +193,15 @@ async def approve_connector(connector_id: int, body: ConnectorApproval, request:
             if not row:
                 raise HTTPException(status_code=404, detail="Connector not found")
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="approve" if body.action == "approve" else "reject",
+                    resource_type="connector", resource_id=str(connector_id),
+                    actor=body.approved_by, actor_type="staff",
+                    changes={"new_status": new_status, "approved_by": body.approved_by},
+                )
+            except Exception:
+                pass
             return _row_to_connector(row)
     except HTTPException:
         raise
@@ -218,6 +245,14 @@ async def toggle_connector(connector_id: int, request: Request):
             )
             row = result.fetchone()
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="toggle", resource_type="connector",
+                    resource_id=str(connector_id),
+                    changes={"old_status": current, "new_status": new_status},
+                )
+            except Exception:
+                pass
             return _row_to_connector(row)
     except HTTPException:
         raise
@@ -243,6 +278,14 @@ async def delete_connector(connector_id: int, request: Request):
             if not row:
                 raise HTTPException(status_code=404, detail="Connector not found")
             await session.commit()
+            try:
+                await write_audit_log(
+                    request, action="delete", resource_type="connector",
+                    resource_id=str(connector_id),
+                    changes={"deleted": True},
+                )
+            except Exception:
+                pass
             return {"ok": True, "deleted": connector_id}
     except HTTPException:
         raise

@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from jose import jwt
 from sqlalchemy import text
 
+from services.api.audit import write_audit_log
 from services.api.models import StaffLoginRequest, StaffLoginResponse
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,15 @@ async def login_staff(body: StaffLoginRequest, request: Request):
         row = result.fetchone()
 
         if not row or not verify_password(body.password, row[1]):
+            try:
+                await write_audit_log(
+                    request, action="login_failed", resource_type="staff_auth",
+                    resource_id=body.email.lower().strip(),
+                    actor=body.email.lower().strip(), actor_type="staff",
+                    changes={"reason": "invalid_credentials"},
+                )
+            except Exception:
+                pass
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Update last_login
@@ -81,6 +91,16 @@ async def login_staff(body: StaffLoginRequest, request: Request):
         await session.commit()
 
         token = create_staff_token(body.email.lower().strip(), row[3], row[2])
+
+        try:
+            await write_audit_log(
+                request, action="login", resource_type="staff_auth",
+                resource_id=body.email.lower().strip(),
+                actor=body.email.lower().strip(), actor_type="staff",
+                changes={"role": row[3], "display_name": row[2]},
+            )
+        except Exception:
+            pass
 
         return StaffLoginResponse(
             token=token,
