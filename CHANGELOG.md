@@ -2,6 +2,26 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.9.0] — 2026-04-01
+
+### Changed
+
+- **Final presentation polish** — boardroom-ready refinements:
+  - New `.card-supporting` variant for secondary content (stats, summaries, SDLC cards)
+  - Team slide badge clusters replaced with compact dot-separated text
+  - Light theme: `--text-muted` contrast improved to #475569, gradient-text override added
+  - Flow-step numbers reduced to 40px to reduce visual competition
+  - Paragraph max-width capped at 65ch for readability
+  - Architecture diagram padding for breathing room
+  - Slide counter border-radius matched to theme toggle (10px)
+  - h3 margin-bottom added for consistent card heading spacing
+
+### Commit History
+
+- `718fd19` feat: final polish pass — boardroom-ready presentation
+
+---
+
 ## [1.8.0] — 2026-04-01
 
 ### Changed
