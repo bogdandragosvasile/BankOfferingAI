@@ -363,3 +363,41 @@ class FormOut(BaseModel):
 
 class FormSubmission(BaseModel):
     data: dict = Field(..., description="Customer-filled form data {field_name: value}")
+
+
+# --- Connector models (third-party service integrations) ---
+
+class ConnectorOut(BaseModel):
+    id: int
+    name: str
+    category: str
+    provider: str
+    description: Optional[str] = None
+    icon: str = "plug"
+    config_schema: list[dict] = Field(default_factory=list)
+    config_values: dict = Field(default_factory=dict)
+    status: str = "available"
+    suggested_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ConnectorCreate(BaseModel):
+    name: str = Field(..., description="Connector display name")
+    category: str = Field(..., description="ai, cloud, advertising, analytics, crm, messaging, payments, security")
+    provider: str = Field(..., description="Service provider name")
+    description: Optional[str] = None
+    icon: str = Field(default="plug", description="Icon identifier")
+    config_schema: list[dict] = Field(default_factory=list, description="Config field definitions [{name, label, type, required, placeholder}]")
+    suggested_by: Optional[str] = Field(None, description="Who suggested this connector (AI or user)")
+
+
+class ConnectorUpdate(BaseModel):
+    config_values: dict = Field(..., description="Configuration values to save")
+
+
+class ConnectorApproval(BaseModel):
+    approved_by: str = Field(..., description="Admin who approved")
+    action: str = Field(..., description="'approve' or 'reject'")

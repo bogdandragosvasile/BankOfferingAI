@@ -1,5 +1,6 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS connectors CASCADE;
 DROP TABLE IF EXISTS application_forms CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS staff_auth CASCADE;
@@ -197,6 +198,25 @@ CREATE TABLE recommendation_overrides (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ===== Connectors (third-party service integrations) =====
+
+CREATE TABLE connectors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(50) NOT NULL CHECK (category IN ('ai','cloud','advertising','analytics','crm','messaging','payments','security')),
+    provider VARCHAR(200) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT 'plug',
+    config_schema JSONB NOT NULL DEFAULT '[]',
+    config_values JSONB NOT NULL DEFAULT '{}',
+    status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK (status IN ('available','pending','approved','active','disabled','rejected')),
+    suggested_by VARCHAR(100),
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ===== Workflow tables (Employee ↔ Customer) =====
 
 -- Notifications sent to employees when customers act on offers
@@ -283,6 +303,8 @@ CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
 CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_active ON api_tokens(revoked, expires_at);
+CREATE INDEX idx_connectors_category ON connectors(category);
+CREATE INDEX idx_connectors_status ON connectors(status);
 CREATE INDEX idx_notifications_read ON notifications(read, created_at DESC);
 CREATE INDEX idx_notifications_customer ON notifications(customer_id);
 CREATE INDEX idx_forms_customer ON application_forms(customer_id);
@@ -290,6 +312,45 @@ CREATE INDEX idx_forms_status ON application_forms(status);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');
+
+-- Seed connector templates (available integrations)
+INSERT INTO connectors (name, category, provider, description, icon, config_schema, status) VALUES
+('OpenAI GPT', 'ai', 'OpenAI', 'Generate offer explanations, customer insights, and natural language summaries using GPT models.', 'brain',
+ '[{"name":"api_key","label":"API Key","type":"password","required":true,"placeholder":"sk-..."},{"name":"model","label":"Model","type":"select","required":true,"options":["gpt-4o","gpt-4o-mini","gpt-4-turbo"]},{"name":"temperature","label":"Temperature","type":"number","required":false,"placeholder":"0.7"}]', 'available'),
+('Claude API', 'ai', 'Anthropic', 'Power offer explanations and compliance reports with Claude. Enhances GDPR Art. 22 transparency.', 'brain',
+ '[{"name":"api_key","label":"API Key","type":"password","required":true,"placeholder":"sk-ant-..."},{"name":"model","label":"Model","type":"select","required":true,"options":["claude-sonnet-4-6","claude-haiku-4-5-20251001","claude-opus-4-6"]},{"name":"max_tokens","label":"Max Tokens","type":"number","required":false,"placeholder":"1024"}]', 'available'),
+('Google Gemini', 'ai', 'Google', 'Multimodal AI for document analysis, customer onboarding verification, and KYC automation.', 'brain',
+ '[{"name":"api_key","label":"API Key","type":"password","required":true},{"name":"model","label":"Model","type":"select","required":true,"options":["gemini-2.5-pro","gemini-2.5-flash"]}]', 'available'),
+('Hugging Face', 'ai', 'Hugging Face', 'Deploy custom NLP models for sentiment analysis, product matching, and customer segmentation.', 'brain',
+ '[{"name":"api_token","label":"API Token","type":"password","required":true},{"name":"model_id","label":"Model ID","type":"text","required":true,"placeholder":"sentence-transformers/all-MiniLM-L6-v2"}]', 'available'),
+('AWS', 'cloud', 'Amazon Web Services', 'S3 storage, SageMaker ML endpoints, Lambda functions, and SES email delivery.', 'cloud',
+ '[{"name":"access_key_id","label":"Access Key ID","type":"password","required":true},{"name":"secret_access_key","label":"Secret Access Key","type":"password","required":true},{"name":"region","label":"Region","type":"select","required":true,"options":["eu-central-1","eu-west-1","us-east-1","ap-southeast-1"]}]', 'available'),
+('Microsoft Azure', 'cloud', 'Microsoft', 'Azure ML, Cognitive Services, Blob Storage, and Azure AD integration.', 'cloud',
+ '[{"name":"tenant_id","label":"Tenant ID","type":"text","required":true},{"name":"client_id","label":"Client ID","type":"text","required":true},{"name":"client_secret","label":"Client Secret","type":"password","required":true},{"name":"subscription_id","label":"Subscription ID","type":"text","required":true}]', 'available'),
+('Google Cloud', 'cloud', 'Google', 'BigQuery analytics, Vertex AI, Cloud Functions, and Firebase integration.', 'cloud',
+ '[{"name":"project_id","label":"Project ID","type":"text","required":true},{"name":"service_account_json","label":"Service Account JSON","type":"textarea","required":true,"placeholder":"Paste service account JSON"}]', 'available'),
+('Google Ads', 'advertising', 'Google', 'Sync high-value customer segments for targeted product advertising campaigns.', 'megaphone',
+ '[{"name":"developer_token","label":"Developer Token","type":"password","required":true},{"name":"client_id","label":"OAuth Client ID","type":"text","required":true},{"name":"client_secret","label":"OAuth Client Secret","type":"password","required":true},{"name":"customer_id","label":"Customer ID","type":"text","required":true,"placeholder":"123-456-7890"}]', 'available'),
+('Meta Ads', 'advertising', 'Meta', 'Create lookalike audiences and retarget customers who viewed but did not accept offers.', 'megaphone',
+ '[{"name":"access_token","label":"Access Token","type":"password","required":true},{"name":"ad_account_id","label":"Ad Account ID","type":"text","required":true,"placeholder":"act_123456789"},{"name":"pixel_id","label":"Pixel ID","type":"text","required":false}]', 'available'),
+('LinkedIn Ads', 'advertising', 'LinkedIn', 'Target B2B banking product campaigns to professionals based on industry and seniority.', 'megaphone',
+ '[{"name":"access_token","label":"Access Token","type":"password","required":true},{"name":"account_id","label":"Account ID","type":"text","required":true}]', 'available'),
+('Google Analytics 4', 'analytics', 'Google', 'Track offer impressions, acceptance rates, and conversion funnels across portals.', 'chart',
+ '[{"name":"measurement_id","label":"Measurement ID","type":"text","required":true,"placeholder":"G-XXXXXXXXXX"},{"name":"api_secret","label":"API Secret","type":"password","required":true}]', 'available'),
+('Mixpanel', 'analytics', 'Mixpanel', 'Product analytics for customer journey tracking, A/B testing, and offer funnel optimization.', 'chart',
+ '[{"name":"project_token","label":"Project Token","type":"text","required":true},{"name":"api_secret","label":"API Secret","type":"password","required":true}]', 'available'),
+('Salesforce CRM', 'crm', 'Salesforce', 'Sync customer profiles and offer history. Enables relationship managers to see AI recommendations.', 'users',
+ '[{"name":"instance_url","label":"Instance URL","type":"url","required":true,"placeholder":"https://yourorg.salesforce.com"},{"name":"client_id","label":"Client ID","type":"text","required":true},{"name":"client_secret","label":"Client Secret","type":"password","required":true}]', 'available'),
+('HubSpot', 'crm', 'HubSpot', 'Marketing automation, lead scoring, and customer lifecycle management integration.', 'users',
+ '[{"name":"api_key","label":"API Key","type":"password","required":true},{"name":"portal_id","label":"Portal ID","type":"text","required":true}]', 'available'),
+('Twilio', 'messaging', 'Twilio', 'Send offer notifications via SMS. Integrates with consent-based marketing (ePrivacy compliance).', 'message',
+ '[{"name":"account_sid","label":"Account SID","type":"text","required":true},{"name":"auth_token","label":"Auth Token","type":"password","required":true},{"name":"from_number","label":"From Number","type":"tel","required":true,"placeholder":"+40..."}]', 'available'),
+('SendGrid', 'messaging', 'Twilio SendGrid', 'Transactional and marketing email delivery for offer notifications and form confirmations.', 'message',
+ '[{"name":"api_key","label":"API Key","type":"password","required":true},{"name":"from_email","label":"From Email","type":"email","required":true,"placeholder":"noreply@bankofferai.com"}]', 'available'),
+('Stripe', 'payments', 'Stripe', 'Payment processing for premium product subscriptions and fee collection.', 'card',
+ '[{"name":"publishable_key","label":"Publishable Key","type":"text","required":true,"placeholder":"pk_..."},{"name":"secret_key","label":"Secret Key","type":"password","required":true,"placeholder":"sk_..."},{"name":"webhook_secret","label":"Webhook Secret","type":"password","required":false}]', 'available'),
+('OPA (Open Policy Agent)', 'security', 'Styra', 'Policy-as-code engine for authorization, compliance rules, and offer eligibility gating.', 'shield',
+ '[{"name":"opa_url","label":"OPA Server URL","type":"url","required":true,"placeholder":"http://opa:8181"},{"name":"policy_path","label":"Policy Path","type":"text","required":true,"placeholder":"/v1/data/bankofferai/allow"}]', 'available');
 
 -- Seed initial risk register entries (AI Act Art. 9)
 INSERT INTO ai_act_risk_register (risk_id, category, description, severity, mitigation, status, owner, model_version) VALUES
