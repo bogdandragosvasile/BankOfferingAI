@@ -252,9 +252,12 @@
   }
 
   function keycloakLogout() {
+    const logoutRedirect = _isCustomerDomain()
+      ? 'https://' + CUSTOMER_DOMAIN + '/'
+      : window.location.origin;
     const params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
-      post_logout_redirect_uri: window.location.origin,
+      post_logout_redirect_uri: logoutRedirect,
     });
     if (_idToken) {
       params.set('id_token_hint', _idToken);
@@ -268,11 +271,18 @@
   }
 
   // ---- Demo mode auth ----
+  const CUSTOMER_DOMAIN = 'my-bankoffer.lupulup.com';
+  const EMPLOYEE_DOMAIN = 'bankoffer.lupulup.com';
+
   const ROLE_PORTALS = {
     admin: '/admin',
     employee: '/',
     client: '/portal'
   };
+
+  function _isCustomerDomain() {
+    return window.location.hostname === CUSTOMER_DOMAIN;
+  }
 
   function demoLogin(role) {
     const user = DEMO_USERS[role];
@@ -281,7 +291,17 @@
     _demoMode = true;
     _saveSession();
 
-    const targetPortal = ROLE_PORTALS[role];
+    // Cross-domain routing: client role goes to customer domain, staff roles go to employee domain
+    if (role === 'client' && !_isCustomerDomain() && window.location.hostname !== 'localhost') {
+      window.location.href = 'https://' + CUSTOMER_DOMAIN + '/';
+      return;
+    }
+    if ((role === 'admin' || role === 'employee') && _isCustomerDomain()) {
+      window.location.href = 'https://' + EMPLOYEE_DOMAIN + ROLE_PORTALS[role];
+      return;
+    }
+
+    const targetPortal = _isCustomerDomain() ? '/' : ROLE_PORTALS[role];
     const currentPath = window.location.pathname;
     if (targetPortal && currentPath !== targetPortal) {
       window.location.href = targetPortal;
@@ -394,7 +414,8 @@
     const { title, subtitle, allowedRoles } = options;
     const t = window.BOAI_I18N?.t || (k => k);
 
-    const roles = allowedRoles || ['admin', 'employee', 'client'];
+    const defaultRoles = _isCustomerDomain() ? ['client'] : ['admin', 'employee', 'client'];
+    const roles = allowedRoles || defaultRoles;
     const roleInfo = {
       admin: { icon: '\uD83D\uDEE1\uFE0F', color: 'red', desc: t('auth.role_admin') },
       employee: { icon: '\uD83D\uDCBC', color: 'cyan', desc: t('auth.role_employee') },
@@ -474,6 +495,7 @@
     isEmployee,
     isClient,
     isDemoMode,
+    isCustomerDomain: _isCustomerDomain,
     getToken,
     getAuthHeader,
     demoLogin,
