@@ -2,6 +2,30 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.5.0] — 2026-04-01
+
+### Changed
+
+- **Presentation redesign** — 12 UX fixes from design critique:
+  - New color palette: deep navy (#1e3a8a), blue (#3b82f6), deep green (#047857), gold (#d97706)
+  - Cabinet Grotesk display font for headings
+  - Single navy→blue gradient-text class (removed green/purple/amber variants)
+  - Slide counter navigation replaces pill dots
+  - Left-aligned content on all non-hero slides
+  - Layout variety: 2-column portals, 2×2 flow steps, 2-column compliance
+  - Badges replaced with icon lists on portal cards
+  - Focused CTA: single primary button + secondary link on demo slide
+  - Removed light mode toggle and bg-glow background effects
+  - Icon circles reduced to 32px natural size without backgrounds
+  - 44px minimum touch targets on navigation
+- Updated footer version to v1.4.0
+
+### Commit History
+
+- `2bc1e43` feat: redesign presentation with navy palette, Cabinet Grotesk font, and 12 UX fixes
+
+---
+
 ## [1.4.0] — 2026-04-01
 
 ### Fixed
