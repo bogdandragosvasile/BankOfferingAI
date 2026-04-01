@@ -1,5 +1,8 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS consent_history CASCADE;
+DROP TABLE IF EXISTS ai_api_call_log CASCADE;
+DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS ai_product_suggestions CASCADE;
 DROP TABLE IF EXISTS market_intelligence CASCADE;
 DROP TABLE IF EXISTS connectors CASCADE;
@@ -248,7 +251,7 @@ CREATE TABLE ai_product_suggestions (
     risk_level VARCHAR(20) DEFAULT 'medium' CHECK (risk_level IN ('low','medium','high')),
     ai_model_used VARCHAR(100),
     intelligence_ids JSONB NOT NULL DEFAULT '[]',
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected','implemented')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected','implemented','expired')),
     approved_by VARCHAR(100),
     approved_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
@@ -350,6 +353,16 @@ CREATE INDEX idx_notifications_read ON notifications(read, created_at DESC);
 CREATE INDEX idx_notifications_customer ON notifications(customer_id);
 CREATE INDEX idx_forms_customer ON application_forms(customer_id);
 CREATE INDEX idx_forms_status ON application_forms(status);
+CREATE INDEX idx_audit_log_actor ON audit_log(actor, created_at DESC);
+CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
+CREATE INDEX idx_audit_log_action ON audit_log(action, created_at DESC);
+CREATE INDEX idx_audit_log_created ON audit_log(created_at DESC);
+CREATE INDEX idx_audit_log_request ON audit_log(request_id);
+CREATE INDEX idx_ai_api_log_provider ON ai_api_call_log(provider, created_at DESC);
+CREATE INDEX idx_ai_api_log_outcome ON ai_api_call_log(outcome, created_at DESC);
+CREATE INDEX idx_ai_api_log_created ON ai_api_call_log(created_at DESC);
+CREATE INDEX idx_consent_history_customer ON consent_history(customer_id, created_at DESC);
+CREATE INDEX idx_consent_history_type ON consent_history(consent_type, created_at DESC);
 
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');
@@ -400,6 +413,105 @@ INSERT INTO connectors (name, category, provider, description, icon, config_sche
  '[{"name":"publishable_key","label":"Publishable Key","type":"text","required":true,"placeholder":"pk_..."},{"name":"secret_key","label":"Secret Key","type":"password","required":true,"placeholder":"sk_..."},{"name":"webhook_secret","label":"Webhook Secret","type":"password","required":false}]', 'available'),
 ('OPA (Open Policy Agent)', 'security', 'Styra', 'Policy-as-code engine for authorization, compliance rules, and offer eligibility gating.', 'shield',
  '[{"name":"opa_url","label":"OPA Server URL","type":"url","required":true,"placeholder":"http://opa:8181"},{"name":"policy_path","label":"Policy Path","type":"text","required":true,"placeholder":"/v1/data/bankofferai/allow"}]', 'available');
+
+-- ===== Central audit log (every state-changing action) =====
+
+CREATE TABLE audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    request_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    action VARCHAR(50) NOT NULL CHECK (action IN (
+        'login','login_failed','logout',
+        'create','update','delete',
+        'approve','reject','implement','toggle',
+        'activate','deactivate','revoke',
+        'consent_change','kill_switch_toggle',
+        'ai_analysis','export','override'
+    )),
+    actor VARCHAR(200) NOT NULL,                   -- staff email or customer_id
+    actor_type VARCHAR(20) NOT NULL DEFAULT 'staff' CHECK (actor_type IN ('staff','customer','system','api_token')),
+    resource_type VARCHAR(50) NOT NULL,            -- e.g. product, connector, suggestion, consent, kill_switch
+    resource_id VARCHAR(200),                      -- the ID of the affected resource
+    changes JSONB DEFAULT '{}',                    -- before/after diff or action details
+    ip_address INET,
+    user_agent TEXT,
+    endpoint VARCHAR(200),                         -- API path, e.g. PUT /intelligence/suggestions/7/approve
+    http_method VARCHAR(10),
+    http_status INTEGER,
+    duration_ms INTEGER,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- ===== AI API call log (every LLM provider interaction) =====
+
+CREATE TABLE ai_api_call_log (
+    id BIGSERIAL PRIMARY KEY,
+    request_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    provider VARCHAR(100) NOT NULL,                -- Anthropic, OpenAI, Google, etc.
+    model VARCHAR(200) NOT NULL,
+    endpoint_url VARCHAR(500),
+    request_prompt TEXT,                            -- truncated system+user prompt
+    request_tokens INTEGER,
+    response_text TEXT,                             -- truncated response
+    response_tokens INTEGER,
+    total_tokens INTEGER,
+    latency_ms INTEGER,
+    http_status INTEGER,
+    outcome VARCHAR(20) NOT NULL DEFAULT 'success' CHECK (outcome IN ('success','failure','timeout','filtered','rate_limited')),
+    guardrail_action VARCHAR(50),                  -- e.g. confidence_rejected, content_filtered, accepted
+    guardrail_details JSONB DEFAULT '{}',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- ===== Consent change history (append-only, GDPR Art. 7(1) proof) =====
+
+CREATE TABLE consent_history (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id VARCHAR(50) NOT NULL,
+    consent_type VARCHAR(50) NOT NULL CHECK (consent_type IN (
+        'profiling_consent','automated_decision_consent',
+        'family_context_consent','sensitive_data_consent',
+        'marketing_push','marketing_email','marketing_sms'
+    )),
+    old_value BOOLEAN,
+    new_value BOOLEAN NOT NULL,
+    changed_by VARCHAR(200) NOT NULL,              -- staff email, customer_id, or 'system'
+    change_reason TEXT,
+    ip_address INET,
+    created_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- ===== Immutability triggers =====
+
+-- Guardrail #9: Audit log immutability (prevent UPDATE/DELETE) =====
+
+CREATE OR REPLACE FUNCTION prevent_audit_modification()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION '% is immutable — UPDATE and DELETE are prohibited (AI Act Art. 12 & 17)', TG_TABLE_NAME;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS audit_immutable ON audit_recommendations;
+CREATE TRIGGER audit_immutable
+    BEFORE UPDATE OR DELETE ON audit_recommendations
+    FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
+
+DROP TRIGGER IF EXISTS audit_log_immutable ON audit_log;
+CREATE TRIGGER audit_log_immutable
+    BEFORE UPDATE OR DELETE ON audit_log
+    FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
+
+DROP TRIGGER IF EXISTS ai_api_call_log_immutable ON ai_api_call_log;
+CREATE TRIGGER ai_api_call_log_immutable
+    BEFORE UPDATE OR DELETE ON ai_api_call_log
+    FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
+
+DROP TRIGGER IF EXISTS consent_history_immutable ON consent_history;
+CREATE TRIGGER consent_history_immutable
+    BEFORE UPDATE OR DELETE ON consent_history
+    FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
 
 -- Seed initial risk register entries (AI Act Art. 9)
 INSERT INTO ai_act_risk_register (risk_id, category, description, severity, mitigation, status, owner, model_version) VALUES

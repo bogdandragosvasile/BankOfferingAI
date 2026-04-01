@@ -2,6 +2,89 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.7.0] — 2026-04-02
+
+### Changed
+
+- **Complete UI/UX refactoring** — Bauhaus + Dieter Rams design system across all 3 portals:
+  - Replaced dark cyberpunk aesthetic with warm, light-first Bauhaus design
+  - **Typography**: Satoshi (Fontshare) replaces Inter/Cabinet Grotesk, weights 400/500/700
+  - **Color palette**: Warm white `#FAFAF8` base, graphite `#1A1A1A` text, ash `#E8E6E1` borders
+  - **Accent colors**: Muted blue `#2D5F9A`, red `#C1403D`, yellow `#D4A843`, green `#2D7D46`
+  - **Cards/containers**: 0px border-radius, solid backgrounds, 1px borders — no glassmorphism
+  - **Buttons/inputs**: 4px border-radius (`rounded`), solid colors, no decorative shadows
+  - **Dark mode**: Opt-in `[data-theme="dark"]` with warm dark tones
+  - Removed all: `backdrop-filter: blur()`, `linear-gradient` card backgrounds, neon glow effects,
+    `stat-glow-*` inset shadows, decorative `translateY` hover transforms, `rounded-2xl`
+  - Consistent design tokens shared across Employee, Customer, and Admin portals
+  - All JavaScript functionality preserved intact (navigation, forms, charts, API calls)
+
+### Fixed
+
+- **Design token consistency pass** — second-pass cleanup across all three portals:
+  - Replaced all `rounded-lg` remnants in admin.html JS templates with `rounded`
+  - Replaced all generic `bg-accent/10` with explicit color tokens (`bg-accent-blue/10`, etc.)
+  - Rewrote `theme.js`: removed legacy `LIGHT_CSS` block, switched to `data-theme="dark"` on
+    `<html>` — aligns with `[data-theme="dark"]` CSS variable system already in all portals
+  - Updated `i18n.js`: removed emoji flags (🇬🇧🇩🇪🇷🇴), language selector uses design token
+    inline styles instead of stale Tailwind utility classes (`text-dark-300`, `bg-accent/20`)
+  - Set up Playwright MCP + LightPanda CDP integration for automated portal auditing
+
+## [2.6.0] — 2026-04-01
+
+### Added
+
+- **Comprehensive audit system** — "everything auditable" across the entire platform:
+  - **`audit_log` table**: Central, immutable, append-only log of every state-changing action.
+    Records actor, actor_type, action, resource, before/after changes, IP address, user-agent,
+    endpoint, HTTP method/status, duration, and a correlation `request_id`.
+  - **`ai_api_call_log` table**: Every AI provider interaction logged with request prompt,
+    response text, model, provider, tokens, latency, HTTP status, guardrail outcome, and errors.
+  - **`consent_history` table**: Append-only log of every consent flag change with old/new values,
+    who changed it, and when (GDPR Art. 7(1) proof of consent).
+  - **`AuditMiddleware`**: FastAPI middleware auto-logs every POST/PUT/DELETE request to `audit_log`
+    with request_id correlation, actor extraction from JWT, IP, user-agent, and response duration.
+  - **Staff login audit**: Successful and failed login attempts logged with actor identity.
+  - **Connector audit**: Create, configure, approve/reject, toggle, and delete actions logged.
+  - **Product catalog audit**: Create, update, and delete actions logged with field-level changes.
+  - **Intelligence audit**: Approve, reject, implement, delete actions logged for AI suggestions.
+  - **Kill-switch audit**: Every toggle logged with actor and reason.
+  - **AI API call audit**: Provider, model, prompt, response, latency, outcome per call.
+  - **Consent change audit**: Per-field old→new tracking with customer ID and actor.
+  - **Immutability triggers** on all 4 audit tables (`audit_recommendations`, `audit_log`,
+    `ai_api_call_log`, `consent_history`) — UPDATE and DELETE are blocked at the database level.
+
+### Changed
+
+- **Audit writes are now critical**: The offers endpoint fails with HTTP 500 if the audit trail
+  write to `audit_recommendations` fails, instead of silently continuing. Recommendations cannot
+  be served without an audit record (AI Act Art. 12 compliance).
+- Immutability trigger function now uses `TG_TABLE_NAME` for dynamic error messages.
+
+---
+
+## [2.5.0] — 2026-04-01
+
+### Added
+
+- **10 AI Guardrails** for production-grade safety and regulatory compliance:
+  1. **Confidence threshold** (60%): AI suggestions below threshold are auto-rejected with metrics tracking
+  2. **Rate limiting**: Max 5 `/intelligence/analyze` calls per hour per instance (Redis-backed, 429 on breach)
+  3. **Dual approval for high-risk products**: Different admin must implement vs. originally approve
+  4. **Auto-expiry**: Stale suggestions older than 30 days marked `expired` on each analysis run
+  5. **Content filter**: PII redaction (email, phone, SSN, card, IBAN) + prompt injection detection on all AI output
+  6. **Product catalog cap**: Max 50 active products — prevents unbounded catalog growth
+  7. **24-hour cool-down staging**: AI products inserted as `active=FALSE`, activatable after 24h via `POST /activate-staged`
+  8. **Fairness monitoring**: Prometheus histograms tracking offer scores by age bracket and income tier (demographic parity)
+  9. **Audit log immutability**: PostgreSQL `BEFORE UPDATE OR DELETE` trigger on `audit_recommendations` (AI Act Art. 12 & 17)
+  10. **AI API call tracking**: Prometheus counters/histograms for success/failure/latency per provider
+- `GET /intelligence/guardrails` transparency endpoint (AI Act Art. 13)
+- `POST /intelligence/activate-staged` endpoint to activate products past cool-down
+- "Activate Staged Products" button and "Expired" filter tab in Admin Intelligence Hub
+- Implemented products now show "24h staging" badge in the UI
+
+---
+
 ## [2.4.0] — 2026-04-01
 
 ### Added

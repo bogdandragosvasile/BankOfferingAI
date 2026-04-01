@@ -15,7 +15,7 @@ from services.api.models import Offer, OfferResponse
 from services.api.metrics import (
     CONSENT_BLOCKS, KILL_SWITCH_ACTIVE, OFFER_SCORING_DURATION,
     OFFERS_GENERATED, OFFERS_PER_REQUEST, PROFILE_BUILD_DURATION,
-    SUITABILITY_CHECKS,
+    SUITABILITY_CHECKS, OFFER_SCORE_BY_AGE, OFFER_SCORE_BY_INCOME,
 )
 from services.worker.profiler import build_profile
 from services.worker.ranker import rank_offers
@@ -732,6 +732,25 @@ async def get_offers(
     ]
     scored.sort(key=lambda x: x["relevance_score"], reverse=True)
 
+    # ===== Guardrail #8: Fairness monitoring (demographic parity) =====
+    age = _safe_int(features.get("age"), 30)
+    age_bracket = (
+        "18-25" if age <= 25 else
+        "26-35" if age <= 35 else
+        "36-50" if age <= 50 else
+        "51-65" if age <= 65 else
+        "65+"
+    )
+    income_tier = (
+        "low" if income < 30000 else
+        "medium" if income < 70000 else
+        "high" if income < 120000 else
+        "premium"
+    )
+    for s in scored:
+        OFFER_SCORE_BY_AGE.labels(age_bracket=age_bracket, product_type=s["product_type"]).observe(s["relevance_score"])
+        OFFER_SCORE_BY_INCOME.labels(income_tier=income_tier, product_type=s["product_type"]).observe(s["relevance_score"])
+
     ranked = rank_offers(scored)
 
     # ===== Build response =====
@@ -802,8 +821,11 @@ async def get_offers(
             )
             await session.commit()
     except Exception as e:
-        logger.error("Audit trail write failed for %s: %s", customer_id, e)
-        # Don't fail the request if audit write fails, but log critically
+        logger.critical("AUDIT TRAIL WRITE FAILED for %s: %s — request will fail", customer_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Audit trail write failed — recommendation cannot be served without audit record (AI Act Art. 12)",
+        )
 
     # ===== Requirement 6: Pseudonymization - return external_id =====
     return OfferResponse(

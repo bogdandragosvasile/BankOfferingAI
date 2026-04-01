@@ -2142,7 +2142,10 @@ function setLanguage(lang) {
   // Re-render all language selectors to update active highlight
   document.querySelectorAll('.lang-btn[data-lang]').forEach(btn => {
     const isActive = btn.dataset.lang === lang;
-    btn.className = `lang-btn px-2 py-1 rounded text-xs font-medium transition-all ${isActive ? 'bg-accent/20 text-accent-light' : 'text-dark-300 hover:text-dark-100'}`;
+    btn.className = 'lang-btn px-2 py-1 rounded text-xs font-medium transition-colors';
+    btn.style.cssText = isActive
+      ? 'background: var(--bg-sunken); color: var(--text-primary); border: 1px solid var(--border-strong);'
+      : 'background: transparent; color: var(--text-muted); border: 1px solid transparent;';
   });
   // Dispatch event for custom handlers
   document.dispatchEvent(new CustomEvent('languageChanged', { detail: { lang } }));
@@ -2150,13 +2153,17 @@ function setLanguage(lang) {
 
 function renderLanguageSelector() {
   const langs = [
-    { code: 'en', label: 'EN', flag: '🇬🇧' },
-    { code: 'de', label: 'DE', flag: '🇩🇪' },
-    { code: 'ro', label: 'RO', flag: '🇷🇴' },
+    { code: 'en', label: 'EN' },
+    { code: 'de', label: 'DE' },
+    { code: 'ro', label: 'RO' },
   ];
-  return langs.map(l =>
-    `<button onclick="setLanguage('${l.code}')" class="lang-btn px-2 py-1 rounded text-xs font-medium transition-all ${currentLang === l.code ? 'bg-accent/20 text-accent-light' : 'text-dark-300 hover:text-dark-100'}" data-lang="${l.code}">${l.flag} ${l.label}</button>`
-  ).join('');
+  return langs.map(l => {
+    const isActive = currentLang === l.code;
+    const style = isActive
+      ? 'background: var(--bg-sunken); color: var(--text-primary); border: 1px solid var(--border-strong);'
+      : 'background: transparent; color: var(--text-muted); border: 1px solid transparent;';
+    return `<button onclick="setLanguage('${l.code}')" class="lang-btn px-2 py-1 rounded text-xs font-medium transition-colors" style="${style}" data-lang="${l.code}">${l.label}</button>`;
+  }).join('');
 }
 
 function tProductName(name) {
