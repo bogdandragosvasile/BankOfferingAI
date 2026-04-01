@@ -198,11 +198,9 @@ async def sso_lookup(email: str, request: Request):
         if not row:
             raise HTTPException(status_code=404, detail="No customer account linked to this email")
 
-        onboarding_complete = row[4]
-        # Existing users (who logged in before onboarding was added) should
-        # skip the wizard — auto-complete onboarding for them.
-        if not onboarding_complete and row[5] is not None:
-            onboarding_complete = True
+        # SSO login always skips the onboarding wizard
+        onboarding_complete = True
+        if not row[4]:
             await session.execute(
                 text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid"),
                 {"cid": str(row[0])},
@@ -254,16 +252,14 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
 
         customer_id = row[2]
         external_id = str(row[5])
-        onboarding_complete = row[6]
 
-        # Existing users (who logged in before onboarding was added) should
-        # skip the wizard — auto-complete onboarding for them.
-        if not onboarding_complete and row[7] is not None:
-            onboarding_complete = True
-            await session.execute(
-                text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid"),
-                {"cid": customer_id},
-            )
+        # Login always skips the onboarding wizard — only /register
+        # routes new users through it.
+        onboarding_complete = True
+        await session.execute(
+            text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid AND onboarding_complete = FALSE"),
+            {"cid": customer_id},
+        )
 
         # Update last_login
         await session.execute(
