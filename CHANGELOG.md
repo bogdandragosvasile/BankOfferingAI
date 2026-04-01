@@ -2,6 +2,20 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [1.7.0] — 2026-04-01
+
+### Changed
+
+- **Unified design system across all portals.** Employee, Customer, and Admin portals now
+  use the same navy palette and Cabinet Grotesk display font as the presentation:
+  deep navy (#1e3a8a), blue (#3b82f6), deep green (#047857), gold (#d97706).
+
+### Commit History
+
+- `0af46bd` feat: apply navy palette and Cabinet Grotesk font to all three portals
+
+---
+
 ## [1.6.0] — 2026-04-01
 
 ### Fixed
