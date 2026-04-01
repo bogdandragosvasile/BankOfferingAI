@@ -2,6 +2,26 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.2.0] — 2026-04-01
+
+### Added
+
+- **Connectors Menu.** Admin portal now manages third-party service integrations:
+  - 8 categories: AI, Cloud, Advertising, Analytics, CRM, Messaging, Payments, Security
+  - 18 pre-seeded connector templates (OpenAI, Claude, AWS, Azure, GCP, Google Ads, Meta,
+    LinkedIn, GA4, Mixpanel, Salesforce, HubSpot, Twilio, SendGrid, Stripe, OPA)
+  - **AI Suggest** button — AI recommends connectors based on platform needs (pending admin approval)
+  - Approval workflow: available → pending → approved → active (admin-gated)
+  - Configuration modal with dynamic field rendering (text, password, select, textarea)
+  - Category filter tabs with active/pending/total status counters
+  - `/connectors/*` API router (list, create, configure, approve/reject, toggle, delete, AI suggest)
+
+### Commit History
+
+- `ed453f6` feat: add Connectors Menu for third-party service integrations
+
+---
+
 ## [2.1.0] — 2026-04-01
 
 ### Added
