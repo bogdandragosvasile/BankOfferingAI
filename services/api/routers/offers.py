@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import datetime
 
@@ -11,6 +12,11 @@ from sqlalchemy import text
 
 from services.api.middleware.auth import get_current_customer_id
 from services.api.models import Offer, OfferResponse
+from services.api.metrics import (
+    CONSENT_BLOCKS, KILL_SWITCH_ACTIVE, OFFER_SCORING_DURATION,
+    OFFERS_GENERATED, OFFERS_PER_REQUEST, PROFILE_BUILD_DURATION,
+    SUITABILITY_CHECKS,
+)
 from services.worker.profiler import build_profile
 from services.worker.ranker import rank_offers
 
@@ -487,6 +493,7 @@ async def get_offers(
 
     session_factory = request.app.state.db_session_factory
     recommendation_id = str(uuid.uuid4())
+    scoring_start = time.monotonic()
 
     # ===== Fetch customer features =====
     try:
@@ -513,6 +520,7 @@ async def get_offers(
             )
             ks_row = ks_result.mappings().fetchone()
             if ks_row and ks_row["active"]:
+                KILL_SWITCH_ACTIVE.set(1)
                 return OfferResponse(
                     customer_id=customer_id,
                     recommendation_id=recommendation_id,
@@ -568,6 +576,7 @@ async def get_offers(
 
     # Consent #1: If no profiling consent, return empty — pipeline cannot process
     if not consent_snapshot["profiling_consent"]:
+        CONSENT_BLOCKS.labels(consent_type="profiling").inc()
         return OfferResponse(
             customer_id=external_id or customer_id,
             recommendation_id=recommendation_id,
@@ -597,7 +606,9 @@ async def get_offers(
     }
 
     try:
+        profile_start = time.monotonic()
         profile = build_profile(customer_id, profiler_input)
+        PROFILE_BUILD_DURATION.observe(time.monotonic() - profile_start)
     except Exception as e:
         logger.error("Profiler failed for %s: %s", customer_id, e)
         raise HTTPException(status_code=500, detail="Profile generation failed")
@@ -646,8 +657,10 @@ async def get_offers(
             "customer_risk": risk_profile,
         }
         if suitable:
+            SUITABILITY_CHECKS.labels(result="passed").inc()
             suitable_products.append(product)
         else:
+            SUITABILITY_CHECKS.labels(result="failed").inc()
             excluded_products.append({
                 "product_id": product["id"],
                 "product_name": product["name"],
@@ -687,6 +700,12 @@ async def get_offers(
             requires_suitability_confirmation=requires_suitability,
             cta_url=f"/products/{r.product_id}/apply?customer={customer_id}",
         ))
+
+    # ===== Metrics =====
+    OFFER_SCORING_DURATION.observe(time.monotonic() - scoring_start)
+    OFFERS_PER_REQUEST.observe(len(offers))
+    for o in offers:
+        OFFERS_GENERATED.labels(product_type=o.product_type).inc()
 
     # ===== Requirement 4: Audit trail (immutable log) =====
     try:
