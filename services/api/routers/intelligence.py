@@ -837,6 +837,117 @@ async def approve_suggestion(suggestion_id: int, request: Request, action: str =
         raise HTTPException(status_code=500, detail="Failed to update suggestion")
 
 
+@router.put(
+    "/suggestions/{suggestion_id}/implement",
+    summary="Implement an approved suggestion — publish to the live product catalog",
+)
+async def implement_suggestion(suggestion_id: int, request: Request, implemented_by: str = Query(...)):
+    """Push an approved AI suggestion into the products table so the offer engine can score it."""
+    session_factory = request.app.state.db_session_factory
+    try:
+        async with session_factory() as session:
+            # 1. Fetch the suggestion (must be approved)
+            result = await session.execute(
+                text("""SELECT id, product_name, product_type, description, risk_level,
+                            target_segments, confidence
+                     FROM ai_product_suggestions WHERE id = :sid"""),
+                {"sid": suggestion_id},
+            )
+            row = result.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Suggestion not found")
+            if row[3] is None:
+                raise HTTPException(status_code=400, detail="Suggestion data is incomplete")
+
+            # Check current status
+            st_result = await session.execute(
+                text("SELECT status FROM ai_product_suggestions WHERE id = :sid"),
+                {"sid": suggestion_id},
+            )
+            current_status = st_result.scalar()
+            if current_status != "approved":
+                raise HTTPException(status_code=400, detail=f"Only approved suggestions can be implemented (current: {current_status})")
+
+            product_name = row[1]
+            product_type = row[2]
+            description = row[3]
+            risk_level = row[4] or "moderate"
+            target_segments = row[5] if isinstance(row[5], list) else json.loads(row[5]) if row[5] else []
+
+            # Map AI product types to scoring-compatible types
+            type_map = {
+                "investment": "investment",
+                "savings": "savings",
+                "lending": "personal_loan",
+                "mortgage": "mortgage",
+                "credit_card": "credit_card",
+                "insurance": "insurance",
+            }
+            scoring_type = type_map.get(product_type, product_type)
+            is_credit = scoring_type in ("personal_loan", "mortgage", "credit_card")
+
+            # Generate a product_id from the name
+            product_id = "prod_ai_" + product_name.lower().replace(" ", "_").replace("—", "").replace("(", "").replace(")", "").replace("%", "pct").replace(".", "")[:60]
+
+            # 2. Check if already in catalog
+            exists = await session.execute(
+                text("SELECT product_id FROM products WHERE product_id = :pid OR product_name = :pname"),
+                {"pid": product_id, "pname": product_name},
+            )
+            if exists.fetchone():
+                # Already exists — just mark as implemented
+                await session.execute(
+                    text("UPDATE ai_product_suggestions SET status = 'implemented' WHERE id = :sid"),
+                    {"sid": suggestion_id},
+                )
+                await session.commit()
+                return {"id": suggestion_id, "product_id": product_id, "status": "implemented", "message": "Product already in catalog"}
+
+            # 3. Insert into products table
+            await session.execute(
+                text("""INSERT INTO products
+                    (product_name, product_id, type, risk_level, short_description,
+                     category, lifecycle_stage, when_to_recommend, is_credit_product, active)
+                    VALUES (:name, :pid, :type, :risk, :desc, :cat, :lifecycle, :recommend, :credit, TRUE)"""),
+                {
+                    "name": product_name,
+                    "pid": product_id,
+                    "type": scoring_type,
+                    "risk": risk_level,
+                    "desc": description,
+                    "cat": product_type,
+                    "lifecycle": ", ".join(target_segments) if target_segments else "all",
+                    "recommend": f"AI-suggested product. Target segments: {', '.join(target_segments)}. Risk: {risk_level}.",
+                    "credit": is_credit,
+                },
+            )
+
+            # 4. Mark suggestion as implemented
+            await session.execute(
+                text("""UPDATE ai_product_suggestions
+                        SET status = 'implemented', approved_by = :by, approved_at = NOW()
+                        WHERE id = :sid"""),
+                {"sid": suggestion_id, "by": implemented_by},
+            )
+            await session.commit()
+
+            return {
+                "id": suggestion_id,
+                "product_id": product_id,
+                "product_name": product_name,
+                "product_type": scoring_type,
+                "risk_level": risk_level,
+                "is_credit_product": is_credit,
+                "status": "implemented",
+                "message": "Product published to catalog — now active in the offer engine",
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Implement error: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to implement suggestion: " + str(e))
+
+
 @router.delete(
     "/suggestions/{suggestion_id}",
     summary="Delete a product suggestion",

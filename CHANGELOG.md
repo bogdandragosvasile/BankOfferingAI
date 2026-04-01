@@ -2,6 +2,27 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.4.0] — 2026-04-01
+
+### Added
+
+- **Full AI-to-Customer pipeline.** Approved AI product suggestions can now be published to the
+  live product catalog and automatically scored against customer profiles:
+  - **"Publish to Catalog"** button on approved suggestions inserts into the `products` table
+  - Products become immediately active in the offer engine (no restart needed)
+  - Generic scoring rules for AI-generated products: scored by `product_type` and `risk_level`
+    with personalized boosts (idle cash, risk appetite, balance trend, family context, etc.)
+  - `PUT /intelligence/suggestions/{id}/implement` endpoint with full validation
+  - Implemented suggestions show "Live in catalog" status badge
+  - MiFID II suitability and AI Act compliance checks apply equally to AI-generated products
+- **Real AI provider integration.** Connected AI models now call real APIs:
+  - Anthropic Claude, OpenAI GPT, Google Gemini, Hugging Face, **Perplexity AI**
+  - **Local LLM** support: Ollama, vLLM, LM Studio (any OpenAI-compatible endpoint)
+  - Falls back to built-in engine when no API key is configured
+  - Validates and sanitizes all AI-generated data before DB insert
+
+---
+
 ## [2.3.0] — 2026-04-01
 
 ### Added

@@ -385,6 +385,61 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
             boost += 0.12
             reasons.append("state bonds provide stable pre-retirement income")
 
+    # ===== Generic scoring for AI-generated products (prod_ai_*) =====
+    # These products don't have hardcoded pid rules above, so apply
+    # type-level signals to ensure they score competitively.
+    if pid.startswith("prod_ai_"):
+        # Investment products: boost for high idle cash and growth trend
+        if ptype == "investment":
+            if idle_cash > 10000:
+                boost += 0.15
+                reasons.append(f"significant idle cash ({idle_cash:,.0f}) available for this opportunity")
+            if risk_profile == "high":
+                boost += 0.10
+                reasons.append("risk appetite matches this investment product")
+            if trend == "growing":
+                boost += 0.08
+                reasons.append("positive balance trend supports new investment")
+        # Savings products: boost for low savings rate
+        elif ptype == "savings":
+            if savings_rate < 0.2:
+                boost += 0.15
+                reasons.append("current savings rate suggests this product could help")
+            if risk_profile == "low":
+                boost += 0.10
+                reasons.append("capital-preservation profile aligns well")
+        # Lending products: boost for low debt, penalize high debt
+        elif ptype == "personal_loan":
+            if dti < 1.5 and income >= 40000:
+                boost += 0.12
+                reasons.append("low leverage and adequate income support borrowing capacity")
+            elif dti > 3.0:
+                penalty += 0.15
+        # Mortgage products: boost for renters
+        elif ptype == "mortgage":
+            if homeowner == "rent" and "mortgage" not in existing:
+                boost += 0.20
+                reasons.append("renter profile makes this mortgage product highly relevant")
+            if income >= 60000 and dti < 2.0:
+                boost += 0.10
+                reasons.append("income and debt levels qualify for mortgage")
+        # Credit card products
+        elif ptype == "credit_card":
+            if "credit_card" not in existing:
+                boost += 0.10
+                reasons.append("no existing credit card — this fills a gap")
+            if category == "shopping":
+                boost += 0.10
+                reasons.append("spending pattern benefits from card rewards")
+        # Insurance products: boost for families
+        elif ptype == "insurance":
+            if family_consent and dependents >= 1:
+                boost += 0.20
+                reasons.append(f"family with {dependents} dependent(s) benefits from insurance coverage")
+            if age >= 40:
+                boost += 0.08
+                reasons.append("age bracket increases insurance value")
+
     # Final scores
     relevance = max(0.0, min(1.0, base + boost - penalty))
     confidence = max(0.2, min(1.0, 0.50 + boost * 0.6 + (0.1 if len(reasons) >= 2 else 0)))

@@ -1304,6 +1304,7 @@ tailwind.config = {
             <button onclick="filterSuggestions('all')" data-sst="all" class="sug-filter active px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">All</button>
             <button onclick="filterSuggestions('pending')" data-sst="pending" class="sug-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Pending</button>
             <button onclick="filterSuggestions('approved')" data-sst="approved" class="sug-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Approved</button>
+            <button onclick="filterSuggestions('implemented')" data-sst="implemented" class="sug-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Live</button>
           </div>
         </div>
         <div id="intel-suggestions-grid" class="space-y-4">
@@ -3062,7 +3063,23 @@ function renderSuggestionsGrid() {
         <button onclick="approveSuggestion(${s.id},'approve')" class="flex-1 py-2 rounded-lg bg-neon-green/10 text-neon-green text-xs font-medium hover:bg-neon-green/20 transition">Approve</button>
         <button onclick="approveSuggestion(${s.id},'reject')" class="flex-1 py-2 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Reject</button>
         <button onclick="deleteSuggestion(${s.id})" class="py-2 px-3 rounded-lg bg-dark-700/50 text-dark-400 text-xs hover:text-neon-red transition">✕</button>
-      </div>` : `
+      </div>`
+      : s.status === 'approved' ? `
+      <div class="flex gap-2 mt-3 pt-3 border-t border-dark-700/30">
+        <button onclick="implementSuggestion(${s.id})" class="flex-1 py-2 rounded-lg bg-neon-cyan/10 text-neon-cyan text-xs font-medium hover:bg-neon-cyan/20 transition flex items-center justify-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Publish to Catalog
+        </button>
+        <button onclick="approveSuggestion(${s.id},'reject')" class="py-2 px-4 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Reject</button>
+        <button onclick="deleteSuggestion(${s.id})" class="py-2 px-3 rounded-lg bg-dark-700/50 text-dark-400 text-xs hover:text-neon-red transition">✕</button>
+      </div>`
+      : s.status === 'implemented' ? `
+      <div class="flex items-center gap-2 mt-3 pt-3 border-t border-dark-700/30 text-xs">
+        <span class="flex items-center gap-1 text-neon-cyan"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Live in catalog</span>
+        ${s.approved_by ? `<span class="text-dark-400">by ${s.approved_by}</span>` : ''}
+        <button onclick="deleteSuggestion(${s.id})" class="ml-auto py-1 px-2 rounded bg-dark-700/50 text-dark-400 hover:text-neon-red transition">Delete</button>
+      </div>`
+      : `
       <div class="flex gap-2 mt-3 pt-3 border-t border-dark-700/30 text-xs text-dark-400">
         ${s.approved_by ? `<span>By ${s.approved_by}</span>` : ''}
         ${s.approved_at ? `<span>on ${new Date(s.approved_at).toLocaleDateString()}</span>` : ''}
@@ -3131,6 +3148,24 @@ async function approveSuggestion(id, action) {
   try {
     const resp = await fetch(`${API}/intelligence/suggestions/${id}/approve?action=${action}&approved_by=${encodeURIComponent(by)}`, { method: 'PUT' });
     if (!resp.ok) throw new Error('Failed');
+    loadIntelligence();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function implementSuggestion(id) {
+  if (!confirm('Publish this product to the live catalog?\n\nIt will immediately become available in the offer engine and be matched to eligible customers.')) return;
+  const session = getStaffSession();
+  const by = session ? session.email : 'admin';
+  try {
+    const resp = await fetch(`${API}/intelligence/suggestions/${id}/implement?implemented_by=${encodeURIComponent(by)}`, { method: 'PUT' });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed');
+    }
+    const data = await resp.json();
+    alert(`Product published to catalog!\n\n• Product ID: ${data.product_id}\n• Type: ${data.product_type}\n• Risk: ${data.risk_level}\n\nCustomers will start seeing this in their personalized offers.`);
     loadIntelligence();
   } catch (err) {
     alert('Error: ' + err.message);
