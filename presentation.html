@@ -6,18 +6,19 @@
 <title>BankOffer AI - Product Presentation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,700,900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg: #060a14;
   --bg2: #0b1120;
   --card: rgba(17,24,39,0.8);
-  --border: rgba(99,102,241,0.12);
-  --accent: #6366f1;
-  --accent-light: #818cf8;
-  --green: #10b981;
+  --border: rgba(30,58,138,0.12);
+  --accent: #1e3a8a;
+  --accent-light: #3b82f6;
+  --green: #047857;
   --cyan: #06b6d4;
-  --amber: #f59e0b;
+  --amber: #d97706;
   --purple: #a78bfa;
   --red: #ef4444;
   --text: #e2e8f0;
@@ -47,29 +48,18 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(30,58,138,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,58,138,0.03) 1px, transparent 1px);
   background-size: 60px 60px;
-}
-.bg-glow {
-  position: absolute;
-  width: 600px; height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.15;
-  pointer-events: none;
 }
 
 /* ===== TYPOGRAPHY ===== */
-h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
-h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+h1 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
+h2 { font-family: 'Cabinet Grotesk', 'Inter', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
 h3 { font-size: 1.25rem; font-weight: 700; }
-.gradient-text { background: linear-gradient(135deg, var(--accent-light), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.gradient-text-green { background: linear-gradient(135deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.gradient-text-purple { background: linear-gradient(135deg, var(--purple), var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.gradient-text-amber { background: linear-gradient(135deg, var(--amber), var(--red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text { background: linear-gradient(135deg, var(--accent-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .subtitle { font-size: clamp(1rem, 2vw, 1.35rem); color: var(--text2); line-height: 1.6; max-width: 700px; }
-.label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+.label { font-size: 0.75rem !important; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
 
 /* ===== CARDS ===== */
 .card {
@@ -80,9 +70,9 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   padding: 28px;
   transition: all 0.3s;
 }
-.card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
+.card:hover { border-color: rgba(30,58,138,0.3); transform: translateY(-2px); }
 .card-sm { padding: 20px; border-radius: 12px; }
-.card-glow { box-shadow: 0 0 30px rgba(99,102,241,0.08); }
+.card-glow { box-shadow: 0 0 30px rgba(30,58,138,0.08); }
 
 /* ===== GRID ===== */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
@@ -103,7 +93,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   padding: 4px 12px; border-radius: 999px;
   font-size: 0.7rem; font-weight: 600;
 }
-.badge-accent { background: rgba(99,102,241,0.15); color: var(--accent-light); }
+.badge-accent { background: rgba(30,58,138,0.15); color: var(--accent-light); }
 .badge-green { background: rgba(16,185,129,0.15); color: var(--green); }
 .badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
 .badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
@@ -117,7 +107,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 
 /* ===== ICON CIRCLE ===== */
 .icon-circle {
-  width: 48px; height: 48px; border-radius: 14px;
+  width: 32px; height: 32px; border-radius: 0; background: none !important;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -139,26 +129,21 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 
 /* ===== TABLE ===== */
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.data-table th { text-align: left; padding: 12px 16px; color: var(--text3); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid rgba(99,102,241,0.15); }
-.data-table td { padding: 12px 16px; border-bottom: 1px solid rgba(99,102,241,0.06); }
-.data-table tr:hover td { background: rgba(99,102,241,0.04); }
-.data-table code { background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--accent-light); }
+.data-table th { text-align: left; padding: 12px 16px; color: var(--text3); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid rgba(30,58,138,0.15); }
+.data-table td { padding: 12px 16px; border-bottom: 1px solid rgba(30,58,138,0.06); }
+.data-table tr:hover td { background: rgba(30,58,138,0.04); }
+.data-table code { background: rgba(30,58,138,0.1); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: var(--accent-light); }
 
-/* ===== PILL NAV ===== */
-.pill-nav {
+/* ===== SLIDE COUNTER ===== */
+.slide-counter {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 8px; padding: 8px 16px;
+  padding: 10px 24px; min-height: 44px; display: flex; align-items: center;
   background: rgba(17,24,39,0.9); backdrop-filter: blur(16px);
-  border: 1px solid var(--border); border-radius: 999px;
+  border: 1px solid var(--border); border-radius: 12px;
+  font-size: 0.95rem; font-weight: 600; color: var(--text2);
   z-index: 100;
 }
-.pill-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--text3); cursor: pointer;
-  transition: all 0.3s; border: none; padding: 0;
-}
-.pill-dot:hover { background: var(--accent-light); }
-.pill-dot.active { background: var(--accent); width: 28px; border-radius: 5px; }
+.slide-counter span { color: var(--accent-light); margin: 0 2px; }
 
 /* ===== ANIMATIONS ===== */
 .fade-up {
@@ -189,9 +174,9 @@ h3 { font-size: 1.25rem; font-weight: 700; }
   border: none; cursor: pointer;
 }
 .cta-primary { background: var(--accent); color: white; }
-.cta-primary:hover { background: #4f46e5; box-shadow: 0 0 30px rgba(99,102,241,0.3); }
-.cta-outline { background: transparent; color: var(--accent-light); border: 1px solid rgba(99,102,241,0.3); }
-.cta-outline:hover { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+.cta-primary:hover { background: #1e3a8a; box-shadow: 0 0 30px rgba(30,58,138,0.3); }
+.cta-outline { background: transparent; color: var(--accent-light); border: 1px solid rgba(30,58,138,0.3); }
+.cta-outline:hover { border-color: var(--accent); background: rgba(30,58,138,0.1); }
 
 /* ===== MISC ===== */
 .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 40px 0; }
@@ -217,76 +202,23 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 .fw-600 { font-weight: 600; }
 .border-l { border-left: 3px solid var(--accent); padding-left: 20px; }
 
-/* ===== LIGHT THEME ===== */
-[data-theme="light"] {
-  --bg: #f8fafc;
-  --bg2: #f1f5f9;
-  --card: rgba(255,255,255,0.85);
-  --border: rgba(99,102,241,0.15);
-  --text: #1e293b;
-  --text2: #475569;
-  --text3: #94a3b8;
-}
-[data-theme="light"] body { background: var(--bg); color: var(--text); }
-[data-theme="light"] .bg-glow { opacity: 0.08; }
-[data-theme="light"] .bg-grid {
-  background-image:
-    linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
-}
-[data-theme="light"] .card { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-[data-theme="light"] .card:hover { box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
-[data-theme="light"] .pill-nav { background: rgba(255,255,255,0.92); border-color: rgba(99,102,241,0.15); }
-[data-theme="light"] .pill-dot { background: #cbd5e1; }
-[data-theme="light"] .data-table th { color: var(--text3); border-bottom-color: rgba(99,102,241,0.12); }
-[data-theme="light"] .data-table td { border-bottom-color: rgba(99,102,241,0.06); }
-[data-theme="light"] .data-table tr:hover td { background: rgba(99,102,241,0.04); }
-[data-theme="light"] .data-table code { background: rgba(99,102,241,0.08); color: #4f46e5; }
-[data-theme="light"] .gradient-text { background: linear-gradient(135deg, #4f46e5, #0891b2); -webkit-background-clip: text; background-clip: text; }
-[data-theme="light"] .gradient-text-green { background: linear-gradient(135deg, #059669, #0891b2); -webkit-background-clip: text; background-clip: text; }
-[data-theme="light"] .gradient-text-purple { background: linear-gradient(135deg, #7c3aed, #4f46e5); -webkit-background-clip: text; background-clip: text; }
-[data-theme="light"] .gradient-text-amber { background: linear-gradient(135deg, #d97706, #dc2626); -webkit-background-clip: text; background-clip: text; }
-
-/* ===== THEME TOGGLE ===== */
-.theme-toggle {
-  position: fixed; top: 20px; right: 20px; z-index: 200;
-  width: 44px; height: 44px; border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--card); backdrop-filter: blur(16px);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s; color: var(--text2);
-}
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent-light); transform: scale(1.05); }
-.theme-toggle svg { width: 20px; height: 20px; }
-.theme-toggle .icon-sun { display: none; }
-[data-theme="light"] .theme-toggle .icon-sun { display: block; }
-[data-theme="light"] .theme-toggle .icon-moon { display: none; }
-[data-theme="light"] svg rect[fill="var(--card)"] { fill: rgba(255,255,255,0.9); }
 </style>
 </head>
 <body>
 
-<!-- THEME TOGGLE -->
-<button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">
-  <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-  <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-</button>
-
-<!-- NAV DOTS -->
-<nav class="pill-nav" id="navDots"></nav>
+<!-- SLIDE COUNTER -->
+<div class="slide-counter" id="slideCounter">Slide <span id="current-slide">1</span> of 14</div>
 
 <!-- ============================== SLIDE 1: HERO ============================== -->
 <section class="slide" id="slide-0">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--accent); top: -200px; right: -200px;"></div>
-  <div class="bg-glow" style="background: var(--cyan); bottom: -200px; left: -200px;"></div>
   <div class="slide-inner text-center">
     <div class="fade-up">
       <div class="flex-center mb-32">
         <div style="position:relative; width:80px; height:80px;">
           <div class="pulse-ring"></div>
-          <div style="width:80px;height:80px;border-radius:20px;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;">
-            <svg width="44" height="44" fill="none" stroke="#818cf8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <div style="width:80px;height:80px;border-radius:20px;background:rgba(30,58,138,0.2);display:flex;align-items:center;justify-content:center;">
+            <svg width="44" height="44" fill="none" stroke="#3b82f6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
         </div>
       </div>
@@ -316,7 +248,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <section class="slide" id="slide-1">
   <div class="bg-grid"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Platform at a Glance</span>
       <h2>Built for Scale,<br>Designed for <span class="gradient-text">Compliance</span></h2>
     </div>
@@ -327,17 +259,17 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <div class="text-xs text-dim mt-24">Employee, Customer, Admin</div>
       </div>
       <div class="card card-glow text-center">
-        <div class="stat-value gradient-text-green">50+</div>
+        <div class="stat-value gradient-text">50+</div>
         <div class="stat-label">API Endpoints</div>
         <div class="text-xs text-dim mt-24">9 router modules</div>
       </div>
       <div class="card card-glow text-center">
-        <div class="stat-value gradient-text-purple">17</div>
+        <div class="stat-value gradient-text">17</div>
         <div class="stat-label">Database Tables</div>
         <div class="text-xs text-dim mt-24">Core + compliance + auth</div>
       </div>
       <div class="card card-glow text-center">
-        <div class="stat-value gradient-text-amber">5</div>
+        <div class="stat-value gradient-text">5</div>
         <div class="stat-label">EU Regulations</div>
         <div class="text-xs text-dim mt-24">GDPR, AI Act, MiFID II, EBA, ePrivacy</div>
       </div>
@@ -366,26 +298,25 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 3: THREE PORTALS ============================== -->
 <section class="slide" id="slide-2">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--purple); top: 50%; left: -100px; transform: translateY(-50%);"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Architecture</span>
-      <h2>Three Portals,<br>One <span class="gradient-text-purple">Platform</span></h2>
+      <h2>Three Portals,<br>One <span class="gradient-text">Platform</span></h2>
     </div>
-    <div class="grid-3 fade-up delay-1">
+    <div class="grid-2 fade-up delay-1">
       <!-- Employee -->
       <div class="card">
-        <div class="icon-circle mb-16" style="background:rgba(99,102,241,0.15);">
+        <div class="icon-circle mb-16" style="background:rgba(30,58,138,0.15);">
           <svg width="24" height="24" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
         </div>
         <h3 class="mb-8">Employee Portal</h3>
         <p class="text-sm text-muted mb-16">Bank staff dashboard with customer overview, offer generation, compliance monitoring, and human-in-the-loop overrides.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="badge badge-accent">Dashboard</span>
-          <span class="badge badge-accent">Customers</span>
-          <span class="badge badge-accent">Analytics</span>
-          <span class="badge badge-accent">Compliance</span>
-        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#9656; Dashboard</li>
+          <li class="mb-8">&#9656; Customers</li>
+          <li class="mb-8">&#9656; Analytics</li>
+          <li>&#9656; Compliance</li>
+        </ul>
         <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--accent-light);font-weight:600;"> /</span></div>
       </div>
       <!-- Customer -->
@@ -395,12 +326,12 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </div>
         <h3 class="mb-8">Customer Portal</h3>
         <p class="text-sm text-muted mb-16">Client-facing portal with personalized offers, consent management, data transparency report, and feedback collection.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="badge badge-green">My Offers</span>
-          <span class="badge badge-green">My Data</span>
-          <span class="badge badge-green">Consent</span>
-          <span class="badge badge-green">History</span>
-        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#9656; My Offers</li>
+          <li class="mb-8">&#9656; My Data</li>
+          <li class="mb-8">&#9656; Consent</li>
+          <li>&#9656; History</li>
+        </ul>
         <div class="mt-24 text-xs text-dim">my-bankoffer.lupulup.com<span style="color:var(--green);font-weight:600;"> /</span></div>
       </div>
       <!-- Admin -->
@@ -410,12 +341,12 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         </div>
         <h3 class="mb-8">Admin Portal</h3>
         <p class="text-sm text-muted mb-16">System configuration, user management, product catalog, consent registry, regulatory monitoring, and API tokens.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="badge badge-red">Products</span>
-          <span class="badge badge-red">Consent Registry</span>
-          <span class="badge badge-red">Users</span>
-          <span class="badge badge-red">Tokens</span>
-        </div>
+        <ul style="list-style:none;padding:0;" class="text-sm text-muted">
+          <li class="mb-8">&#9656; Products</li>
+          <li class="mb-8">&#9656; Consent Registry</li>
+          <li class="mb-8">&#9656; Users</li>
+          <li>&#9656; Tokens</li>
+        </ul>
         <div class="mt-24 text-xs text-dim">bankoffer.lupulup.com<span style="color:var(--red);font-weight:600;"> /admin</span></div>
       </div>
     </div>
@@ -425,21 +356,20 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 4: AI ENGINE ============================== -->
 <section class="slide" id="slide-3">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--green); bottom: -100px; right: -100px;"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Core Engine</span>
-      <h2>AI-Powered <span class="gradient-text-green">Personalization</span></h2>
+      <h2>AI-Powered <span class="gradient-text">Personalization</span></h2>
       <p class="subtitle" style="margin: 16px auto 0;">From raw transactions to hyper-personalized offers in milliseconds</p>
     </div>
-    <div class="grid-4 mb-40 fade-up delay-1">
+    <div class="grid-2 mb-40 fade-up delay-1">
       <div class="flow-step">
         <div class="flow-num" style="background:rgba(6,182,212,0.15);color:var(--cyan);">1</div>
         <h3 class="mb-8" style="font-size:0.95rem;">Ingest</h3>
         <p class="text-xs text-muted">Transaction streams, events, and customer data flow into the feature store</p>
       </div>
       <div class="flow-step">
-        <div class="flow-num" style="background:rgba(99,102,241,0.15);color:var(--accent-light);">2</div>
+        <div class="flow-num" style="background:rgba(30,58,138,0.15);color:var(--accent-light);">2</div>
         <h3 class="mb-8" style="font-size:0.95rem;">Profile</h3>
         <p class="text-xs text-muted">Customer profiler classifies life stage, risk tolerance, and segments</p>
       </div>
@@ -504,13 +434,12 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 5: COMPLIANCE ============================== -->
 <section class="slide" id="slide-4">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--amber); top: -200px; left: 50%; transform: translateX(-50%);"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Regulatory Framework</span>
-      <h2>Five EU Regulations,<br><span class="gradient-text-amber">One Platform</span></h2>
+      <h2>Five EU Regulations,<br><span class="gradient-text">One Platform</span></h2>
     </div>
-    <div class="grid-3 fade-up delay-1">
+    <div class="grid-2 fade-up delay-1">
       <!-- GDPR -->
       <div class="card">
         <div class="flex-center gap-16 mb-16" style="justify-content:flex-start;">
@@ -562,7 +491,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="grid-2 mt-24 fade-up delay-2">
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(16,185,129,0.15);width:40px;height:40px;border-radius:10px;">
+          <div class="icon-circle" style="background:rgba(16,185,129,0.15);">
             <svg width="20" height="20" fill="none" stroke="var(--green)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
           </div>
           <div>
@@ -573,7 +502,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       </div>
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(99,102,241,0.15);width:40px;height:40px;border-radius:10px;">
+          <div class="icon-circle" style="background:rgba(30,58,138,0.15);">
             <svg width="20" height="20" fill="none" stroke="var(--accent-light)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           </div>
           <div>
@@ -589,15 +518,14 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 6: ONBOARDING ============================== -->
 <section class="slide" id="slide-5">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--accent); bottom: 0; left: 50%; transform: translateX(-50%);"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Customer Journey</span>
       <h2>Onboarding <span class="gradient-text">Wizard</span></h2>
       <p class="subtitle" style="margin: 16px auto 0;">Three steps from registration to personalized offers</p>
     </div>
     <div class="grid-3 fade-up delay-1">
-      <div class="card text-center">
+      <div class="card">
         <div class="flex-center mb-16">
           <div class="flow-num" style="background:rgba(6,182,212,0.15);color:var(--cyan);margin-bottom:0;">1</div>
         </div>
@@ -609,7 +537,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
           <span class="badge badge-cyan">AI Act Art. 13</span>
         </div>
       </div>
-      <div class="card text-center">
+      <div class="card">
         <div class="flex-center mb-16">
           <div class="flow-num" style="background:rgba(167,139,250,0.15);color:var(--purple);margin-bottom:0;">2</div>
         </div>
@@ -621,7 +549,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
           <span class="badge badge-purple">Segments</span>
         </div>
       </div>
-      <div class="card text-center">
+      <div class="card">
         <div class="flex-center mb-16">
           <div class="flow-num" style="background:rgba(16,185,129,0.15);color:var(--green);margin-bottom:0;">3</div>
         </div>
@@ -643,9 +571,9 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <section class="slide" id="slide-6">
   <div class="bg-grid"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Admin Tools</span>
-      <h2>Consent Registry &amp;<br><span class="gradient-text-amber">Regulatory Monitoring</span></h2>
+      <h2>Consent Registry &amp;<br><span class="gradient-text">Regulatory Monitoring</span></h2>
     </div>
     <div class="grid-2 fade-up delay-1">
       <div class="card">
@@ -707,9 +635,8 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 8: TECH STACK ============================== -->
 <section class="slide" id="slide-7">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--cyan); top: 50%; right: -200px; transform: translateY(-50%);"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Technology</span>
       <h2>Modern <span class="gradient-text">Stack</span></h2>
     </div>
@@ -751,9 +678,8 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 9: ARCHITECTURE ============================== -->
 <section class="slide" id="slide-8">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--accent); top: 50%; left: 50%; transform: translate(-50%,-50%); width: 700px; height: 700px;"></div>
   <div class="slide-inner">
-    <div class="text-center mb-40 fade-up">
+    <div class="mb-40 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Infrastructure</span>
       <h2>System <span class="gradient-text">Architecture</span></h2>
       <p class="subtitle" style="margin: 12px auto 0;">End-to-end request flow from browser to database</p>
@@ -776,7 +702,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <text x="16" y="458" fill="var(--text3)" font-size="10" font-weight="700" letter-spacing="0.1em">DATA</text>
 
         <!-- ── SECURITY ZONE 1: Employee Domain ── -->
-        <rect x="118" y="4" width="370" height="90" rx="14" fill="rgba(99,102,241,0.03)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6,4"/>
+        <rect x="118" y="4" width="370" height="90" rx="14" fill="rgba(30,58,138,0.03)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6,4"/>
         <text x="303" y="104" fill="var(--accent-light)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">bankoffer.lupulup.com</text>
 
         <!-- ── SECURITY ZONE 2: Customer Domain ── -->
@@ -899,7 +825,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <text x="928" y="208" fill="#06b6d4" font-size="8" font-weight="700" text-anchor="middle">TLS PER DOMAIN</text>
         <text x="928" y="220" fill="var(--text3)" font-size="7" text-anchor="middle">Let's Encrypt certs</text>
 
-        <rect x="870" y="238" width="115" height="34" rx="8" fill="rgba(99,102,241,0.08)" stroke="var(--accent)" stroke-width="0.8"/>
+        <rect x="870" y="238" width="115" height="34" rx="8" fill="rgba(30,58,138,0.08)" stroke="var(--accent)" stroke-width="0.8"/>
         <text x="928" y="252" fill="var(--accent-light)" font-size="8" font-weight="700" text-anchor="middle">CORS ENFORCEMENT</text>
         <text x="928" y="264" fill="var(--text3)" font-size="7" text-anchor="middle">Per-origin allow list</text>
 
@@ -912,9 +838,9 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <section class="slide" id="slide-9">
   <div class="bg-grid"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Transparency</span>
-      <h2>Immutable <span class="gradient-text-purple">Audit Trail</span></h2>
+      <h2>Immutable <span class="gradient-text">Audit Trail</span></h2>
       <p class="subtitle" style="margin: 16px auto 0;">Every recommendation is fully traceable end-to-end</p>
     </div>
     <div class="card fade-up delay-1" style="overflow-x:auto;">
@@ -958,12 +884,10 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 11: TEAM ============================== -->
 <section class="slide" id="slide-10">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--purple); top: -200px; right: -100px;"></div>
-  <div class="bg-glow" style="background: var(--cyan); bottom: -200px; left: -100px;"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">The People &amp; Agents</span>
-      <h2>Meet the <span class="gradient-text-purple">Team</span></h2>
+      <h2>Meet the <span class="gradient-text">Team</span></h2>
       <p class="subtitle" style="margin: 16px auto 0;">Two humans and a multi-agent Claude hierarchy building together</p>
     </div>
 
@@ -971,7 +895,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="grid-2 mb-32 fade-up delay-1">
       <div class="card" style="border-color: rgba(6,182,212,0.3);">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(6,182,212,0.15);width:56px;height:56px;border-radius:16px;">
+          <div class="icon-circle" style="background:rgba(6,182,212,0.15);">
             <svg width="28" height="28" fill="none" stroke="var(--cyan)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           </div>
           <div>
@@ -990,7 +914,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       </div>
       <div class="card" style="border-color: rgba(245,158,11,0.3);">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(245,158,11,0.15);width:56px;height:56px;border-radius:16px;">
+          <div class="icon-circle" style="background:rgba(245,158,11,0.15);">
             <svg width="28" height="28" fill="none" stroke="var(--amber)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
           </div>
           <div>
@@ -1079,11 +1003,10 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 12: SDLC GITOPS ============================== -->
 <section class="slide" id="slide-11">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--green); top: 50%; left: -200px; transform: translateY(-50%);"></div>
   <div class="slide-inner">
-    <div class="text-center mb-48 fade-up">
+    <div class="mb-48 fade-up">
       <span class="label text-dim mb-8" style="display:block;">Development Lifecycle</span>
-      <h2>SDLC GitOps<br><span class="gradient-text-green">Shifted Left</span></h2>
+      <h2>SDLC GitOps<br><span class="gradient-text">Shifted Left</span></h2>
       <p class="subtitle" style="margin: 16px auto 0;">Security, compliance, and testing embedded from the first commit</p>
     </div>
 
@@ -1145,7 +1068,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     <div class="grid-3 mt-32 fade-up delay-2">
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(239,68,68,0.12);width:40px;height:40px;border-radius:10px;">
+          <div class="icon-circle" style="background:rgba(239,68,68,0.12);">
             <svg width="20" height="20" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           </div>
           <div>
@@ -1156,7 +1079,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       </div>
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(167,139,250,0.15);width:40px;height:40px;border-radius:10px;">
+          <div class="icon-circle" style="background:rgba(167,139,250,0.15);">
             <svg width="20" height="20" fill="none" stroke="var(--purple)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </div>
           <div>
@@ -1167,7 +1090,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
       </div>
       <div class="card card-sm">
         <div class="flex-center gap-16" style="justify-content:flex-start;">
-          <div class="icon-circle" style="background:rgba(16,185,129,0.15);width:40px;height:40px;border-radius:10px;">
+          <div class="icon-circle" style="background:rgba(16,185,129,0.15);">
             <svg width="20" height="20" fill="none" stroke="var(--green)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           <div>
@@ -1183,7 +1106,6 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 <!-- ============================== SLIDE 13: DEMO ============================== -->
 <section class="slide" id="slide-12">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--accent); top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;"></div>
   <div class="slide-inner text-center">
     <div class="fade-up">
       <div class="mb-16">
@@ -1229,35 +1151,28 @@ h3 { font-size: 1.25rem; font-weight: 700; }
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         Open Live Demo
       </a>
-      <a href="https://bankoffer.lupulup.com/docs" target="_blank" class="cta-btn cta-outline">
-        Swagger API Docs
-      </a>
-      <a href="https://github.com/bogdandragosvasile/BankOfferingAI" target="_blank" class="cta-btn cta-outline">
-        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        GitHub
-      </a>
+      <a href="https://bankoffer.lupulup.com/docs" target="_blank" style="color:var(--text2);text-decoration:underline;font-size:0.85rem;margin-left:16px;">API Docs</a>
     </div>
-    <p class="text-xs text-dim mt-32 fade-up delay-3">BankOffer AI v1.1.0 &bull; Built with FastAPI, PostgreSQL, Redis, Keycloak &bull; Deployed on OpenStack</p>
+    <p class="text-xs text-dim mt-32 fade-up delay-3">BankOffer AI v1.4.0 &bull; Built with FastAPI, PostgreSQL, Redis, Keycloak &bull; Deployed on OpenStack</p>
   </div>
 </section>
 
 <!-- ============================== SLIDE 14: QR CODE ============================== -->
 <section class="slide" id="slide-13">
   <div class="bg-grid"></div>
-  <div class="bg-glow" style="background: var(--green); top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;"></div>
   <div class="slide-inner text-center">
     <div class="fade-up">
       <div class="mb-16">
         <span class="badge badge-green" style="font-size:0.8rem;">Try it yourself</span>
       </div>
-      <h2 class="mb-16">Scan to <span class="gradient-text-green">Register</span></h2>
+      <h2 class="mb-16">Scan to <span class="gradient-text">Register</span></h2>
       <p class="subtitle" style="margin: 0 auto 40px;">Open the Customer Portal on your phone, create an account, and get personalized banking offers in seconds.</p>
     </div>
     <div class="fade-up delay-1" style="display:inline-block;">
       <div class="card" style="padding:40px; border-color: rgba(16,185,129,0.3); display:inline-block;">
         <svg viewBox="0 0 33 33" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:260px;display:block;">
           <rect width="33" height="33" fill="white" rx="2"/>
-          <path d="M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM10,2H11V3H10zM11,2H12V3H11zM12,2H13V3H12zM13,2H14V3H13zM14,2H15V3H14zM17,2H18V3H17zM18,2H19V3H18zM21,2H22V3H21zM22,2H23V3H22zM24,2H25V3H24zM25,2H26V3H25zM26,2H27V3H26zM27,2H28V3H27zM28,2H29V3H28zM29,2H30V3H29zM30,2H31V3H30zM2,3H3V4H2zM8,3H9V4H8zM10,3H11V4H10zM12,3H13V4H12zM16,3H17V4H16zM17,3H18V4H17zM19,3H20V4H19zM20,3H21V4H20zM22,3H23V4H22zM24,3H25V4H24zM30,3H31V4H30zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM13,4H14V5H13zM14,4H15V5H14zM15,4H16V5H15zM16,4H17V5H16zM17,4H18V5H17zM20,4H21V5H20zM21,4H22V5H21zM22,4H23V5H22zM24,4H25V5H24zM26,4H27V5H26zM27,4H28V5H27zM28,4H29V5H28zM30,4H31V5H30zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM10,5H11V6H10zM11,5H12V6H11zM13,5H14V6H13zM14,5H15V6H14zM18,5H19V6H18zM19,5H20V6H19zM21,5H22V6H21zM24,5H25V6H24zM26,5H27V6H26zM27,5H28V6H27zM28,5H29V6H28zM30,5H31V6H30zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM11,6H12V7H11zM13,6H14V7H13zM14,6H15V7H14zM15,6H16V7H15zM19,6H20V7H19zM20,6H21V7H20zM21,6H22V7H21zM24,6H25V7H24zM26,6H27V7H26zM27,6H28V7H27zM28,6H29V7H28zM30,6H31V7H30zM2,7H3V8H2zM8,7H9V8H8zM12,7H13V8H12zM13,7H14V8H13zM14,7H15V8H14zM16,7H17V8H16zM21,7H22V8H21zM24,7H25V8H24zM30,7H31V8H30zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM25,8H26V9H25zM26,8H27V9H26zM27,8H28V9H27zM28,8H29V9H28zM29,8H30V9H29zM30,8H31V9H30zM10,9H11V10H10zM11,9H12V10H11zM14,9H15V10H14zM15,9H16V10H15zM16,9H17V10H16zM19,9H20V10H19zM21,9H22V10H21zM2,10H3V11H2zM4,10H5V11H4zM5,10H6V11H5zM7,10H8V11H7zM8,10H9V11H8zM9,10H10V11H9zM15,10H16V11H15zM16,10H17V11H16zM18,10H19V11H18zM19,10H20V11H19zM20,10H21V11H20zM24,10H25V11H24zM27,10H28V11H27zM29,10H30V11H29zM30,10H31V11H30zM4,11H5V12H4zM5,11H6V12H5zM9,11H10V12H9zM13,11H14V12H13zM17,11H18V12H17zM18,11H19V12H18zM21,11H22V12H21zM23,11H24V12H23zM24,11H25V12H24zM25,11H26V12H25zM26,11H27V12H26zM30,11H31V12H30zM2,12H3V13H2zM4,12H5V13H4zM5,12H6V13H5zM6,12H7V13H6zM8,12H9V13H8zM10,12H11V13H10zM14,12H15V13H14zM16,12H17V13H16zM17,12H18V13H17zM19,12H20V13H19zM20,12H21V13H20zM22,12H23V13H22zM25,12H26V13H25zM26,12H27V13H26zM28,12H29V13H28zM29,12H30V13H29zM6,13H7V14H6zM7,13H8V14H7zM9,13H10V14H9zM10,13H11V14H10zM12,13H13V14H12zM14,13H15V14H14zM15,13H16V14H15zM16,13H17V14H16zM17,13H18V14H17zM20,13H21V14H20zM23,13H24V14H23zM24,13H25V14H24zM30,13H31V14H30zM2,14H3V15H2zM3,14H4V15H3zM4,14H5V15H4zM5,14H6V15H5zM6,14H7V15H6zM8,14H9V15H8zM9,14H10V15H9zM10,14H11V15H10zM11,14H12V15H11zM14,14H15V15H14zM19,14H20V15H19zM22,14H23V15H22zM27,14H28V15H27zM28,14H29V15H28zM2,15H3V16H2zM9,15H10V16H9zM10,15H11V16H10zM13,15H14V16H13zM15,15H16V16H15zM21,15H22V16H21zM24,15H25V16H24zM28,15H29V16H28zM29,15H30V16H29zM30,15H31V16H30zM3,16H4V17H3zM4,16H5V17H4zM6,16H7V17H6zM7,16H8V17H7zM8,16H9V17H8zM12,16H13V17H12zM14,16H15V17H14zM16,16H17V17H16zM20,16H21V17H20zM21,16H22V17H21zM22,16H23V17H22zM23,16H24V17H23zM25,16H26V17H25zM28,16H29V17H28zM29,16H30V17H29zM30,16H31V17H30zM6,17H7V18H6zM7,17H8V18H7zM11,17H12V18H11zM14,17H15V18H14zM15,17H16V18H15zM18,17H19V18H18zM20,17H21V18H20zM22,17H23V18H22zM23,17H24V18H23zM24,17H25V18H24zM25,17H26V18H25zM29,17H30V18H29zM3,18H4V19H3zM7,18H8V19H7zM8,18H9V19H8zM13,18H14V19H13zM17,18H18V19H17zM20,18H21V19H20zM22,18H23V19H22zM23,18H24V19H23zM25,18H26V19H25zM26,18H27V19H26zM27,18H28V19H27zM29,18H30V19H29zM5,19H6V20H5zM6,19H7V20H6zM7,19H8V20H7zM9,19H10V20H9zM11,19H12V20H11zM14,19H15V20H14zM15,19H16V20H15zM17,19H18V20H17zM18,19H19V20H18zM20,19H21V20H20zM22,19H23V20H22zM27,19H28V20H27zM28,19H29V20H28zM29,19H30V20H29zM2,20H3V21H2zM5,20H6V21H5zM7,20H8V21H7zM8,20H9V21H8zM10,20H11V21H10zM11,20H12V21H11zM17,20H18V21H17zM18,20H19V21H18zM23,20H24V21H23zM24,20H25V21H24zM25,20H26V21H25zM26,20H27V21H26zM28,20H29V21H28zM6,21H7V22H6zM13,21H14V22H13zM18,21H19V22H18zM19,21H20V22H19zM20,21H21V22H20zM21,21H22V22H21zM23,21H24V22H23zM24,21H25V22H24zM25,21H26V22H25zM26,21H27V22H26zM28,21H29V22H28zM3,22H4V23H3zM4,22H5V23H4zM6,22H7V23H6zM7,22H8V23H7zM8,22H9V23H8zM9,22H10V23H9zM11,22H12V23H11zM12,22H13V23H12zM13,22H14V23H13zM15,22H16V23H15zM17,22H18V23H17zM18,22H19V23H18zM19,22H20V23H19zM20,22H21V23H20zM21,22H22V23H21zM22,22H23V23H22zM23,22H24V23H23zM24,22H25V23H24zM25,22H26V23H25zM26,22H27V23H26zM27,22H28V23H27zM28,22H29V23H28zM10,23H11V24H10zM11,23H12V24H11zM15,23H16V24H15zM16,23H17V24H16zM18,23H19V24H18zM22,23H23V24H22zM26,23H27V24H26zM27,23H28V24H27zM28,23H29V24H28zM29,23H30V24H29zM30,23H31V24H30zM2,24H3V25H2zM3,24H4V25H3zM4,24H5V25H4zM5,24H6V25H5zM6,24H7V25H6zM7,24H8V25H7zM8,24H9V25H8zM10,24H11V25H10zM12,24H13V25H12zM13,24H14V25H13zM15,24H16V25H15zM18,24H19V25H18zM19,24H20V25H19zM21,24H22V25H21zM22,24H23V25H22zM24,24H25V25H24zM26,24H27V25H26zM27,24H28V25H27zM29,24H30V25H29zM2,25H3V26H2zM8,25H9V26H8zM10,25H11V26H10zM11,25H12V26H11zM17,25H18V26H17zM22,25H23V26H22zM26,25H27V26H26zM27,25H28V26H27zM29,25H30V26H29zM30,25H31V26H30zM2,26H3V27H2zM4,26H5V27H4zM5,26H6V27H5zM6,26H7V27H6zM8,26H9V27H8zM12,26H13V27H12zM13,26H14V27H13zM16,26H17V27H16zM19,26H20V27H19zM20,26H21V27H20zM22,26H23V27H22zM23,26H24V27H23zM24,26H25V27H24zM25,26H26V27H25zM26,26H27V27H26zM28,26H29V27H28zM29,26H30V27H29zM2,27H3V28H2zM4,27H5V28H4zM5,27H6V28H5zM6,27H7V28H6zM8,27H9V28H8zM10,27H11V28H10zM11,27H12V28H11zM13,27H14V28H13zM16,27H17V28H16zM17,27H18V28H17zM18,27H19V28H18zM23,27H24V28H23zM26,27H27V28H26zM27,27H28V28H27zM30,27H31V28H30zM2,28H3V29H2zM4,28H5V29H4zM5,28H6V29H5zM6,28H7V29H6zM8,28H9V29H8zM10,28H11V29H10zM11,28H12V29H11zM19,28H20V29H19zM20,28H21V29H20zM25,28H26V29H25zM28,28H29V29H28zM30,28H31V29H30zM2,29H3V30H2zM8,29H9V30H8zM11,29H12V30H11zM12,29H13V30H12zM15,29H16V30H15zM16,29H17V30H16zM20,29H21V30H20zM22,29H23V30H22zM24,29H25V30H24zM25,29H26V30H25zM26,29H27V30H26zM27,29H28V30H27zM29,29H30V30H29zM2,30H3V31H2zM3,30H4V31H3zM4,30H5V31H4zM5,30H6V31H5zM6,30H7V31H6zM7,30H8V31H7zM8,30H9V31H8zM10,30H11V31H10zM12,30H13V31H12zM15,30H16V31H15zM16,30H17V31H16zM20,30H21V31H20zM21,30H22V31H21zM22,30H23V31H22zM23,30H24V31H23zM24,30H25V31H24zM26,30H27V31H26zM29,30H30V31H29z" fill="#6366f1"/>
+          <path d="M2,2H3V3H2zM3,2H4V3H3zM4,2H5V3H4zM5,2H6V3H5zM6,2H7V3H6zM7,2H8V3H7zM8,2H9V3H8zM10,2H11V3H10zM11,2H12V3H11zM12,2H13V3H12zM13,2H14V3H13zM14,2H15V3H14zM17,2H18V3H17zM18,2H19V3H18zM21,2H22V3H21zM22,2H23V3H22zM24,2H25V3H24zM25,2H26V3H25zM26,2H27V3H26zM27,2H28V3H27zM28,2H29V3H28zM29,2H30V3H29zM30,2H31V3H30zM2,3H3V4H2zM8,3H9V4H8zM10,3H11V4H10zM12,3H13V4H12zM16,3H17V4H16zM17,3H18V4H17zM19,3H20V4H19zM20,3H21V4H20zM22,3H23V4H22zM24,3H25V4H24zM30,3H31V4H30zM2,4H3V5H2zM4,4H5V5H4zM5,4H6V5H5zM6,4H7V5H6zM8,4H9V5H8zM13,4H14V5H13zM14,4H15V5H14zM15,4H16V5H15zM16,4H17V5H16zM17,4H18V5H17zM20,4H21V5H20zM21,4H22V5H21zM22,4H23V5H22zM24,4H25V5H24zM26,4H27V5H26zM27,4H28V5H27zM28,4H29V5H28zM30,4H31V5H30zM2,5H3V6H2zM4,5H5V6H4zM5,5H6V6H5zM6,5H7V6H6zM8,5H9V6H8zM10,5H11V6H10zM11,5H12V6H11zM13,5H14V6H13zM14,5H15V6H14zM18,5H19V6H18zM19,5H20V6H19zM21,5H22V6H21zM24,5H25V6H24zM26,5H27V6H26zM27,5H28V6H27zM28,5H29V6H28zM30,5H31V6H30zM2,6H3V7H2zM4,6H5V7H4zM5,6H6V7H5zM6,6H7V7H6zM8,6H9V7H8zM11,6H12V7H11zM13,6H14V7H13zM14,6H15V7H14zM15,6H16V7H15zM19,6H20V7H19zM20,6H21V7H20zM21,6H22V7H21zM24,6H25V7H24zM26,6H27V7H26zM27,6H28V7H27zM28,6H29V7H28zM30,6H31V7H30zM2,7H3V8H2zM8,7H9V8H8zM12,7H13V8H12zM13,7H14V8H13zM14,7H15V8H14zM16,7H17V8H16zM21,7H22V8H21zM24,7H25V8H24zM30,7H31V8H30zM2,8H3V9H2zM3,8H4V9H3zM4,8H5V9H4zM5,8H6V9H5zM6,8H7V9H6zM7,8H8V9H7zM8,8H9V9H8zM10,8H11V9H10zM12,8H13V9H12zM14,8H15V9H14zM16,8H17V9H16zM18,8H19V9H18zM20,8H21V9H20zM22,8H23V9H22zM24,8H25V9H24zM25,8H26V9H25zM26,8H27V9H26zM27,8H28V9H27zM28,8H29V9H28zM29,8H30V9H29zM30,8H31V9H30zM10,9H11V10H10zM11,9H12V10H11zM14,9H15V10H14zM15,9H16V10H15zM16,9H17V10H16zM19,9H20V10H19zM21,9H22V10H21zM2,10H3V11H2zM4,10H5V11H4zM5,10H6V11H5zM7,10H8V11H7zM8,10H9V11H8zM9,10H10V11H9zM15,10H16V11H15zM16,10H17V11H16zM18,10H19V11H18zM19,10H20V11H19zM20,10H21V11H20zM24,10H25V11H24zM27,10H28V11H27zM29,10H30V11H29zM30,10H31V11H30zM4,11H5V12H4zM5,11H6V12H5zM9,11H10V12H9zM13,11H14V12H13zM17,11H18V12H17zM18,11H19V12H18zM21,11H22V12H21zM23,11H24V12H23zM24,11H25V12H24zM25,11H26V12H25zM26,11H27V12H26zM30,11H31V12H30zM2,12H3V13H2zM4,12H5V13H4zM5,12H6V13H5zM6,12H7V13H6zM8,12H9V13H8zM10,12H11V13H10zM14,12H15V13H14zM16,12H17V13H16zM17,12H18V13H17zM19,12H20V13H19zM20,12H21V13H20zM22,12H23V13H22zM25,12H26V13H25zM26,12H27V13H26zM28,12H29V13H28zM29,12H30V13H29zM6,13H7V14H6zM7,13H8V14H7zM9,13H10V14H9zM10,13H11V14H10zM12,13H13V14H12zM14,13H15V14H14zM15,13H16V14H15zM16,13H17V14H16zM17,13H18V14H17zM20,13H21V14H20zM23,13H24V14H23zM24,13H25V14H24zM30,13H31V14H30zM2,14H3V15H2zM3,14H4V15H3zM4,14H5V15H4zM5,14H6V15H5zM6,14H7V15H6zM8,14H9V15H8zM9,14H10V15H9zM10,14H11V15H10zM11,14H12V15H11zM14,14H15V15H14zM19,14H20V15H19zM22,14H23V15H22zM27,14H28V15H27zM28,14H29V15H28zM2,15H3V16H2zM9,15H10V16H9zM10,15H11V16H10zM13,15H14V16H13zM15,15H16V16H15zM21,15H22V16H21zM24,15H25V16H24zM28,15H29V16H28zM29,15H30V16H29zM30,15H31V16H30zM3,16H4V17H3zM4,16H5V17H4zM6,16H7V17H6zM7,16H8V17H7zM8,16H9V17H8zM12,16H13V17H12zM14,16H15V17H14zM16,16H17V17H16zM20,16H21V17H20zM21,16H22V17H21zM22,16H23V17H22zM23,16H24V17H23zM25,16H26V17H25zM28,16H29V17H28zM29,16H30V17H29zM30,16H31V17H30zM6,17H7V18H6zM7,17H8V18H7zM11,17H12V18H11zM14,17H15V18H14zM15,17H16V18H15zM18,17H19V18H18zM20,17H21V18H20zM22,17H23V18H22zM23,17H24V18H23zM24,17H25V18H24zM25,17H26V18H25zM29,17H30V18H29zM3,18H4V19H3zM7,18H8V19H7zM8,18H9V19H8zM13,18H14V19H13zM17,18H18V19H17zM20,18H21V19H20zM22,18H23V19H22zM23,18H24V19H23zM25,18H26V19H25zM26,18H27V19H26zM27,18H28V19H27zM29,18H30V19H29zM5,19H6V20H5zM6,19H7V20H6zM7,19H8V20H7zM9,19H10V20H9zM11,19H12V20H11zM14,19H15V20H14zM15,19H16V20H15zM17,19H18V20H17zM18,19H19V20H18zM20,19H21V20H20zM22,19H23V20H22zM27,19H28V20H27zM28,19H29V20H28zM29,19H30V20H29zM2,20H3V21H2zM5,20H6V21H5zM7,20H8V21H7zM8,20H9V21H8zM10,20H11V21H10zM11,20H12V21H11zM17,20H18V21H17zM18,20H19V21H18zM23,20H24V21H23zM24,20H25V21H24zM25,20H26V21H25zM26,20H27V21H26zM28,20H29V21H28zM6,21H7V22H6zM13,21H14V22H13zM18,21H19V22H18zM19,21H20V22H19zM20,21H21V22H20zM21,21H22V22H21zM23,21H24V22H23zM24,21H25V22H24zM25,21H26V22H25zM26,21H27V22H26zM28,21H29V22H28zM3,22H4V23H3zM4,22H5V23H4zM6,22H7V23H6zM7,22H8V23H7zM8,22H9V23H8zM9,22H10V23H9zM11,22H12V23H11zM12,22H13V23H12zM13,22H14V23H13zM15,22H16V23H15zM17,22H18V23H17zM18,22H19V23H18zM19,22H20V23H19zM20,22H21V23H20zM21,22H22V23H21zM22,22H23V23H22zM23,22H24V23H23zM24,22H25V23H24zM25,22H26V23H25zM26,22H27V23H26zM27,22H28V23H27zM28,22H29V23H28zM10,23H11V24H10zM11,23H12V24H11zM15,23H16V24H15zM16,23H17V24H16zM18,23H19V24H18zM22,23H23V24H22zM26,23H27V24H26zM27,23H28V24H27zM28,23H29V24H28zM29,23H30V24H29zM30,23H31V24H30zM2,24H3V25H2zM3,24H4V25H3zM4,24H5V25H4zM5,24H6V25H5zM6,24H7V25H6zM7,24H8V25H7zM8,24H9V25H8zM10,24H11V25H10zM12,24H13V25H12zM13,24H14V25H13zM15,24H16V25H15zM18,24H19V25H18zM19,24H20V25H19zM21,24H22V25H21zM22,24H23V25H22zM24,24H25V25H24zM26,24H27V25H26zM27,24H28V25H27zM29,24H30V25H29zM2,25H3V26H2zM8,25H9V26H8zM10,25H11V26H10zM11,25H12V26H11zM17,25H18V26H17zM22,25H23V26H22zM26,25H27V26H26zM27,25H28V26H27zM29,25H30V26H29zM30,25H31V26H30zM2,26H3V27H2zM4,26H5V27H4zM5,26H6V27H5zM6,26H7V27H6zM8,26H9V27H8zM12,26H13V27H12zM13,26H14V27H13zM16,26H17V27H16zM19,26H20V27H19zM20,26H21V27H20zM22,26H23V27H22zM23,26H24V27H23zM24,26H25V27H24zM25,26H26V27H25zM26,26H27V27H26zM28,26H29V27H28zM29,26H30V27H29zM2,27H3V28H2zM4,27H5V28H4zM5,27H6V28H5zM6,27H7V28H6zM8,27H9V28H8zM10,27H11V28H10zM11,27H12V28H11zM13,27H14V28H13zM16,27H17V28H16zM17,27H18V28H17zM18,27H19V28H18zM23,27H24V28H23zM26,27H27V28H26zM27,27H28V28H27zM30,27H31V28H30zM2,28H3V29H2zM4,28H5V29H4zM5,28H6V29H5zM6,28H7V29H6zM8,28H9V29H8zM10,28H11V29H10zM11,28H12V29H11zM19,28H20V29H19zM20,28H21V29H20zM25,28H26V29H25zM28,28H29V29H28zM30,28H31V29H30zM2,29H3V30H2zM8,29H9V30H8zM11,29H12V30H11zM12,29H13V30H12zM15,29H16V30H15zM16,29H17V30H16zM20,29H21V30H20zM22,29H23V30H22zM24,29H25V30H24zM25,29H26V30H25zM26,29H27V30H26zM27,29H28V30H27zM29,29H30V30H29zM2,30H3V31H2zM3,30H4V31H3zM4,30H5V31H4zM5,30H6V31H5zM6,30H7V31H6zM7,30H8V31H7zM8,30H9V31H8zM10,30H11V31H10zM12,30H13V31H12zM15,30H16V31H15zM16,30H17V31H16zM20,30H21V31H20zM21,30H22V31H21zM22,30H23V31H22zM23,30H24V31H23zM24,30H25V31H24zM26,30H27V31H26zM29,30H30V31H29z" fill="#1e3a8a"/>
         </svg>
         <div class="mt-24 text-center">
           <p style="font-size:1.1rem;font-weight:700;color:var(--green);">my-bankoffer.lupulup.com</p>
@@ -1267,7 +1182,7 @@ h3 { font-size: 1.25rem; font-weight: 700; }
     </div>
     <div class="mt-40 fade-up delay-2">
       <p class="text-sm text-muted mb-16" style="max-width:500px;margin:0 auto;">Create an account with any email, complete the onboarding wizard, and receive AI-generated personalized banking offers.</p>
-      <a href="https://my-bankoffer.lupulup.com/" target="_blank" class="cta-btn cta-primary" style="background: var(--green);">
+      <a href="https://my-bankoffer.lupulup.com/" target="_blank" class="cta-btn cta-primary" style="background: var(--accent);">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         Open Customer Portal
       </a>
@@ -1277,24 +1192,22 @@ h3 { font-size: 1.25rem; font-weight: 700; }
 </section>
 
 <script>
-// ===== NAV DOTS =====
+// ===== SLIDE COUNTER =====
 const slides = document.querySelectorAll('.slide');
-const navDots = document.getElementById('navDots');
-slides.forEach((_, i) => {
-  const dot = document.createElement('button');
-  dot.className = 'pill-dot' + (i === 0 ? ' active' : '');
-  dot.onclick = () => slides[i].scrollIntoView({ behavior: 'smooth' });
-  navDots.appendChild(dot);
-});
+const counterSpan = document.getElementById('current-slide');
+
+function updateCounter(idx) {
+  counterSpan.textContent = idx + 1;
+}
 
 // ===== SCROLL ANIMATIONS =====
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.querySelectorAll('.fade-up').forEach(el => el.classList.add('visible'));
-      // Update nav dots
+      // Update slide counter
       const idx = Array.from(slides).indexOf(entry.target);
-      document.querySelectorAll('.pill-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+      updateCounter(idx);
     }
   });
 }, { threshold: 0.3 });
@@ -1307,10 +1220,12 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     currentSlide = Math.min(currentSlide + 1, slides.length - 1);
     slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+    updateCounter(currentSlide);
   } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
     e.preventDefault();
     currentSlide = Math.max(currentSlide - 1, 0);
     slides[currentSlide].scrollIntoView({ behavior: 'smooth' });
+    updateCounter(currentSlide);
   }
 });
 
@@ -1320,26 +1235,10 @@ window.addEventListener('scroll', () => {
     const rect = s.getBoundingClientRect();
     if (rect.top < window.innerHeight / 2 && rect.bottom > window.innerHeight / 2) {
       currentSlide = i;
+      updateCounter(i);
     }
   });
 });
-
-// ===== THEME TOGGLE =====
-(function() {
-  const saved = localStorage.getItem('pres-theme');
-  if (saved) document.documentElement.setAttribute('data-theme', saved);
-
-  document.getElementById('themeToggle').addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'light' ? 'dark' : 'light';
-    if (next === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', next);
-    }
-    localStorage.setItem('pres-theme', next);
-  });
-})();
 </script>
 </body>
 </html>
