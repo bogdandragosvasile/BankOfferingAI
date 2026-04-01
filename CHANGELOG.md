@@ -2,6 +2,26 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.1.0] — 2026-04-01
+
+### Added
+
+- **Employee ↔ Customer workflow.** Full-cycle offer acceptance → notification → form → submission:
+  - `notifications` and `application_forms` database tables
+  - `/workflow/*` API router: notification CRUD, form lifecycle (create, list, submit)
+  - Auto-create employee notification when customer accepts/rejects an offer
+  - **Employee portal**: notification bell with unread badge (polls every 15s), dropdown panel,
+    "Send Form" button with template selection (Standard, Investment, Loan, Insurance)
+  - **Customer portal**: "My Forms" navigation tab, form rendering with field types
+    (text, number, date, checkbox, textarea), submission flow
+  - Form submission triggers a back-notification to the employee
+
+### Commit History
+
+- `fc8a0a1` feat: implement Employee ↔ Customer workflow (notifications + forms)
+
+---
+
 ## [2.0.0] — 2026-04-01
 
 ### Changed
