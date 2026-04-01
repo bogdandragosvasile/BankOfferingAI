@@ -185,7 +185,8 @@ async def sso_lookup(email: str, request: Request):
         result = await session.execute(
             text(
                 "SELECT ca.customer_id, ca.display_name, c.external_id, ca.anonymize_after, "
-                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete "
+                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete, "
+                "ca.last_login "
                 "FROM customer_auth ca "
                 "JOIN customers c ON c.customer_id = ca.customer_id "
                 "WHERE ca.email_hash = :eh"
@@ -197,12 +198,23 @@ async def sso_lookup(email: str, request: Request):
         if not row:
             raise HTTPException(status_code=404, detail="No customer account linked to this email")
 
+        onboarding_complete = row[4]
+        # Existing users (who logged in before onboarding was added) should
+        # skip the wizard — auto-complete onboarding for them.
+        if not onboarding_complete and row[5] is not None:
+            onboarding_complete = True
+            await session.execute(
+                text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid"),
+                {"cid": str(row[0])},
+            )
+            await session.commit()
+
         return {
             "customer_id": str(row[0]),
             "display_name": row[1] or "Customer",
             "external_id": str(row[2]),
             "anonymize_after": row[3].isoformat() if row[3] else None,
-            "onboarding_complete": row[4],
+            "onboarding_complete": onboarding_complete,
         }
 
 
@@ -227,7 +239,8 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
             text(
                 "SELECT ca.id, ca.password_hash, ca.customer_id, ca.display_name, "
                 "ca.anonymize_after, c.external_id, "
-                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete "
+                "COALESCE(c.onboarding_complete, FALSE) AS onboarding_complete, "
+                "ca.last_login "
                 "FROM customer_auth ca "
                 "JOIN customers c ON c.customer_id = ca.customer_id "
                 "WHERE ca.email_hash = :eh"
@@ -242,6 +255,15 @@ async def login_customer(body: CustomerLoginRequest, request: Request):
         customer_id = row[2]
         external_id = str(row[5])
         onboarding_complete = row[6]
+
+        # Existing users (who logged in before onboarding was added) should
+        # skip the wizard — auto-complete onboarding for them.
+        if not onboarding_complete and row[7] is not None:
+            onboarding_complete = True
+            await session.execute(
+                text("UPDATE customers SET onboarding_complete = TRUE WHERE customer_id = :cid"),
+                {"cid": customer_id},
+            )
 
         # Update last_login
         await session.execute(
