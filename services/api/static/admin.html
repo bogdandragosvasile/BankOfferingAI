@@ -88,6 +88,8 @@ tailwind.config = {
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .conn-filter:hover { background: rgba(30,58,138,0.1); }
+  .conn-filter.active { background: rgba(30,58,138,0.15); border-color: #1e3a8a; color: #3b82f6; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
@@ -219,6 +221,10 @@ tailwind.config = {
       <button onclick="showSection('consent')" data-section="consent" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span data-i18n="admin.consent_registry">Consent Registry</span>
+      </button>
+      <button onclick="showSection('connectors')" data-section="connectors" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        <span>Connectors</span>
       </button>
       <button onclick="showSection('config')" data-section="config" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -1112,6 +1118,118 @@ tailwind.config = {
       </div>
     </section>
 
+    <!-- ===== CONNECTORS SECTION ===== -->
+    <section id="section-connectors" class="p-4 md:p-8 space-y-6 hidden">
+      <!-- Header with AI Suggest and Add buttons -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-white">Service Connectors</h2>
+          <p class="text-xs text-dark-300 mt-1">Manage integrations with AI, Cloud, Advertising, and other services</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="aiSuggestConnectors()" id="ai-suggest-btn" class="px-4 py-2 rounded-xl bg-accent/20 text-accent-light text-sm font-medium hover:bg-accent/30 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            AI Suggest
+          </button>
+          <button onclick="openAddConnectorForm()" class="px-4 py-2 rounded-xl bg-neon-green/10 text-neon-green text-sm font-medium hover:bg-neon-green/20 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Connector
+          </button>
+        </div>
+      </div>
+
+      <!-- Category filter tabs -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="filterConnectors('all')" data-cat="all" class="conn-filter active px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">All</button>
+        <button onclick="filterConnectors('ai')" data-cat="ai" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">AI</button>
+        <button onclick="filterConnectors('cloud')" data-cat="cloud" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Cloud</button>
+        <button onclick="filterConnectors('advertising')" data-cat="advertising" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Advertising</button>
+        <button onclick="filterConnectors('analytics')" data-cat="analytics" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Analytics</button>
+        <button onclick="filterConnectors('crm')" data-cat="crm" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">CRM</button>
+        <button onclick="filterConnectors('messaging')" data-cat="messaging" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Messaging</button>
+        <button onclick="filterConnectors('payments')" data-cat="payments" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Payments</button>
+        <button onclick="filterConnectors('security')" data-cat="security" class="conn-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Security</button>
+        <!-- Status summary -->
+        <div class="ml-auto flex items-center gap-3 text-xs text-dark-400">
+          <span id="conn-count-active" class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-neon-green"></span> 0 active</span>
+          <span id="conn-count-pending" class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-neon-amber"></span> 0 pending</span>
+          <span id="conn-count-total" class="">0 total</span>
+        </div>
+      </div>
+
+      <!-- Connector Cards Grid -->
+      <div id="connectors-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="text-center py-12 text-dark-400 col-span-full">
+          <p class="text-sm">Loading connectors...</p>
+        </div>
+      </div>
+
+      <!-- Add/Edit Connector Form (hidden by default) -->
+      <div id="add-connector-form" class="glass-card rounded-2xl p-6 hidden">
+        <h3 class="text-base font-semibold text-white mb-4">Add New Connector</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-dark-300 mb-1">Name *</label>
+            <input type="text" id="conn-name" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50" placeholder="Service Name">
+          </div>
+          <div>
+            <label class="block text-xs text-dark-300 mb-1">Provider *</label>
+            <input type="text" id="conn-provider" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50" placeholder="Company Name">
+          </div>
+          <div>
+            <label class="block text-xs text-dark-300 mb-1">Category *</label>
+            <select id="conn-category" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50">
+              <option value="ai">AI</option>
+              <option value="cloud">Cloud</option>
+              <option value="advertising">Advertising</option>
+              <option value="analytics">Analytics</option>
+              <option value="crm">CRM</option>
+              <option value="messaging">Messaging</option>
+              <option value="payments">Payments</option>
+              <option value="security">Security</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-dark-300 mb-1">Icon</label>
+            <select id="conn-icon" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50">
+              <option value="plug">Plug</option>
+              <option value="brain">Brain (AI)</option>
+              <option value="cloud">Cloud</option>
+              <option value="megaphone">Megaphone (Ads)</option>
+              <option value="chart">Chart (Analytics)</option>
+              <option value="users">Users (CRM)</option>
+              <option value="message">Message</option>
+              <option value="card">Card (Payments)</option>
+              <option value="shield">Shield (Security)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs text-dark-300 mb-1">Description</label>
+            <textarea id="conn-desc" rows="2" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50 resize-y" placeholder="What does this connector do?"></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button onclick="saveNewConnector()" class="px-5 py-2 rounded-xl bg-accent hover:bg-accent-dark text-white font-medium text-sm transition-colors">Save Connector</button>
+          <button onclick="closeAddConnectorForm()" class="px-4 py-2 border border-dark-500/50 text-dark-200 rounded-xl text-sm transition hover:text-white">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Configure Connector Modal (hidden) -->
+      <div id="conn-config-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.6)">
+        <div class="glass-card rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-white" id="config-modal-title">Configure Connector</h2>
+            <button onclick="closeConfigModal()" class="text-dark-400 hover:text-white transition text-xl">&times;</button>
+          </div>
+          <div id="config-modal-fields" class="space-y-3"></div>
+          <div class="flex gap-3 mt-5">
+            <button onclick="saveConnectorConfig()" class="flex-1 py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl font-medium text-sm transition-colors">Save Configuration</button>
+            <button onclick="closeConfigModal()" class="px-4 py-2.5 border border-dark-500/50 text-dark-200 rounded-xl text-sm transition hover:text-white">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== AUDIT LOG SECTION ===== -->
     <section id="section-audit" class="p-4 md:p-8 space-y-6 hidden">
       <div class="glass-card rounded-2xl p-6">
@@ -1310,7 +1428,7 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', connectors: 'Connectors', config: 'admin.system_config', audit: 'admin.audit_log' };
   const titleEl = document.getElementById('sectionTitle');
   titleEl.dataset.i18n = titleKeys[name] || '';
   titleEl.textContent = t(titleKeys[name] || name);
@@ -1320,6 +1438,7 @@ function showSection(name) {
   if (name === 'tokens') loadApiTokens();
   if (name === 'products') loadProducts();
   if (name === 'consent') loadConsentRegistry();
+  if (name === 'connectors') loadConnectors();
 }
 
 async function loadOverview() {
@@ -2417,6 +2536,280 @@ async function loadAuditLog() {
     document.getElementById('audit-table-container').innerHTML = html;
   } catch (e) {
     document.getElementById('audit-table-container').innerHTML = `<p class="text-red-400 text-sm">Failed to load: ${e.message}</p>`;
+  }
+}
+
+// ===== CONNECTORS =====
+let _allConnectors = [];
+let _currentCatFilter = 'all';
+let _configConnectorId = null;
+
+const CONN_ICONS = {
+  brain: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>',
+  cloud: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>',
+  megaphone: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>',
+  chart: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
+  users: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+  message: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>',
+  card: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+  shield: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  plug: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>',
+};
+
+const CONN_STATUS_STYLES = {
+  available: { bg: 'bg-dark-600/30', text: 'text-dark-200', border: 'border-dark-600/50', label: 'Available', dot: 'bg-dark-400' },
+  pending: { bg: 'bg-neon-amber/10', text: 'text-neon-amber', border: 'border-neon-amber/30', label: 'Pending Approval', dot: 'bg-neon-amber' },
+  approved: { bg: 'bg-accent/10', text: 'text-accent-light', border: 'border-accent/30', label: 'Approved', dot: 'bg-accent-light' },
+  active: { bg: 'bg-neon-green/10', text: 'text-neon-green', border: 'border-neon-green/30', label: 'Active', dot: 'bg-neon-green' },
+  disabled: { bg: 'bg-dark-600/30', text: 'text-dark-300', border: 'border-dark-600/50', label: 'Disabled', dot: 'bg-dark-400' },
+  rejected: { bg: 'bg-neon-red/10', text: 'text-neon-red', border: 'border-neon-red/30', label: 'Rejected', dot: 'bg-neon-red' },
+};
+
+const CAT_COLORS = {
+  ai: 'text-neon-purple bg-neon-purple/10',
+  cloud: 'text-neon-cyan bg-neon-cyan/10',
+  advertising: 'text-neon-amber bg-neon-amber/10',
+  analytics: 'text-accent-light bg-accent/10',
+  crm: 'text-neon-green bg-neon-green/10',
+  messaging: 'text-white bg-dark-600/50',
+  payments: 'text-neon-amber bg-neon-amber/10',
+  security: 'text-neon-red bg-neon-red/10',
+};
+
+async function loadConnectors() {
+  try {
+    const resp = await fetch(`${API}/connectors`);
+    if (!resp.ok) throw new Error('Failed to load');
+    _allConnectors = await resp.json();
+    renderConnectors();
+  } catch (err) {
+    document.getElementById('connectors-grid').innerHTML = '<div class="col-span-full text-center py-8 text-neon-red text-sm">Failed to load connectors</div>';
+  }
+}
+
+function renderConnectors() {
+  const grid = document.getElementById('connectors-grid');
+  const filtered = _currentCatFilter === 'all' ? _allConnectors : _allConnectors.filter(c => c.category === _currentCatFilter);
+
+  // Update counts
+  const active = _allConnectors.filter(c => c.status === 'active').length;
+  const pending = _allConnectors.filter(c => c.status === 'pending').length;
+  document.getElementById('conn-count-active').innerHTML = `<span class="w-2 h-2 rounded-full bg-neon-green"></span> ${active} active`;
+  document.getElementById('conn-count-pending').innerHTML = `<span class="w-2 h-2 rounded-full bg-neon-amber"></span> ${pending} pending`;
+  document.getElementById('conn-count-total').textContent = `${_allConnectors.length} total`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="col-span-full text-center py-12 text-dark-400 text-sm">No connectors in this category</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const st = CONN_STATUS_STYLES[c.status] || CONN_STATUS_STYLES.available;
+    const icon = CONN_ICONS[c.icon] || CONN_ICONS.plug;
+    const catColor = CAT_COLORS[c.category] || 'text-dark-200 bg-dark-600/50';
+    const aiSuggested = c.suggested_by && c.suggested_by.startsWith('ai');
+
+    let actions = '';
+    if (c.status === 'pending') {
+      actions = `<div class="flex gap-2 mt-3">
+        <button onclick="approveConnector(${c.id}, 'approve')" class="flex-1 px-3 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-xs font-medium hover:bg-neon-green/20 transition">Approve</button>
+        <button onclick="approveConnector(${c.id}, 'reject')" class="flex-1 px-3 py-1.5 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Reject</button>
+      </div>`;
+    } else if (c.status === 'available' || c.status === 'approved') {
+      actions = `<div class="flex gap-2 mt-3">
+        <button onclick="openConfigModal(${c.id})" class="flex-1 px-3 py-1.5 rounded-lg bg-accent/10 text-accent-light text-xs font-medium hover:bg-accent/20 transition">Configure</button>
+        ${c.status === 'approved' ? `<button onclick="toggleConnector(${c.id})" class="px-3 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-xs font-medium hover:bg-neon-green/20 transition">Activate</button>` : ''}
+      </div>`;
+    } else if (c.status === 'active') {
+      actions = `<div class="flex gap-2 mt-3">
+        <button onclick="openConfigModal(${c.id})" class="flex-1 px-3 py-1.5 rounded-lg bg-accent/10 text-accent-light text-xs font-medium hover:bg-accent/20 transition">Configure</button>
+        <button onclick="toggleConnector(${c.id})" class="px-3 py-1.5 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Disable</button>
+      </div>`;
+    } else if (c.status === 'disabled') {
+      actions = `<div class="flex gap-2 mt-3">
+        <button onclick="toggleConnector(${c.id})" class="flex-1 px-3 py-1.5 rounded-lg bg-neon-green/10 text-neon-green text-xs font-medium hover:bg-neon-green/20 transition">Re-activate</button>
+        <button onclick="deleteConnector(${c.id}, '${c.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Delete</button>
+      </div>`;
+    }
+
+    return `<div class="glass-card rounded-xl p-4 fade-in border ${st.border}">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl ${catColor} flex items-center justify-center flex-shrink-0">${icon}</div>
+          <div>
+            <h4 class="text-sm font-semibold text-white">${c.name}</h4>
+            <p class="text-xs text-dark-400">${c.provider}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          ${aiSuggested ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-accent/10 text-accent-light">AI</span>' : ''}
+          <span class="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${st.bg} ${st.text}"><span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span>${st.label}</span>
+        </div>
+      </div>
+      <p class="text-xs text-dark-300 leading-relaxed mb-1">${c.description || ''}</p>
+      <span class="inline-block px-2 py-0.5 rounded text-[10px] font-medium ${catColor} uppercase tracking-wider">${c.category}</span>
+      ${c.approved_by ? `<p class="text-[10px] text-dark-500 mt-2">Approved by ${c.approved_by}</p>` : ''}
+      ${actions}
+    </div>`;
+  }).join('');
+}
+
+function filterConnectors(cat) {
+  _currentCatFilter = cat;
+  document.querySelectorAll('.conn-filter').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-cat="${cat}"]`).classList.add('active');
+  renderConnectors();
+}
+
+async function approveConnector(id, action) {
+  const session = getStaffSession();
+  const admin = session?.email || session?.name || 'admin';
+  try {
+    const resp = await fetch(`${API}/connectors/${id}/approve`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approved_by: admin, action }),
+    });
+    if (!resp.ok) throw new Error('Failed');
+    alert(action === 'approve' ? 'Connector approved!' : 'Connector rejected.');
+    loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function toggleConnector(id) {
+  try {
+    const resp = await fetch(`${API}/connectors/${id}/toggle`, { method: 'PUT' });
+    if (!resp.ok) throw new Error('Failed');
+    loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deleteConnector(id, name) {
+  if (!confirm(`Delete connector "${name}"?`)) return;
+  try {
+    const resp = await fetch(`${API}/connectors/${id}`, { method: 'DELETE' });
+    if (!resp.ok) throw new Error('Failed');
+    loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function aiSuggestConnectors() {
+  const btn = document.getElementById('ai-suggest-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Analyzing...';
+  try {
+    const resp = await fetch(`${API}/connectors/ai-suggest`, { method: 'POST' });
+    if (!resp.ok) throw new Error('Failed');
+    const suggested = await resp.json();
+    alert(`AI suggested ${suggested.length} new connector(s) for your review.`);
+    loadConnectors();
+  } catch (err) {
+    alert('AI suggestion failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> AI Suggest';
+  }
+}
+
+function openAddConnectorForm() {
+  document.getElementById('add-connector-form').classList.remove('hidden');
+}
+
+function closeAddConnectorForm() {
+  document.getElementById('add-connector-form').classList.add('hidden');
+  document.getElementById('conn-name').value = '';
+  document.getElementById('conn-provider').value = '';
+  document.getElementById('conn-desc').value = '';
+}
+
+async function saveNewConnector() {
+  const name = document.getElementById('conn-name').value.trim();
+  const provider = document.getElementById('conn-provider').value.trim();
+  const category = document.getElementById('conn-category').value;
+  const icon = document.getElementById('conn-icon').value;
+  const desc = document.getElementById('conn-desc').value.trim();
+  if (!name || !provider) { alert('Name and Provider are required.'); return; }
+  try {
+    const resp = await fetch(`${API}/connectors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, provider, category, icon, description: desc, config_schema: [], suggested_by: 'admin' }),
+    });
+    if (!resp.ok) throw new Error('Failed');
+    closeAddConnectorForm();
+    loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function openConfigModal(id) {
+  const conn = _allConnectors.find(c => c.id === id);
+  if (!conn) return;
+  _configConnectorId = id;
+  document.getElementById('config-modal-title').textContent = `Configure: ${conn.name}`;
+  const fields = document.getElementById('config-modal-fields');
+  const schema = conn.config_schema || [];
+  const values = conn.config_values || {};
+
+  if (schema.length === 0) {
+    fields.innerHTML = '<p class="text-dark-400 text-sm">No configuration fields defined for this connector.</p>';
+  } else {
+    fields.innerHTML = schema.map(f => {
+      const val = values[f.name] || '';
+      const req = f.required ? '<span class="text-neon-red">*</span>' : '';
+      if (f.type === 'select' && f.options) {
+        const opts = f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('');
+        return `<div><label class="block text-xs text-dark-300 mb-1">${f.label} ${req}</label><select id="cfg-${f.name}" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50">${opts}</select></div>`;
+      }
+      if (f.type === 'textarea') {
+        return `<div><label class="block text-xs text-dark-300 mb-1">${f.label} ${req}</label><textarea id="cfg-${f.name}" rows="3" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50 resize-y" placeholder="${f.placeholder || ''}">${val}</textarea></div>`;
+      }
+      const inputType = f.type === 'password' ? 'password' : f.type || 'text';
+      return `<div><label class="block text-xs text-dark-300 mb-1">${f.label} ${req}</label><input type="${inputType}" id="cfg-${f.name}" value="${val}" class="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600/50 text-dark-100 text-sm focus:outline-none focus:border-accent/50" placeholder="${f.placeholder || ''}"></div>`;
+    }).join('');
+  }
+
+  const modal = document.getElementById('conn-config-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeConfigModal() {
+  const modal = document.getElementById('conn-config-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  _configConnectorId = null;
+}
+
+async function saveConnectorConfig() {
+  if (!_configConnectorId) return;
+  const conn = _allConnectors.find(c => c.id === _configConnectorId);
+  if (!conn) return;
+  const schema = conn.config_schema || [];
+  const values = {};
+  schema.forEach(f => {
+    const el = document.getElementById(`cfg-${f.name}`);
+    if (el) values[f.name] = el.value;
+  });
+  try {
+    const resp = await fetch(`${API}/connectors/${_configConnectorId}/configure`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config_values: values }),
+    });
+    if (!resp.ok) throw new Error('Failed');
+    closeConfigModal();
+    alert('Configuration saved!');
+    loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
   }
 }
 </script>
