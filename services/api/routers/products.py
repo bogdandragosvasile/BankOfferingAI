@@ -85,9 +85,29 @@ async def _ensure_table(session):
             pass  # Column may already exist
     await session.commit()
 
-    # Backfill product_id from product_name for existing rows
+    # Backfill product_id from product_name for existing rows using canonical prod_* IDs
+    _PRODUCT_NAME_TO_ID = {
+        "ETF Starter Portfolio": "prod_etf_starter",
+        "ETF Growth Portfolio": "prod_etf_growth",
+        "Mutual Funds": "prod_mutual_funds",
+        "Managed Portfolio": "prod_managed_portfolio",
+        "State Bonds / Treasury Bills": "prod_state_bonds",
+        "Savings Deposit": "prod_savings_deposit",
+        "Private Pension": "prod_private_pension",
+        "Personal Loan": "prod_personal_loan",
+        "Mortgage": "prod_mortgage",
+        "Credit Card": "prod_credit_card",
+        "Life Insurance": "prod_life_insurance",
+        "Travel Insurance": "prod_travel_insurance",
+    }
+    for pname, pid in _PRODUCT_NAME_TO_ID.items():
+        await session.execute(
+            text("UPDATE products SET product_id = :pid WHERE product_name = :pname AND (product_id IS NULL OR product_id = '' OR product_id != :pid)"),
+            {"pid": pid, "pname": pname},
+        )
+    # Fallback for any unknown products
     await session.execute(text("""
-        UPDATE products SET product_id = LOWER(REPLACE(REPLACE(product_name, ' ', '_'), '-', '_'))
+        UPDATE products SET product_id = 'prod_' || LOWER(REPLACE(REPLACE(product_name, ' ', '_'), '-', '_'))
         WHERE product_id IS NULL OR product_id = ''
     """))
     # Backfill type from category
