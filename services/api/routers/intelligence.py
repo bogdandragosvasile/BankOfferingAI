@@ -191,12 +191,88 @@ async def _call_huggingface(config: dict, market_context: str = "") -> dict | No
         return None
 
 
+async def _call_perplexity(config: dict, market_context: str = "") -> dict | None:
+    """Call Perplexity AI API (OpenAI-compatible)."""
+    api_key = config.get("api_key", "").strip()
+    if not api_key:
+        return None
+    model = config.get("model", "sonar-pro")
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.perplexity.ai/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "max_tokens": 4096,
+                    "messages": [
+                        {"role": "system", "content": _AI_SYSTEM_PROMPT},
+                        {"role": "user", "content": _AI_USER_PROMPT + market_context},
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data["choices"][0]["message"]["content"]
+            # Perplexity may wrap JSON in markdown code fences
+            text_block = text_block.strip()
+            if text_block.startswith("```"):
+                text_block = text_block.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("Perplexity API error: %s", e)
+        return None
+
+
+async def _call_local_llm(config: dict, market_context: str = "") -> dict | None:
+    """Call a local/self-hosted LLM via OpenAI-compatible API (Ollama, vLLM, LM Studio, text-generation-webui, etc.)."""
+    base_url = config.get("base_url", "").strip().rstrip("/")
+    if not base_url:
+        return None
+    model = config.get("model", "llama3")
+    api_key = config.get("api_key", "").strip() or "not-needed"
+    temperature = float(config.get("temperature", 0.7))
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                f"{base_url}/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "temperature": temperature,
+                    "max_tokens": 4096,
+                    "messages": [
+                        {"role": "system", "content": _AI_SYSTEM_PROMPT},
+                        {"role": "user", "content": _AI_USER_PROMPT + market_context},
+                    ],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            text_block = data["choices"][0]["message"]["content"]
+            text_block = text_block.strip()
+            if text_block.startswith("```"):
+                text_block = text_block.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+            return json.loads(text_block)
+    except Exception as e:
+        logger.error("Local LLM API error (%s): %s", base_url, e)
+        return None
+
+
 # Provider name → adapter function
 _AI_ADAPTERS = {
     "Anthropic": _call_anthropic,
     "OpenAI": _call_openai,
     "Google": _call_gemini,
     "Hugging Face": _call_huggingface,
+    "Perplexity": _call_perplexity,
+    "Local LLM": _call_local_llm,
 }
 
 
