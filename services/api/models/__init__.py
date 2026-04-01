@@ -321,3 +321,45 @@ class NotificationPayload(BaseModel):
     cta_url: str = Field(..., description="Call-to-action deep link URL")
     channel: Channel = Field(..., description="Delivery channel for the notification")
     customer_id: str = Field(..., description="Target customer identifier")
+
+
+# --- Workflow models (Employee ↔ Customer) ---
+
+class NotificationOut(BaseModel):
+    id: int
+    customer_id: str
+    offer_id: str
+    product_name: str
+    action: str
+    recommendation_id: Optional[str] = None
+    read: bool = False
+    created_at: datetime
+
+
+class FormCreate(BaseModel):
+    customer_id: str = Field(..., description="Target customer")
+    employee_id: str = Field(..., description="Employee sending the form")
+    notification_id: Optional[int] = Field(None, description="Linked notification")
+    product_name: str = Field(..., description="Product the form is for")
+    offer_id: Optional[str] = Field(None, description="Original offer ID")
+    form_type: str = Field(default="product_application", description="Form type")
+    fields: list[dict] = Field(..., description="Form field definitions [{name, label, type, required}]")
+
+
+class FormOut(BaseModel):
+    id: int
+    customer_id: str
+    employee_id: str
+    notification_id: Optional[int] = None
+    product_name: str
+    offer_id: Optional[str] = None
+    form_type: str
+    fields: list[dict]
+    status: str
+    submitted_data: Optional[dict] = None
+    submitted_at: Optional[datetime] = None
+    created_at: datetime
+
+
+class FormSubmission(BaseModel):
+    data: dict = Field(..., description="Customer-filled form data {field_name: value}")
