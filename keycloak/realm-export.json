@@ -60,11 +60,13 @@
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
         "https://bankoffer.lupulup.com/*",
+        "https://my-bankoffer.lupulup.com/*",
         "http://localhost:8000/*",
         "http://localhost:3000/*"
       ],
       "webOrigins": [
         "https://bankoffer.lupulup.com",
+        "https://my-bankoffer.lupulup.com",
         "http://localhost:8000",
         "http://localhost:3000"
       ],
@@ -72,7 +74,7 @@
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
-        "post.logout.redirect.uris": "https://bankoffer.lupulup.com/*##http://localhost:8000/*",
+        "post.logout.redirect.uris": "https://bankoffer.lupulup.com/*##https://my-bankoffer.lupulup.com/*##http://localhost:8000/*",
         "pkce.code.challenge.method": "S256"
       },
       "standardFlowEnabled": true,

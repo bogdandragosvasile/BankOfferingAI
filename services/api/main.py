@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_ORIGINS = [
     "https://bankoffer.lupulup.com",
+    "https://my-bankoffer.lupulup.com",
     "https://bankofferingai.example.com",
     "http://localhost:3000",
 ]
