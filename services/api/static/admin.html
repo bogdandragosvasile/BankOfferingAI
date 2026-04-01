@@ -88,8 +88,8 @@ tailwind.config = {
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-  .conn-filter:hover { background: rgba(30,58,138,0.1); }
-  .conn-filter.active { background: rgba(30,58,138,0.15); border-color: #1e3a8a; color: #3b82f6; }
+  .conn-filter:hover, .intel-filter:hover, .sug-filter:hover { background: rgba(30,58,138,0.1); }
+  .conn-filter.active, .intel-filter.active, .sug-filter.active { background: rgba(30,58,138,0.15); border-color: #1e3a8a; color: #3b82f6; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
@@ -225,6 +225,10 @@ tailwind.config = {
       <button onclick="showSection('connectors')" data-section="connectors" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
         <span>Connectors</span>
+      </button>
+      <button onclick="showSection('intelligence')" data-section="intelligence" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        <span>Intelligence</span>
       </button>
       <button onclick="showSection('config')" data-section="config" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-dark-200">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -1230,6 +1234,86 @@ tailwind.config = {
       </div>
     </section>
 
+    <!-- ===== INTELLIGENCE HUB SECTION ===== -->
+    <section id="section-intelligence" class="p-4 md:p-8 space-y-6 hidden">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-white">Market Intelligence Hub</h2>
+          <p class="text-xs text-dark-300 mt-1">AI-powered market analysis and product suggestions based on real-time world dynamics</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="intel-model-badge" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-dark-700/50 text-dark-300 border border-dark-600/30">No AI model connected</span>
+          <button onclick="runIntelAnalysis()" id="intel-analyze-btn" class="px-4 py-2 rounded-xl bg-accent/20 text-accent-light text-sm font-medium hover:bg-accent/30 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            Run AI Analysis
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="intel-stats">
+        <div class="glass-card rounded-xl p-4 text-center stat-glow-cyan">
+          <p class="text-2xl font-bold text-white" id="intel-stat-total">0</p>
+          <p class="text-xs text-dark-300 mt-1">Market Signals</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center stat-glow-green">
+          <p class="text-2xl font-bold text-neon-green" id="intel-stat-positive">0</p>
+          <p class="text-xs text-dark-300 mt-1">Positive</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center stat-glow-red">
+          <p class="text-2xl font-bold text-neon-red" id="intel-stat-negative">0</p>
+          <p class="text-xs text-dark-300 mt-1">Negative</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center stat-glow-amber">
+          <p class="text-2xl font-bold text-neon-amber" id="intel-stat-critical">0</p>
+          <p class="text-xs text-dark-300 mt-1">Critical</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center stat-glow-purple">
+          <p class="text-2xl font-bold text-neon-purple" id="intel-stat-suggestions">0</p>
+          <p class="text-xs text-dark-300 mt-1">Suggestions</p>
+        </div>
+      </div>
+
+      <!-- Category Tabs for Market Data -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="filterIntel('all')" data-icat="all" class="intel-filter active px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">All</button>
+        <button onclick="filterIntel('exchange_markets')" data-icat="exchange_markets" class="intel-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Exchange Markets</button>
+        <button onclick="filterIntel('geopolitics')" data-icat="geopolitics" class="intel-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Geopolitics</button>
+        <button onclick="filterIntel('regulations')" data-icat="regulations" class="intel-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Regulations</button>
+        <button onclick="filterIntel('economic')" data-icat="economic" class="intel-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Economic</button>
+        <button onclick="filterIntel('trends')" data-icat="trends" class="intel-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Trends</button>
+      </div>
+
+      <!-- Market Intelligence Cards -->
+      <div id="intel-market-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="text-center py-12 text-dark-400 col-span-full">
+          <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <p class="text-sm">No market data yet. Click <strong>Run AI Analysis</strong> to generate intelligence.</p>
+        </div>
+      </div>
+
+      <!-- AI Product Suggestions -->
+      <div class="border-t border-dark-600/30 pt-6 mt-2">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-semibold text-white">AI Product Suggestions</h3>
+            <p class="text-xs text-dark-300 mt-0.5">Products recommended by AI based on market intelligence analysis</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="filterSuggestions('all')" data-sst="all" class="sug-filter active px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">All</button>
+            <button onclick="filterSuggestions('pending')" data-sst="pending" class="sug-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Pending</button>
+            <button onclick="filterSuggestions('approved')" data-sst="approved" class="sug-filter px-3 py-1.5 rounded-lg text-xs font-medium border border-dark-600/50 text-dark-200 transition">Approved</button>
+          </div>
+        </div>
+        <div id="intel-suggestions-grid" class="space-y-4">
+          <div class="text-center py-8 text-dark-400">
+            <p class="text-sm">No product suggestions yet. Run analysis to generate AI recommendations.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== AUDIT LOG SECTION ===== -->
     <section id="section-audit" class="p-4 md:p-8 space-y-6 hidden">
       <div class="glass-card rounded-2xl p-6">
@@ -1428,7 +1512,7 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', connectors: 'Connectors', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', connectors: 'Connectors', intelligence: 'Intelligence Hub', config: 'admin.system_config', audit: 'admin.audit_log' };
   const titleEl = document.getElementById('sectionTitle');
   titleEl.dataset.i18n = titleKeys[name] || '';
   titleEl.textContent = t(titleKeys[name] || name);
@@ -1439,6 +1523,7 @@ function showSection(name) {
   if (name === 'products') loadProducts();
   if (name === 'consent') loadConsentRegistry();
   if (name === 'connectors') loadConnectors();
+  if (name === 'intelligence') loadIntelligence();
 }
 
 async function loadOverview() {
@@ -2808,6 +2893,256 @@ async function saveConnectorConfig() {
     closeConfigModal();
     alert('Configuration saved!');
     loadConnectors();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INTELLIGENCE HUB
+// ═══════════════════════════════════════════════════════════
+
+let _allIntel = [];
+let _allSuggestions = [];
+let _intelFilter = 'all';
+let _sugFilter = 'all';
+
+const IMPACT_STYLES = {
+  positive: { bg: 'bg-neon-green/10', text: 'text-neon-green', border: 'border-neon-green/20', icon: '↑' },
+  negative: { bg: 'bg-neon-red/10', text: 'text-neon-red', border: 'border-neon-red/20', icon: '↓' },
+  neutral:  { bg: 'bg-dark-400/10', text: 'text-dark-300', border: 'border-dark-400/20', icon: '→' },
+  mixed:    { bg: 'bg-neon-amber/10', text: 'text-neon-amber', border: 'border-neon-amber/20', icon: '↕' },
+};
+
+const SEVERITY_STYLES = {
+  critical: { bg: 'bg-neon-red/15', text: 'text-neon-red', label: 'CRITICAL' },
+  high:     { bg: 'bg-neon-amber/15', text: 'text-neon-amber', label: 'HIGH' },
+  medium:   { bg: 'bg-accent/15', text: 'text-accent-light', label: 'MEDIUM' },
+  low:      { bg: 'bg-dark-500/15', text: 'text-dark-300', label: 'LOW' },
+};
+
+const CAT_LABELS = {
+  exchange_markets: 'Exchange Markets',
+  geopolitics: 'Geopolitics',
+  regulations: 'Regulations',
+  economic: 'Economic',
+  trends: 'Trends',
+};
+
+const CAT_ICONS = {
+  exchange_markets: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+  geopolitics: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  regulations: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>',
+  economic: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>',
+  trends: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+};
+
+const PROD_TYPE_STYLES = {
+  investment:  { bg: 'bg-neon-purple/10', text: 'text-neon-purple', label: 'Investment' },
+  savings:     { bg: 'bg-neon-green/10', text: 'text-neon-green', label: 'Savings' },
+  lending:     { bg: 'bg-neon-amber/10', text: 'text-neon-amber', label: 'Lending' },
+  mortgage:    { bg: 'bg-neon-cyan/10', text: 'text-neon-cyan', label: 'Mortgage' },
+  credit_card: { bg: 'bg-accent/10', text: 'text-accent-light', label: 'Credit' },
+  insurance:   { bg: 'bg-neon-red/10', text: 'text-neon-red', label: 'Insurance' },
+};
+
+async function loadIntelligence() {
+  try {
+    const [mResp, sResp] = await Promise.all([
+      fetch(`${API}/intelligence/market-data`),
+      fetch(`${API}/intelligence/suggestions`),
+    ]);
+    _allIntel = mResp.ok ? await mResp.json() : [];
+    _allSuggestions = sResp.ok ? await sResp.json() : [];
+  } catch (e) {
+    _allIntel = [];
+    _allSuggestions = [];
+  }
+  updateIntelStats();
+  renderIntelGrid();
+  renderSuggestionsGrid();
+  updateModelBadge();
+}
+
+function updateIntelStats() {
+  document.getElementById('intel-stat-total').textContent = _allIntel.length;
+  document.getElementById('intel-stat-positive').textContent = _allIntel.filter(i => i.impact === 'positive').length;
+  document.getElementById('intel-stat-negative').textContent = _allIntel.filter(i => i.impact === 'negative').length;
+  document.getElementById('intel-stat-critical').textContent = _allIntel.filter(i => i.severity === 'critical').length;
+  document.getElementById('intel-stat-suggestions').textContent = _allSuggestions.length;
+}
+
+function updateModelBadge() {
+  const badge = document.getElementById('intel-model-badge');
+  const models = [...new Set(_allSuggestions.map(s => s.ai_model_used).filter(Boolean))];
+  if (models.length && models[0] !== 'built-in-engine') {
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-neon-green inline-block mr-1"></span> ${models[0]}`;
+    badge.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-neon-green/10 text-neon-green border border-neon-green/20';
+  } else if (models.length) {
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-neon-amber inline-block mr-1"></span> Built-in Engine`;
+    badge.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-neon-amber/10 text-neon-amber border border-neon-amber/20';
+  } else {
+    badge.textContent = 'No AI model connected';
+    badge.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-dark-700/50 text-dark-300 border border-dark-600/30';
+  }
+}
+
+function renderIntelGrid() {
+  const grid = document.getElementById('intel-market-grid');
+  const items = _intelFilter === 'all' ? _allIntel : _allIntel.filter(i => i.category === _intelFilter);
+  if (!items.length) {
+    grid.innerHTML = '<div class="text-center py-12 text-dark-400 col-span-full"><p class="text-sm">No market intelligence data for this category.</p></div>';
+    return;
+  }
+  grid.innerHTML = items.map(item => {
+    const imp = IMPACT_STYLES[item.impact] || IMPACT_STYLES.neutral;
+    const sev = SEVERITY_STYLES[item.severity] || SEVERITY_STYLES.medium;
+    const catIcon = CAT_ICONS[item.category] || '';
+    const catLabel = CAT_LABELS[item.category] || item.category;
+
+    // Render data points as key-value pills
+    const dp = item.data_points || {};
+    const dpHtml = Object.entries(dp).slice(0, 6).map(([k, v]) => {
+      const label = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      const val = Array.isArray(v) ? v.join(', ') : v;
+      return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-dark-700/50 text-xs"><span class="text-dark-400">${label}:</span> <span class="text-white font-medium">${val}</span></span>`;
+    }).join('');
+
+    return `
+      <div class="glass-card rounded-xl p-5 border-l-2 ${imp.border}">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="flex-shrink-0 ${imp.text}">${catIcon}</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded ${imp.bg} ${imp.text}">${catLabel}</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded ${sev.bg} ${sev.text}">${sev.label}</span>
+          </div>
+          <span class="text-lg ${imp.text} font-bold flex-shrink-0">${imp.icon}</span>
+        </div>
+        <h4 class="text-sm font-semibold text-white mb-1.5 leading-snug">${item.title}</h4>
+        <p class="text-xs text-dark-300 leading-relaxed mb-3">${item.summary}</p>
+        <div class="flex flex-wrap gap-1.5 mb-2">${dpHtml}</div>
+        <div class="flex items-center justify-between text-xs text-dark-400 pt-2 border-t border-dark-700/30">
+          <span>${item.source || 'Unknown source'}</span>
+          <span>${item.region || 'Global'}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterIntel(cat) {
+  _intelFilter = cat;
+  document.querySelectorAll('.intel-filter').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-icat="${cat}"]`).classList.add('active');
+  renderIntelGrid();
+}
+
+function renderSuggestionsGrid() {
+  const grid = document.getElementById('intel-suggestions-grid');
+  const items = _sugFilter === 'all' ? _allSuggestions : _allSuggestions.filter(s => s.status === _sugFilter);
+  if (!items.length) {
+    grid.innerHTML = '<div class="text-center py-8 text-dark-400"><p class="text-sm">No suggestions match this filter.</p></div>';
+    return;
+  }
+  grid.innerHTML = items.map(s => {
+    const pt = PROD_TYPE_STYLES[s.product_type] || PROD_TYPE_STYLES.investment;
+    const conf = Math.round(s.confidence * 100);
+    const confColor = conf >= 85 ? 'text-neon-green' : conf >= 70 ? 'text-neon-amber' : 'text-dark-300';
+    const demandColors = { very_high: 'text-neon-green', high: 'text-neon-cyan', medium: 'text-neon-amber', low: 'text-dark-300' };
+    const riskColors = { low: 'text-neon-green', medium: 'text-neon-amber', high: 'text-neon-red' };
+    const statusBadge = s.status === 'pending' ? '<span class="px-2 py-0.5 rounded bg-neon-amber/10 text-neon-amber text-xs">Pending</span>'
+      : s.status === 'approved' ? '<span class="px-2 py-0.5 rounded bg-neon-green/10 text-neon-green text-xs">Approved</span>'
+      : s.status === 'rejected' ? '<span class="px-2 py-0.5 rounded bg-neon-red/10 text-neon-red text-xs">Rejected</span>'
+      : '<span class="px-2 py-0.5 rounded bg-neon-cyan/10 text-neon-cyan text-xs">Implemented</span>';
+
+    const segments = (s.target_segments || []).map(seg => `<span class="px-2 py-0.5 rounded bg-dark-700/50 text-xs text-dark-200">${seg.replace(/_/g, ' ')}</span>`).join('');
+    const drivers = (s.market_drivers || []).map(d => `<span class="px-2 py-0.5 rounded bg-accent/10 text-accent-light text-xs">${d}</span>`).join('');
+
+    const actions = s.status === 'pending' ? `
+      <div class="flex gap-2 mt-3 pt-3 border-t border-dark-700/30">
+        <button onclick="approveSuggestion(${s.id},'approve')" class="flex-1 py-2 rounded-lg bg-neon-green/10 text-neon-green text-xs font-medium hover:bg-neon-green/20 transition">Approve</button>
+        <button onclick="approveSuggestion(${s.id},'reject')" class="flex-1 py-2 rounded-lg bg-neon-red/10 text-neon-red text-xs font-medium hover:bg-neon-red/20 transition">Reject</button>
+        <button onclick="deleteSuggestion(${s.id})" class="py-2 px-3 rounded-lg bg-dark-700/50 text-dark-400 text-xs hover:text-neon-red transition">✕</button>
+      </div>` : `
+      <div class="flex gap-2 mt-3 pt-3 border-t border-dark-700/30 text-xs text-dark-400">
+        ${s.approved_by ? `<span>By ${s.approved_by}</span>` : ''}
+        ${s.approved_at ? `<span>on ${new Date(s.approved_at).toLocaleDateString()}</span>` : ''}
+        <button onclick="deleteSuggestion(${s.id})" class="ml-auto py-1 px-2 rounded bg-dark-700/50 text-dark-400 hover:text-neon-red transition">Delete</button>
+      </div>`;
+
+    return `
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded text-xs font-medium ${pt.bg} ${pt.text}">${pt.label}</span>
+            ${statusBadge}
+          </div>
+          <div class="flex items-center gap-3 text-xs flex-shrink-0">
+            <span class="${confColor} font-bold">${conf}%</span>
+            <span class="${demandColors[s.projected_demand] || 'text-dark-300'}">${(s.projected_demand || 'medium').replace('_', ' ')} demand</span>
+            <span class="${riskColors[s.risk_level] || 'text-dark-300'}">${s.risk_level || 'medium'} risk</span>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-white mb-1">${s.product_name}</h4>
+        <p class="text-xs text-dark-300 leading-relaxed mb-2">${s.description}</p>
+        <details class="mb-3">
+          <summary class="text-xs text-accent-light cursor-pointer hover:underline">AI Reasoning</summary>
+          <p class="text-xs text-dark-300 mt-2 leading-relaxed pl-3 border-l-2 border-accent/20">${s.reasoning}</p>
+        </details>
+        <div class="flex flex-wrap gap-1.5 mb-1">
+          <span class="text-xs text-dark-400 mr-1">Segments:</span>${segments}
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="text-xs text-dark-400 mr-1">Drivers:</span>${drivers}
+        </div>
+        <div class="text-xs text-dark-500 mt-2">Model: ${s.ai_model_used || 'built-in'}</div>
+        ${actions}
+      </div>`;
+  }).join('');
+}
+
+function filterSuggestions(status) {
+  _sugFilter = status;
+  document.querySelectorAll('.sug-filter').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-sst="${status}"]`).classList.add('active');
+  renderSuggestionsGrid();
+}
+
+async function runIntelAnalysis() {
+  const btn = document.getElementById('intel-analyze-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Analyzing...';
+  try {
+    const resp = await fetch(`${API}/intelligence/analyze`, { method: 'POST' });
+    if (!resp.ok) throw new Error('Analysis failed');
+    const data = await resp.json();
+    alert(`Analysis complete!\n\n• ${data.market_intelligence_count} market signals processed\n• ${data.suggestions_created} new product suggestions\n• Model: ${data.model_used}`);
+    loadIntelligence();
+  } catch (err) {
+    alert('Analysis error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Run AI Analysis';
+  }
+}
+
+async function approveSuggestion(id, action) {
+  const session = getStaffSession();
+  const by = session ? session.email : 'admin';
+  try {
+    const resp = await fetch(`${API}/intelligence/suggestions/${id}/approve?action=${action}&approved_by=${encodeURIComponent(by)}`, { method: 'PUT' });
+    if (!resp.ok) throw new Error('Failed');
+    loadIntelligence();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deleteSuggestion(id) {
+  if (!confirm('Delete this product suggestion?')) return;
+  try {
+    const resp = await fetch(`${API}/intelligence/suggestions/${id}`, { method: 'DELETE' });
+    if (!resp.ok) throw new Error('Failed');
+    loadIntelligence();
   } catch (err) {
     alert('Error: ' + err.message);
   }

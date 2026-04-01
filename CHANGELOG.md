@@ -2,6 +2,25 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.3.0] — 2026-04-01
+
+### Added
+
+- **Market Intelligence Hub.** AI-powered market analysis and product suggestion engine in the Admin portal:
+  - 5 intelligence categories: Exchange Markets, Geopolitics, Regulations, Economic Indicators, Trends
+  - 16 real-time market intelligence signals with impact/severity scoring and structured data points
+  - 7 AI-generated product suggestions (savings, investment, lending, mortgage, credit) with confidence scores,
+    target segments, market drivers, projected demand, and risk levels
+  - **Run AI Analysis** button triggers full refresh — detects active AI connectors from the Connectors module
+  - Admin approve/reject workflow for product suggestions
+  - Expandable AI reasoning explaining why each product was recommended
+  - Category filter tabs, summary stats dashboard, connected model indicator badge
+  - `market_intelligence` and `ai_product_suggestions` database tables
+  - `/intelligence/*` API router (market-data, analyze, suggestions CRUD, approve/reject)
+  - Integrates with Connectors — uses active AI connector name as the model attribution
+
+---
+
 ## [2.2.0] — 2026-04-01
 
 ### Added

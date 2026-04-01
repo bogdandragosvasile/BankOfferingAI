@@ -1,5 +1,7 @@
 -- BankOfferAI database schema (with compliance tables)
 -- Drop order respects FK dependencies
+DROP TABLE IF EXISTS ai_product_suggestions CASCADE;
+DROP TABLE IF EXISTS market_intelligence CASCADE;
 DROP TABLE IF EXISTS connectors CASCADE;
 DROP TABLE IF EXISTS application_forms CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
@@ -217,6 +219,41 @@ CREATE TABLE connectors (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ===== Market Intelligence (AI-driven product suggestions) =====
+
+CREATE TABLE market_intelligence (
+    id SERIAL PRIMARY KEY,
+    category VARCHAR(50) NOT NULL CHECK (category IN ('exchange_markets','geopolitics','regulations','economic','trends')),
+    title VARCHAR(300) NOT NULL,
+    summary TEXT NOT NULL,
+    impact VARCHAR(20) NOT NULL CHECK (impact IN ('positive','negative','neutral','mixed')),
+    severity VARCHAR(20) NOT NULL DEFAULT 'medium' CHECK (severity IN ('low','medium','high','critical')),
+    data_points JSONB NOT NULL DEFAULT '{}',
+    source VARCHAR(200),
+    region VARCHAR(100) DEFAULT 'Global',
+    valid_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE ai_product_suggestions (
+    id SERIAL PRIMARY KEY,
+    product_name VARCHAR(200) NOT NULL,
+    product_type VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    reasoning TEXT NOT NULL,
+    target_segments JSONB NOT NULL DEFAULT '[]',
+    market_drivers JSONB NOT NULL DEFAULT '[]',
+    confidence NUMERIC(4,3) NOT NULL DEFAULT 0.5,
+    projected_demand VARCHAR(20) DEFAULT 'medium' CHECK (projected_demand IN ('low','medium','high','very_high')),
+    risk_level VARCHAR(20) DEFAULT 'medium' CHECK (risk_level IN ('low','medium','high')),
+    ai_model_used VARCHAR(100),
+    intelligence_ids JSONB NOT NULL DEFAULT '[]',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected','implemented')),
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- ===== Workflow tables (Employee ↔ Customer) =====
 
 -- Notifications sent to employees when customers act on offers
@@ -303,6 +340,10 @@ CREATE INDEX idx_customer_auth_email ON customer_auth(email_hash);
 CREATE INDEX idx_customer_auth_customer ON customer_auth(customer_id);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_api_tokens_active ON api_tokens(revoked, expires_at);
+CREATE INDEX idx_market_intel_category ON market_intelligence(category);
+CREATE INDEX idx_market_intel_impact ON market_intelligence(impact);
+CREATE INDEX idx_ai_suggestions_status ON ai_product_suggestions(status);
+CREATE INDEX idx_ai_suggestions_type ON ai_product_suggestions(product_type);
 CREATE INDEX idx_connectors_category ON connectors(category);
 CREATE INDEX idx_connectors_status ON connectors(status);
 CREATE INDEX idx_notifications_read ON notifications(read, created_at DESC);
