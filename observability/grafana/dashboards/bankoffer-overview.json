@@ -559,23 +559,30 @@
     },
     {
       "id": 25,
-      "title": "Consent Blocks (empty = no blocks)",
-      "type": "timeseries",
+      "title": "Consent Blocks",
+      "type": "stat",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 39 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(bankoffer_consent_blocks_total{job=\"bankoffer-api\"}[5m])) by (consent_type)",
-          "legendFormat": "{{ consent_type }}"
+          "expr": "sum(bankoffer_consent_blocks_total{job=\"bankoffer-api\"}) or vector(0)",
+          "legendFormat": "Total Blocks"
         }
       ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 30
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
           }
         }
       },
