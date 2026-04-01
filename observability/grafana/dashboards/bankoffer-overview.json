@@ -192,7 +192,7 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{job=\"$job\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_requests_total{job=\"bankoffer-api\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"bankoffer-api\"}[5m])) or vector(0)",
           "legendFormat": "Error %"
         }
       ],
@@ -359,18 +359,14 @@
     },
     {
       "id": 13,
-      "title": "Response Size Distribution",
+      "title": "Avg Response Size by Endpoint",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(http_response_size_bytes_bucket{job=\"bankoffer-api\"}[5m])) by (le))",
-          "legendFormat": "p50"
-        },
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_response_size_bytes_bucket{job=\"bankoffer-api\"}[5m])) by (le))",
-          "legendFormat": "p95"
+          "expr": "rate(http_response_size_bytes_sum{job=\"bankoffer-api\"}[5m]) / rate(http_response_size_bytes_count{job=\"bankoffer-api\"}[5m])",
+          "legendFormat": "{{ handler }}"
         }
       ],
       "fieldConfig": {
@@ -511,11 +507,11 @@
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "targets": [
         {
-          "expr": "sum(rate(bankoffer_suitability_checks_total{job=\"$job\",result=\"passed\"}[5m]))",
+          "expr": "sum(rate(bankoffer_suitability_checks_total{job=\"bankoffer-api\",result=\"passed\"}[5m]))",
           "legendFormat": "Passed"
         },
         {
-          "expr": "sum(rate(bankoffer_suitability_checks_total{job=\"$job\",result=\"failed\"}[5m]))",
+          "expr": "sum(rate(bankoffer_suitability_checks_total{job=\"bankoffer-api\",result=\"failed\"}[5m]))",
           "legendFormat": "Failed"
         }
       ],
@@ -563,7 +559,7 @@
     },
     {
       "id": 25,
-      "title": "Consent Blocks",
+      "title": "Consent Blocks (empty = no blocks)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 39 },
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
