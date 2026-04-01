@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,700,900&display=swap" rel="stylesheet">
 <script>
 tailwind.config = {
   theme: {
@@ -15,8 +16,8 @@ tailwind.config = {
       fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
       colors: {
         dark: { 50:'#f8fafc',100:'#e2e8f0',200:'#94a3b8',300:'#64748b',400:'#475569',500:'#334155',600:'#1e293b',700:'#161e2e',800:'#111827',900:'#0b1120',950:'#060a14' },
-        accent: { DEFAULT:'#6366f1',light:'#818cf8',dark:'#4f46e5',glow:'rgba(99,102,241,0.15)' },
-        neon: { green:'#10b981',red:'#ef4444',amber:'#f59e0b',cyan:'#06b6d4',purple:'#a78bfa' }
+        accent: { DEFAULT:'#1e3a8a',light:'#3b82f6',dark:'#1e3a8a',glow:'rgba(30,58,138,0.15)' },
+        neon: { green:'#047857',red:'#ef4444',amber:'#d97706',cyan:'#06b6d4',purple:'#a78bfa' }
       }
     }
   }
@@ -25,37 +26,37 @@ tailwind.config = {
 <style>
   * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
   body { background: #060a14; }
-  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(20px); border: 1px solid rgba(99,102,241,0.08); }
-  .glass-card:hover { border-color: rgba(99,102,241,0.2); }
-  .glow-accent { box-shadow: 0 0 20px rgba(99,102,241,0.15), 0 0 60px rgba(99,102,241,0.05); }
+  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(20px); border: 1px solid rgba(30,58,138,0.08); }
+  .glass-card:hover { border-color: rgba(30,58,138,0.2); }
+  .glow-accent { box-shadow: 0 0 20px rgba(30,58,138,0.15), 0 0 60px rgba(30,58,138,0.05); }
   .offer-card { transition: all 0.3s ease; }
-  .offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
-  .score-bar { background: linear-gradient(90deg, #6366f1, #a78bfa); border-radius: 999px; height: 6px; transition: width 0.8s ease; }
-  .score-bar-bg { background: rgba(99,102,241,0.1); border-radius: 999px; height: 6px; }
+  .offer-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(30,58,138,0.12); }
+  .score-bar { background: linear-gradient(90deg, #1e3a8a, #a78bfa); border-radius: 999px; height: 6px; transition: width 0.8s ease; }
+  .score-bar-bg { background: rgba(30,58,138,0.1); border-radius: 999px; height: 6px; }
   .fade-in { animation: fadeIn 0.4s ease forwards; opacity: 0; }
   @keyframes fadeIn { to { opacity: 1; } }
   .pulse-dot { animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   .customer-btn { transition: all 0.15s; }
-  .customer-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
-  .customer-btn.selected { background: rgba(99,102,241,0.2); border-color: #6366f1; }
+  .customer-btn:hover { background: rgba(30,58,138,0.15); border-color: rgba(30,58,138,0.3); }
+  .customer-btn.selected { background: rgba(30,58,138,0.2); border-color: #1e3a8a; }
   .nav-link { transition: all 0.2s; }
-  .nav-link:hover { color: #818cf8; background: rgba(99,102,241,0.08); }
-  .nav-link.active { color: #818cf8; background: rgba(99,102,241,0.12); border-bottom: 2px solid #6366f1; }
+  .nav-link:hover { color: #3b82f6; background: rgba(30,58,138,0.08); }
+  .nav-link.active { color: #3b82f6; background: rgba(30,58,138,0.12); border-bottom: 2px solid #1e3a8a; }
   .toggle-track { width: 44px; height: 24px; border-radius: 12px; transition: background 0.3s; cursor: pointer; position: relative; display: block; }
-  .toggle-track.on { background: #6366f1 !important; }
+  .toggle-track.on { background: #1e3a8a !important; }
   .toggle-track.off { background: #334155 !important; }
   .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: white !important; position: absolute; top: 2px; transition: left 0.3s; pointer-events: none; }
   .toggle-track.on .toggle-thumb { left: 22px !important; }
   .toggle-track.off .toggle-thumb { left: 2px !important; }
   .table-row { transition: background 0.15s; }
-  .table-row:hover { background: rgba(99,102,241,0.06); }
-  .consent-banner { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); }
+  .table-row:hover { background: rgba(30,58,138,0.06); }
+  .consent-banner { background: linear-gradient(135deg, rgba(217,119,6,0.12), rgba(217,119,6,0.05)); border: 1px solid rgba(217,119,6,0.3); }
   .health-bar { height: 8px; border-radius: 999px; transition: width 0.8s ease; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-  .shimmer { background: linear-gradient(90deg, rgba(99,102,241,0.05) 25%, rgba(99,102,241,0.1) 50%, rgba(99,102,241,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  .shimmer { background: linear-gradient(90deg, rgba(30,58,138,0.05) 25%, rgba(30,58,138,0.1) 50%, rgba(30,58,138,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>
 </head>
@@ -1607,8 +1608,8 @@ function renderDataSection() {
 
   // Financial health
   const healthMap = {
-    strong: { pct: 90, color: '#10b981', label: 'Strong', desc: 'Your financial indicators show a healthy and stable pattern. Savings rate and debt levels are within recommended ranges.' },
-    stable: { pct: 65, color: '#6366f1', label: 'Stable', desc: 'Your financial position is stable. There may be opportunities to optimize savings or reduce debt.' },
+    strong: { pct: 90, color: '#047857', label: 'Strong', desc: 'Your financial indicators show a healthy and stable pattern. Savings rate and debt levels are within recommended ranges.' },
+    stable: { pct: 65, color: '#1e3a8a', label: 'Stable', desc: 'Your financial position is stable. There may be opportunities to optimize savings or reduce debt.' },
     fragile: { pct: 30, color: '#ef4444', label: 'Fragile', desc: 'Some financial indicators suggest vulnerability. The system excludes high-risk products to protect your interests.' },
   };
   const health = healthMap[c.financial_health] || healthMap.stable;
@@ -1661,7 +1662,7 @@ function setToggleState(toggleId, isOn) {
   if (isOn) {
     el.classList.remove('off');
     el.classList.add('on');
-    el.style.background = '#6366f1';
+    el.style.background = '#1e3a8a';
     if (thumb) thumb.style.left = '22px';
   } else {
     el.classList.remove('on');
