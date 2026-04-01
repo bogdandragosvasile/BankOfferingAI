@@ -13,6 +13,8 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 import asyncio
 
+from services.api.metrics import CUSTOMERS_TOTAL, PRODUCTS_ACTIVE, KILL_SWITCH_ACTIVE
+
 from services.api.routers import api_tokens, compliance, consent_registry, customer_auth, offers, products, profiles, staff_auth
 
 logger = logging.getLogger(__name__)
@@ -63,11 +65,32 @@ async def lifespan(app: FastAPI):
     )
     app.state.source_check_task = source_check_task
 
+    # Start metrics gauge updater
+    async def _update_gauges():
+        while True:
+            try:
+                async with session_factory() as session:
+                    from sqlalchemy import text
+                    r = await session.execute(text("SELECT count(*) FROM customers"))
+                    CUSTOMERS_TOTAL.set(r.scalar() or 0)
+                    r = await session.execute(text("SELECT count(*) FROM products WHERE active = TRUE"))
+                    PRODUCTS_ACTIVE.set(r.scalar() or 0)
+                    r = await session.execute(text("SELECT active FROM model_kill_switch ORDER BY id DESC LIMIT 1"))
+                    ks = r.scalar()
+                    KILL_SWITCH_ACTIVE.set(1 if ks else 0)
+            except Exception:
+                pass
+            await asyncio.sleep(30)
+
+    gauge_task = asyncio.create_task(_update_gauges())
+    app.state.gauge_task = gauge_task
+
     yield
 
     # Cancel background tasks
     sync_task.cancel()
     source_check_task.cancel()
+    gauge_task.cancel()
 
     # Shutdown: close connections
     logger.info("Shutting down API service...")

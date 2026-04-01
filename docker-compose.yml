@@ -86,6 +86,8 @@ services:
       DEMO_MODE: "true"
       KEYCLOAK_URL: http://keycloak:8080/auth
       KEYCLOAK_REALM: bankofferai
+    ports:
+      - "192.168.1.94:9102:8000"  # Prometheus scrape target (metrics)
     expose:
       - "8000"
 
