@@ -2,6 +2,25 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.0.0] — 2026-04-01
+
+### Changed
+
+- **Unified design system across all portals.** Employee, Customer, and Admin portals now
+  share the same CSS token system and design language as the presentation:
+  - `:root` CSS custom properties for all colors, shadows, and focus rings
+  - `[data-theme="light"]` overrides with WCAG-friendly contrast (#0f172a text, #f1f5f9 bg)
+  - Reduced decoration: backdrop blur 20px→12px, toned-down glow/shadow effects
+  - Score bar gradient updated to navy palette (#1e3a8a → #3b82f6)
+  - Glass card hover effects softened (translateY -1px, lighter shadows)
+  - Accessibility: `focus-visible` outline ring, `prefers-reduced-motion` media query
+
+### Commit History
+
+- `e1ef91d` feat: apply presentation design system to all three portals
+
+---
+
 ## [1.9.0] — 2026-04-01
 
 ### Changed
