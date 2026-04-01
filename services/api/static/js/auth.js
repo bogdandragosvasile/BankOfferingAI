@@ -7,7 +7,7 @@
  * with role-based demo users.
  */
 (function() {
-  const STORAGE_KEY = 'boai_auth';
+  const STORAGE_KEY_BASE = 'boai_auth';
   const PKCE_KEY = 'boai_pkce';
   const KC_URL = 'https://auth.lupulup.com';
   const KC_REALM = 'bankofferai';
@@ -16,6 +16,24 @@
   const TOKEN_URL = KC_BASE + '/token';
   const AUTH_URL = KC_BASE + '/auth';
   const LOGOUT_URL = KC_BASE + '/logout';
+
+  // ---- Portal-scoped session isolation ----
+  const CUSTOMER_DOMAIN = 'my-bankoffer.lupulup.com';
+  const EMPLOYEE_DOMAIN = 'bankoffer.lupulup.com';
+
+  function _isCustomerDomain() {
+    return window.location.hostname === CUSTOMER_DOMAIN;
+  }
+
+  function _getPortalContext() {
+    if (_isCustomerDomain()) return 'client';
+    if (window.location.pathname.startsWith('/admin')) return 'admin';
+    return 'employee';
+  }
+
+  function _getStorageKey() {
+    return STORAGE_KEY_BASE + '_' + _getPortalContext();
+  }
 
   // Demo users for when Keycloak is unavailable
   const DEMO_USERS = {
@@ -266,47 +284,17 @@
     _accessToken = null;
     _refreshToken = null;
     _idToken = null;
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(_getStorageKey());
     window.location.href = LOGOUT_URL + '?' + params.toString();
   }
 
   // ---- Demo mode auth ----
-  const CUSTOMER_DOMAIN = 'my-bankoffer.lupulup.com';
-  const EMPLOYEE_DOMAIN = 'bankoffer.lupulup.com';
-
-  const ROLE_PORTALS = {
-    admin: '/admin',
-    employee: '/',
-    client: '/portal'
-  };
-
-  function _isCustomerDomain() {
-    return window.location.hostname === CUSTOMER_DOMAIN;
-  }
-
   function demoLogin(role) {
     const user = DEMO_USERS[role];
     if (!user) return;
     _currentUser = { ...user };
     _demoMode = true;
     _saveSession();
-
-    // Cross-domain routing: client role goes to customer domain, staff roles go to employee domain
-    if (role === 'client' && !_isCustomerDomain() && window.location.hostname !== 'localhost') {
-      window.location.href = 'https://' + CUSTOMER_DOMAIN + '/';
-      return;
-    }
-    if ((role === 'admin' || role === 'employee') && _isCustomerDomain()) {
-      window.location.href = 'https://' + EMPLOYEE_DOMAIN + ROLE_PORTALS[role];
-      return;
-    }
-
-    const targetPortal = _isCustomerDomain() ? '/' : ROLE_PORTALS[role];
-    const currentPath = window.location.pathname;
-    if (targetPortal && currentPath !== targetPortal) {
-      window.location.href = targetPortal;
-      return;
-    }
     _notifyChange();
   }
 
@@ -320,7 +308,7 @@
     _accessToken = null;
     _refreshToken = null;
     _idToken = null;
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(_getStorageKey());
     _notifyChange();
   }
 
@@ -355,7 +343,7 @@
 
   function _saveSession() {
     if (_currentUser) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(_getStorageKey(), JSON.stringify({
         user: _currentUser,
         demo: _demoMode,
         ts: Date.now()
@@ -365,13 +353,20 @@
 
   function _restoreSession() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const key = _getStorageKey();
+      const raw = localStorage.getItem(key);
       if (!raw) return false;
       const data = JSON.parse(raw);
       if (Date.now() - data.ts > 8 * 60 * 60 * 1000) {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(key);
         return false;
       }
+      // Validate role matches portal context
+      const ctx = _getPortalContext();
+      const roles = data.user?.roles || [];
+      if (ctx === 'admin' && !roles.includes('admin')) { localStorage.removeItem(key); return false; }
+      if (ctx === 'employee' && !roles.includes('employee')) { localStorage.removeItem(key); return false; }
+      if (ctx === 'client' && !roles.includes('client')) { localStorage.removeItem(key); return false; }
       _currentUser = data.user;
       _demoMode = data.demo;
       return true;
@@ -414,7 +409,8 @@
     const { title, subtitle, allowedRoles } = options;
     const t = window.BOAI_I18N?.t || (k => k);
 
-    const defaultRoles = _isCustomerDomain() ? ['client'] : ['admin', 'employee', 'client'];
+    const ctx = _getPortalContext();
+    const defaultRoles = ctx === 'client' ? ['client'] : ctx === 'admin' ? ['admin'] : ['employee'];
     const roles = allowedRoles || defaultRoles;
     const roleInfo = {
       admin: { icon: '\uD83D\uDEE1\uFE0F', color: 'red', desc: t('auth.role_admin') },
@@ -454,13 +450,23 @@
 
   // ---- Initialize ----
   async function init() {
+    // Handle cross-portal fresh session request (session isolation)
+    if (window.location.search.includes('fresh=1')) {
+      localStorage.removeItem(_getStorageKey());
+      _currentUser = null;
+      _demoMode = true;
+      const url = new URL(window.location);
+      url.searchParams.delete('fresh');
+      window.history.replaceState({}, '', url.pathname + (url.search || ''));
+    }
+
     // FIRST: check if this is an SSO callback with ?code= in URL
     const hasAuthCode = window.location.search.includes('code=');
 
     if (hasAuthCode) {
       console.log('[Auth] SSO callback detected in URL');
       // Clear any stale session before processing
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(_getStorageKey());
       _currentUser = null;
       _demoMode = true;
 

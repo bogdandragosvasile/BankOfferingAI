@@ -1918,9 +1918,9 @@ function setupAuthGate() {
     window.BOAI_AUTH.onAuthChange(async function(user) {
       if (user && !_ssoCustomerAuth) {
         const roles = user.roles || [];
-        // If this is an admin/employee SSO user, redirect them to their portal
-        if (roles.includes('admin') || (roles.includes('employee') && !roles.includes('client'))) {
-          window.location.href = '/';
+        // Non-client session — clear and stay on customer login (session isolation)
+        if (!roles.includes('client')) {
+          window.BOAI_AUTH.logout();
           return;
         }
         // Client SSO user — look up customer_id from database by email

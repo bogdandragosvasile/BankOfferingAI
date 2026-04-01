@@ -96,7 +96,7 @@ services:
       - api
       - keycloak
     ports:
-      - "80:80"
+      - "192.168.1.94:80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
 
