@@ -23,11 +23,54 @@ tailwind.config = {
 }
 </script>
 <style>
+  :root {
+    --bg: #060a14;
+    --bg-elevated: #0c1221;
+    --card-bg: rgba(15,23,42,0.75);
+    --border: rgba(30,58,138,0.10);
+    --border-hover: rgba(59,130,246,0.20);
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent: #1e3a8a;
+    --accent-light: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-subtle: rgba(30,58,138,0.10);
+    --success: #047857;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --shadow: rgba(0,0,0,0.25);
+    --focus-ring: rgba(59,130,246,0.5);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  [data-theme="light"] {
+    --bg: #f1f5f9;
+    --bg-elevated: #e2e8f0;
+    --card-bg: rgba(255,255,255,0.85);
+    --border: rgba(30,58,138,0.10);
+    --border-hover: rgba(30,58,138,0.25);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #475569;
+    --accent: #1e3a8a;
+    --accent-light: #1e40af;
+    --accent-hover: #1e40af;
+    --accent-subtle: rgba(30,58,138,0.08);
+    --success: #047857;
+    --warning: #92400e;
+    --danger: #991b1b;
+    --shadow: rgba(0,0,0,0.06);
+    --focus-ring: rgba(30,58,138,0.4);
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  [data-theme="light"] body { background: var(--bg); color: var(--text-primary); }
+  [data-theme="light"] .glass-card { background: var(--card-bg); box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-color: var(--border); }
+  [data-theme="light"] .glass-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
   * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
   body { background: #060a14; }
-  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(20px); border: 1px solid rgba(30,58,138,0.08); }
-  .glass-card:hover { border-color: rgba(30,58,138,0.2); }
-  .glow-accent { box-shadow: 0 0 20px rgba(30,58,138,0.15), 0 0 60px rgba(30,58,138,0.05); }
+  .glass-card { background: linear-gradient(135deg, rgba(17,24,39,0.8), rgba(11,17,32,0.9)); backdrop-filter: blur(12px); border: 1px solid rgba(30,58,138,0.08); }
+  .glass-card:hover { border-color: rgba(30,58,138,0.15); }
+  .glow-accent { box-shadow: 0 0 15px rgba(30,58,138,0.10), 0 0 40px rgba(30,58,138,0.03); }
   .fade-in { animation: fadeIn 0.4s ease forwards; opacity: 0; }
   @keyframes fadeIn { to { opacity: 1; } }
   .pulse-dot { animation: pulse 2s infinite; }
@@ -45,6 +88,8 @@ tailwind.config = {
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
 <body class="font-sans text-dark-100 min-h-screen">
