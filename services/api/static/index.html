@@ -768,8 +768,11 @@ function openAuditDetail(recommendationId) {
         </div>`;
       }).join('') || '<p class="text-xs" style="color: var(--text-muted);">No excluded products</p>';
 
-      const suitabilityHtml = (data.suitability_checks || []).map(sc => {
-        const passed = sc.passed || sc.status === 'passed';
+      const suitabilityEntries = Array.isArray(data.suitability_checks)
+        ? data.suitability_checks
+        : Object.entries(data.suitability_checks || {}).map(([pid, sc]) => ({ product_id: pid, ...sc }));
+      const suitabilityHtml = suitabilityEntries.map(sc => {
+        const passed = sc.suitable !== undefined ? sc.suitable : (sc.passed || sc.status === 'passed');
         return `<div class="flex items-center gap-2 py-1.5">
           <span class="w-5 h-5 rounded-full flex items-center justify-center ${passed ? 'bg-accent-green/10' : 'bg-accent-red/10'}">
             ${passed
