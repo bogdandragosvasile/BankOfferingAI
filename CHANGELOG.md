@@ -2,6 +2,19 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.10.1] — 2026-04-03
+
+### Added
+
+- **Action audit log API**: `GET /compliance/action-log` endpoint queries the `audit_log` table
+  with optional filters for `action`, `resource_type`, and `actor`. Returns the full action history
+  including IP address, HTTP status, duration, request ID, and change payload.
+- **Admin portal — dual audit tabs**: The Audit Log section now has two tabs:
+  - **Recommendation Audit**: existing per-recommendation trail (offer scores, exclusions, model version)
+  - **Action Log**: live view of `audit_log` entries (staff logins, product edits, connector toggles,
+    consent changes) with inline filters and click-to-expand detail modal
+- **Staff password reset**: Reset admin/manager passwords to known demo values after DB state drift.
+
 ## [2.9.1] — 2026-04-03
 
 ### Fixed

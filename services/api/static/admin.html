@@ -1233,10 +1233,52 @@ tailwind.config = {
 
     <!-- ===== AUDIT LOG SECTION ===== -->
     <section id="section-audit" class="p-4 md:p-8 space-y-6 hidden">
-      <div class="p-6" style="background: var(--bg-raised); border: 1px solid var(--border);">
-        <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);" data-i18n="admin.audit_trail">Audit Trail</h3>
+      <!-- Tab bar -->
+      <div class="flex border-b" style="border-color: var(--border);">
+        <button id="audit-tab-recommendations" onclick="switchAuditTab('recommendations')"
+          class="px-4 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+          style="border-color: var(--accent); color: var(--accent);">
+          Recommendation Audit
+        </button>
+        <button id="audit-tab-actions" onclick="switchAuditTab('actions')"
+          class="px-4 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors"
+          style="border-color: transparent; color: var(--text-secondary);">
+          Action Log
+        </button>
+      </div>
+
+      <!-- Recommendation audit pane -->
+      <div id="audit-pane-recommendations" class="p-6" style="background: var(--bg-raised); border: 1px solid var(--border);">
         <div id="audit-table-container">
-          <p class="text-sm" style="color: var(--text-muted);" data-i18n="admin.loading_audit">Loading audit entries...</p>
+          <p class="text-sm" style="color: var(--text-muted);">Loading audit entries...</p>
+        </div>
+      </div>
+
+      <!-- Action log pane -->
+      <div id="audit-pane-actions" class="hidden space-y-4">
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-2">
+          <select id="action-log-filter-action" onchange="loadActionLog()"
+            class="px-2 py-1 text-xs border" style="background:var(--bg-raised);border-color:var(--border);color:var(--text-primary);">
+            <option value="">All actions</option>
+            <option>login</option><option>login_failed</option><option>create</option>
+            <option>update</option><option>delete</option><option>approve</option>
+            <option>reject</option><option>toggle</option><option>implement</option>
+            <option>kill_switch_toggle</option><option>consent_update</option>
+          </select>
+          <select id="action-log-filter-resource" onchange="loadActionLog()"
+            class="px-2 py-1 text-xs border" style="background:var(--bg-raised);border-color:var(--border);color:var(--text-primary);">
+            <option value="">All resources</option>
+            <option>staff_auth</option><option>product</option><option>connector</option>
+            <option>suggestion</option><option>consent</option><option>kill_switch</option>
+          </select>
+          <input id="action-log-filter-actor" oninput="loadActionLog()" placeholder="Filter by actor…"
+            class="px-2 py-1 text-xs border flex-1 min-w-32" style="background:var(--bg-raised);border-color:var(--border);color:var(--text-primary);">
+        </div>
+        <div class="p-6" style="background: var(--bg-raised); border: 1px solid var(--border);">
+          <div id="action-log-container">
+            <p class="text-sm" style="color: var(--text-muted);">Select this tab to load action log.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -2646,6 +2688,102 @@ async function loadAuditLog() {
   } catch (e) {
     document.getElementById('audit-table-container').innerHTML = `<p class="text-accent-red text-sm">Failed to load: ${e.message}</p>`;
   }
+}
+
+function switchAuditTab(tab) {
+  const tabs = ['recommendations', 'actions'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`audit-tab-${t}`);
+    const pane = document.getElementById(`audit-pane-${t}`);
+    const active = t === tab;
+    btn.style.borderColor = active ? 'var(--accent)' : 'transparent';
+    btn.style.color = active ? 'var(--accent)' : 'var(--text-secondary)';
+    pane.classList.toggle('hidden', !active);
+  });
+  if (tab === 'actions') loadActionLog();
+}
+
+let _actionLogDebounce = null;
+async function loadActionLog() {
+  clearTimeout(_actionLogDebounce);
+  _actionLogDebounce = setTimeout(async () => {
+    const action = document.getElementById('action-log-filter-action').value;
+    const resource = document.getElementById('action-log-filter-resource').value;
+    const actor = document.getElementById('action-log-filter-actor').value;
+    const params = new URLSearchParams({ limit: 100 });
+    if (action) params.set('action', action);
+    if (resource) params.set('resource_type', resource);
+    if (actor) params.set('actor', actor);
+
+    const container = document.getElementById('action-log-container');
+    container.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">Loading…</p>';
+    try {
+      const resp = await fetch(`${API}/compliance/action-log?${params}`);
+      const data = await resp.json();
+      if (!data.length) {
+        container.innerHTML = '<p class="text-sm" style="color:var(--text-muted);">No action log entries match your filters.</p>';
+        return;
+      }
+      const actionColors = {
+        login: 'var(--accent-green)', login_failed: 'var(--accent-red)',
+        create: 'var(--accent-blue)', update: 'var(--accent-yellow)',
+        delete: 'var(--accent-red)', approve: 'var(--accent-green)',
+        reject: 'var(--accent-red)', toggle: 'var(--accent-yellow)',
+        implement: 'var(--accent-blue)', kill_switch_toggle: 'var(--accent-red)',
+        consent_update: 'var(--accent-blue)',
+      };
+      let html = `<div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead><tr class="text-left text-xs uppercase tracking-wider border-b" style="color:var(--text-secondary);border-color:var(--border);">
+          <th class="pb-2 pr-3">Time</th><th class="pb-2 pr-3">Action</th>
+          <th class="pb-2 pr-3">Actor</th><th class="pb-2 pr-3">Resource</th>
+          <th class="pb-2 pr-3">Status</th><th class="pb-2">IP</th>
+        </tr></thead><tbody>`;
+      data.forEach(r => {
+        const color = actionColors[r.action] || 'var(--text-primary)';
+        const ts = r.created_at ? new Date(r.created_at).toLocaleString() : '—';
+        const resource = [r.resource_type, r.resource_id].filter(Boolean).join('/');
+        html += `<tr class="border-b hover:bg-[var(--bg-sunken)] transition-colors cursor-pointer"
+          style="border-color:var(--border);" onclick='showActionDetail(${JSON.stringify(r)})'>
+          <td class="py-2 pr-3 text-xs" style="color:var(--text-muted);">${ts}</td>
+          <td class="py-2 pr-3"><span class="text-xs font-mono px-1.5 py-0.5" style="color:${color};background:${color}18;">${r.action}</span></td>
+          <td class="py-2 pr-3 text-xs" style="color:var(--text-primary);">${r.actor || '—'}</td>
+          <td class="py-2 pr-3 text-xs font-mono" style="color:var(--text-secondary);">${resource || '—'}</td>
+          <td class="py-2 pr-3 text-xs" style="color:${r.http_status >= 400 ? 'var(--accent-red)' : 'var(--accent-green)'};">${r.http_status || '—'}</td>
+          <td class="py-2 text-xs" style="color:var(--text-muted);">${r.ip_address || '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = `<p class="text-sm" style="color:var(--accent-red);">Failed to load: ${e.message}</p>`;
+    }
+  }, 300);
+}
+
+function showActionDetail(entry) {
+  const modal = document.getElementById('audit-detail-modal');
+  const content = document.getElementById('audit-detail-content');
+  const changesHtml = entry.changes
+    ? `<div class="mt-3"><p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:var(--text-muted);">Changes</p>
+       <pre class="text-xs p-3 overflow-x-auto" style="background:var(--bg-sunken);border:1px solid var(--border);color:var(--text-secondary);white-space:pre-wrap;">${JSON.stringify(entry.changes, null, 2)}</pre></div>`
+    : '';
+  content.innerHTML = `
+    <div class="space-y-2 text-sm">
+      <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <span style="color:var(--text-muted);">Action</span><span style="color:var(--text-primary);font-weight:600;">${entry.action}</span>
+        <span style="color:var(--text-muted);">Actor</span><span style="color:var(--text-primary);">${entry.actor || '—'}</span>
+        <span style="color:var(--text-muted);">Actor type</span><span style="color:var(--text-primary);">${entry.actor_type || '—'}</span>
+        <span style="color:var(--text-muted);">Resource</span><span style="color:var(--text-primary);">${[entry.resource_type, entry.resource_id].filter(Boolean).join(' / ') || '—'}</span>
+        <span style="color:var(--text-muted);">Endpoint</span><span class="font-mono" style="color:var(--text-secondary);">${entry.http_method || ''} ${entry.endpoint || '—'}</span>
+        <span style="color:var(--text-muted);">HTTP status</span><span style="color:var(--text-primary);">${entry.http_status || '—'}</span>
+        <span style="color:var(--text-muted);">Duration</span><span style="color:var(--text-primary);">${entry.duration_ms != null ? entry.duration_ms + ' ms' : '—'}</span>
+        <span style="color:var(--text-muted);">IP address</span><span style="color:var(--text-primary);">${entry.ip_address || '—'}</span>
+        <span style="color:var(--text-muted);">Request ID</span><span class="font-mono text-xs" style="color:var(--text-secondary);">${entry.request_id || '—'}</span>
+        <span style="color:var(--text-muted);">Time</span><span style="color:var(--text-primary);">${entry.created_at ? new Date(entry.created_at).toLocaleString() : '—'}</span>
+      </div>
+      ${changesHtml}
+    </div>`;
+  modal.classList.remove('hidden');
 }
 
 function _auditSection(label, data) {

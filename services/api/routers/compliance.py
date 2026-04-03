@@ -253,6 +253,69 @@ async def get_audit_detail(
         raise HTTPException(status_code=500, detail="Failed to retrieve audit entry")
 
 
+@router.get(
+    "/action-log",
+    summary="List action audit log entries",
+    description="Returns the general action audit log (staff actions, product changes, AI calls). AI Act Art. 12.",
+)
+async def list_action_log(
+    request: Request,
+    action: str = Query(default=None, description="Filter by action type"),
+    resource_type: str = Query(default=None, description="Filter by resource type"),
+    actor: str = Query(default=None, description="Filter by actor"),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    authenticated_customer: str = Depends(get_current_customer_id),
+):
+    """List general audit log entries from audit_log table."""
+    session_factory = request.app.state.db_session_factory
+    try:
+        async with session_factory() as session:
+            filters = []
+            params: dict = {"lim": limit, "off": offset}
+            if action:
+                filters.append("action = :action")
+                params["action"] = action
+            if resource_type:
+                filters.append("resource_type = :resource_type")
+                params["resource_type"] = resource_type
+            if actor:
+                filters.append("actor ILIKE :actor")
+                params["actor"] = f"%{actor}%"
+            where = ("WHERE " + " AND ".join(filters)) if filters else ""
+            result = await session.execute(
+                text(f"""SELECT id, request_id, action, actor, actor_type,
+                         resource_type, resource_id, changes, ip_address,
+                         endpoint, http_method, http_status, duration_ms, created_at
+                      FROM audit_log {where}
+                      ORDER BY created_at DESC LIMIT :lim OFFSET :off"""),
+                params,
+            )
+            rows = result.mappings().fetchall()
+            return [
+                {
+                    "id": r["id"],
+                    "request_id": str(r["request_id"]) if r["request_id"] else None,
+                    "action": r["action"],
+                    "actor": r["actor"],
+                    "actor_type": r["actor_type"],
+                    "resource_type": r["resource_type"],
+                    "resource_id": r["resource_id"],
+                    "changes": r["changes"],
+                    "ip_address": str(r["ip_address"]) if r["ip_address"] else None,
+                    "endpoint": r["endpoint"],
+                    "http_method": r["http_method"],
+                    "http_status": r["http_status"],
+                    "duration_ms": r["duration_ms"],
+                    "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                }
+                for r in rows
+            ]
+    except Exception as e:
+        logger.error("Failed to fetch action log: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to retrieve action log")
+
+
 # ===== Requirement 5: Consent management (5-tier) =====
 
 CONSENT_FIELDS = {
