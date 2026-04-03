@@ -18,11 +18,16 @@
   const LOGOUT_URL = KC_BASE + '/logout';
 
   // ---- Portal-scoped session isolation ----
-  const CUSTOMER_DOMAIN = 'my-bankoffer.lupulup.com';
+  // List all hostnames that serve the customer portal (VM and K8s deployments).
+  const CUSTOMER_DOMAINS = [
+    'my-bankoffer.lupulup.com',
+    'my-bankoffer-k8s.lupulup.com',
+  ];
+  const CUSTOMER_DOMAIN = CUSTOMER_DOMAINS[0]; // kept for logout redirect compat
   const EMPLOYEE_DOMAIN = 'bankoffer.lupulup.com';
 
   function _isCustomerDomain() {
-    return window.location.hostname === CUSTOMER_DOMAIN;
+    return CUSTOMER_DOMAINS.includes(window.location.hostname);
   }
 
   function _getPortalContext() {
@@ -270,9 +275,7 @@
   }
 
   function keycloakLogout() {
-    const logoutRedirect = _isCustomerDomain()
-      ? 'https://' + CUSTOMER_DOMAIN + '/'
-      : window.location.origin;
+    const logoutRedirect = window.location.origin + '/';
     const params = new URLSearchParams({
       client_id: KC_CLIENT_ID,
       post_logout_redirect_uri: logoutRedirect,

@@ -186,8 +186,10 @@ tailwind.config = {
       </span>
     </div>
     <script>
-      // Only show internal nav links on the employee domain (staff testing)
-      if (window.location.hostname !== 'my-bankoffer.lupulup.com') {
+      // Only show internal nav links on the employee domain (staff testing).
+      // Use BOAI_AUTH.isCustomerDomain() so this works for all customer hostnames
+      // (my-bankoffer.lupulup.com, my-bankoffer-k8s.lupulup.com, etc.).
+      if (window.BOAI_AUTH && !window.BOAI_AUTH.isCustomerDomain()) {
         document.getElementById('portalNav').style.display = '';
       }
     </script>
