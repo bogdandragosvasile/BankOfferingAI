@@ -560,6 +560,12 @@ tailwind.config = {
 
 <script>
 const API = '';
+function _authFetch(url, opts) {
+  const auth = window.BOAI_AUTH ? window.BOAI_AUTH.getAuthHeader() : {};
+  const merged = Object.assign({}, opts);
+  merged.headers = Object.assign({}, auth, opts && opts.headers);
+  return fetch(url, merged);
+}
 const ICONS = {
   investment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
   bond: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
@@ -862,7 +868,7 @@ async function fetchEligibility() {
   if (eligibilityLoading) return;
   eligibilityLoading = true;
   try {
-    const resp = await fetch(`${API}/offers/eligibility/all`);
+    const resp = await _authFetch(`${API}/offers/eligibility/all`);
     if (resp.ok) {
       eligibilityData = await resp.json();
       renderEligibilityBadges();
@@ -934,7 +940,7 @@ async function renderCustomersPage() {
   const rows = [];
   for (const i of allCustomerIds) {
     try {
-      const [profResp, offResp] = await Promise.all([fetch(`${API}/profiles/${i}`), fetch(`${API}/offers/${i}?top_n=1`)]);
+      const [profResp, offResp] = await Promise.all([_authFetch(`${API}/profiles/${i}`), _authFetch(`${API}/offers/${i}?top_n=1`)]);
       const prof = profResp.ok ? await profResp.json() : null;
       const off = offResp.ok ? await offResp.json() : null;
       if (prof) profileCache[i] = prof;
@@ -967,8 +973,8 @@ async function renderAnalyticsPage() {
   for (const i of allCustomerIds) {
     try {
       const [pr, of] = await Promise.all([
-        profileCache[i] ? Promise.resolve(profileCache[i]) : fetch(`${API}/profiles/${i}`).then(r=>r.json()),
-        fetch(`${API}/offers/${i}?top_n=3`).then(r=>r.json())
+        profileCache[i] ? Promise.resolve(profileCache[i]) : _authFetch(`${API}/profiles/${i}`).then(r=>r.json()),
+        _authFetch(`${API}/offers/${i}?top_n=3`).then(r=>r.json())
       ]);
       profiles.push(pr);
       (of.offers||[]).forEach(o => { allOffers[o.product_name] = (allOffers[o.product_name]||0) + 1; });
@@ -1250,7 +1256,7 @@ async function selectCustomer(id) {
   document.getElementById('excludedProductsCard').classList.add('hidden');
   document.getElementById('consentStatusCard').classList.add('hidden');
   try {
-    const [offResp, profResp] = await Promise.all([fetch(`${API}/offers/${id}?top_n=8`), fetch(`${API}/profiles/${id}`)]);
+    const [offResp, profResp] = await Promise.all([_authFetch(`${API}/offers/${id}?top_n=8`), _authFetch(`${API}/profiles/${id}`)]);
     if (offResp.ok) {
       const data = await offResp.json();
       lastOffersResponse = data;
@@ -1686,7 +1692,7 @@ async function init() {
   fetchKillSwitchStatus();
   updateNotifBadge();
   const firstId = allCustomerIds[0] || '1';
-  try { const r=await fetch(`${API}/offers/${firstId}?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
+  try { const r=await _authFetch(`${API}/offers/${firstId}?top_n=5`); if(r.ok){const d=await r.json(); const avg=d.offers.reduce((a,o)=>a+o.relevance_score,0)/Math.max(d.offers.length,1); document.getElementById('statAvgScore').textContent=(avg*100).toFixed(0)+'%';} } catch(e){}
   document.getElementById('loadingOverlay').style.opacity='0';
   setTimeout(()=>document.getElementById('loadingOverlay').style.display='none',500);
 }

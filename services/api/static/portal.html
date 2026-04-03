@@ -1280,9 +1280,14 @@ function switchCustomer() {
 }
 
 // ==================== API CALLS ====================
+function _authHeaders(extra) {
+  const auth = window.BOAI_AUTH ? window.BOAI_AUTH.getAuthHeader() : {};
+  return Object.assign({}, auth, extra);
+}
+
 async function apiGet(url) {
   try {
-    const resp = await fetch(API + url);
+    const resp = await fetch(API + url, { headers: _authHeaders() });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       throw new Error(err.detail || `HTTP ${resp.status}`);
@@ -1298,7 +1303,7 @@ async function apiPut(url, body) {
   try {
     const resp = await fetch(API + url, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
     });
     if (!resp.ok) {
@@ -1316,7 +1321,7 @@ async function apiPost(url, body) {
   try {
     const resp = await fetch(API + url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
     });
     if (!resp.ok) {

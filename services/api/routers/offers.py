@@ -7,7 +7,10 @@ import time
 import uuid
 from datetime import datetime
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import text
 
 from services.api.middleware.auth import get_current_customer_id
@@ -465,7 +468,7 @@ def _score_product(product: dict, life_stage: str, risk_score: float,
 )
 async def get_eligibility_counts(
     request: Request,
-    authenticated_customer: str = Depends(get_current_customer_id),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
 ):
     """Run suitability checks for all customers against all products. Returns per-product counts."""
     session_factory = request.app.state.db_session_factory
@@ -544,7 +547,15 @@ async def get_offers(
 ):
     """Return top-N ranked offers with suitability checks, audit trail, and explainability."""
     if not DEMO_MODE and authenticated_customer != customer_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        # Allow staff/admin: Keycloak SSO users have a UUID sub, not a DB integer ID.
+        # If authenticated_customer looks like a UUID it is a staff user accessing on behalf of a customer.
+        import re as _re
+        _is_staff = bool(_re.match(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+            authenticated_customer, _re.I,
+        ))
+        if not _is_staff and authenticated_customer not in ("__api_token__", "__demo__"):
+            raise HTTPException(status_code=403, detail="Not authorized")
 
     session_factory = request.app.state.db_session_factory
     recommendation_id = str(uuid.uuid4())
