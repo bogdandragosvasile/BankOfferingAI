@@ -343,3 +343,43 @@ argocd app sync --all
 | Data engineering    | Data Platform  | Slack #data-platform   |
 | Security            | InfoSec        | Slack #security-alerts |
 | Infrastructure      | Platform       | Slack #infra           |
+
+---
+
+## Infrastructure Notes
+
+### Docker networking — AI connector internet access
+
+**Context:** The Docker daemon on this host is configured with `"iptables": false` and `"ip-forward": false`
+in `/etc/docker/daemon.json`. This is intentional — it prevents Docker from conflicting with OpenStack
+Neutron's iptables management. The side effect is that Docker never installs its own MASQUERADE rule,
+so containers on the `bankofferingai_default` bridge (`172.18.0.0/16`, interface `br-9d316977e851`)
+cannot reach the internet. This breaks AI connector calls (Perplexity, Claude, OpenAI, etc.).
+
+**Fix:** A systemd service adds the single missing NAT rule at boot:
+
+```
+/etc/systemd/system/bankofferingai-nat.service
+```
+
+It runs `iptables -t nat -A POSTROUTING -s 172.18.0.0/16 ! -o br-9d316977e851 -j MASQUERADE`
+idempotently (skips if the rule already exists). It is enabled and will start automatically after
+`docker.service` on every boot.
+
+**To verify after a reboot:**
+```bash
+systemctl status bankofferingai-nat.service
+# Should show: Active: active (exited)
+
+# Confirm the rule is present:
+sudo iptables -t nat -S POSTROUTING | grep 172.18
+
+# Confirm connectivity from the API container:
+docker exec bankofferingai-api-1 python3 -c \
+  "import socket; s=socket.create_connection(('104.18.27.48',443),5); print('OK'); s.close()"
+```
+
+**To disable** (e.g. if you intentionally want to air-gap the containers):
+```bash
+sudo systemctl disable --now bankofferingai-nat.service
+```

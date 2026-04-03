@@ -212,6 +212,10 @@ tailwind.config = {
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         <span data-i18n="admin.audit_log">Audit Log</span>
       </button>
+      <button onclick="showSection('pnl')" data-section="pnl" class="admin-nav w-full text-left flex items-center gap-3 px-3 py-2.5 rounded text-sm" style="color: var(--text-secondary);">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>Product P&amp;L</span>
+      </button>
     </nav>
     <div class="p-3 space-y-2" style="border-top: 1px solid var(--border);">
       <a href="/" class="flex items-center gap-2 px-3 py-2 rounded text-xs transition" style="color: var(--text-secondary);">
@@ -1236,6 +1240,114 @@ tailwind.config = {
         </div>
       </div>
     </section>
+
+    <!-- ===== PRODUCT P&L SECTION ===== -->
+    <section id="section-pnl" class="p-4 md:p-8 space-y-6 hidden">
+
+      <!-- Header + period selector -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <p class="text-xs" style="color:var(--text-muted);">Per-product performance, compliance risk, and priority score over the selected period.</p>
+        <div class="flex items-center gap-2 text-xs">
+          <span style="color:var(--text-secondary);">Period:</span>
+          <button onclick="setPnlPeriod(7)"  id="pnl-btn-7"  class="pnl-period-btn px-3 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">7d</button>
+          <button onclick="setPnlPeriod(30)" id="pnl-btn-30" class="pnl-period-btn px-3 py-1 rounded border text-xs" style="border-color:var(--accent);color:var(--accent);">30d</button>
+          <button onclick="setPnlPeriod(90)" id="pnl-btn-90" class="pnl-period-btn px-3 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">90d</button>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 text-center" style="background:var(--bg-raised);border:1px solid var(--border);">
+          <div class="text-xs mb-1" style="color:var(--text-muted);">Net Contribution</div>
+          <div id="pnl-kpi-net" class="text-xl font-semibold" style="color:var(--text-primary);">—</div>
+        </div>
+        <div class="p-4 text-center" style="background:var(--bg-raised);border:1px solid var(--border);">
+          <div class="text-xs mb-1" style="color:var(--text-muted);">Avg E2E Conversion</div>
+          <div id="pnl-kpi-e2e" class="text-xl font-semibold" style="color:var(--text-primary);">—</div>
+        </div>
+        <div class="p-4 text-center" style="background:var(--bg-raised);border:1px solid var(--border);">
+          <div class="text-xs mb-1" style="color:var(--text-muted);">Avg Compliance Pass Rate</div>
+          <div id="pnl-kpi-comp" class="text-xl font-semibold" style="color:var(--text-primary);">—</div>
+        </div>
+        <div class="p-4 text-center" style="background:var(--bg-raised);border:1px solid var(--border);">
+          <div class="text-xs mb-1" style="color:var(--text-muted);">HIGH Alerts</div>
+          <div id="pnl-kpi-flags" class="text-xl font-semibold" style="color:var(--text-primary);">—</div>
+        </div>
+      </div>
+
+      <!-- Alerts panel -->
+      <div id="pnl-alerts" class="hidden space-y-1.5"></div>
+
+      <!-- Position map -->
+      <div class="p-4" style="background:var(--bg-raised);border:1px solid var(--border);">
+        <h3 class="text-xs font-semibold uppercase tracking-wider mb-1" style="color:var(--text-muted);">Position Map</h3>
+        <p class="text-xs mb-3" style="color:var(--text-muted);">
+          X = Final priority score &nbsp;&middot;&nbsp; Y = Compliance pass rate &nbsp;&middot;&nbsp; Bubble size = offers generated
+          &nbsp;&nbsp;
+          <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#2D7D46;opacity:.8;vertical-align:middle;"></span>Scale (&gt;40)</span>
+          &nbsp;
+          <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#D4A843;opacity:.8;vertical-align:middle;"></span>Optimise (10&ndash;40)</span>
+          &nbsp;
+          <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#C1403D;opacity:.8;vertical-align:middle;"></span>Restrict (&lt;10)</span>
+        </p>
+        <div id="pnl-scatter" style="height:300px;"></div>
+      </div>
+
+      <!-- Product scorecard table -->
+      <div style="background:var(--bg-raised);border:1px solid var(--border);">
+        <!-- Quick filters -->
+        <div class="flex flex-wrap items-center gap-2 px-4 py-2.5" style="border-bottom:1px solid var(--border);">
+          <span class="text-xs font-semibold uppercase tracking-wider mr-1" style="color:var(--text-muted);">Filter:</span>
+          <button onclick="filterPnl('all')" id="pnl-filter-all" class="pnl-filter-btn px-2.5 py-1 rounded text-xs" style="background:var(--accent);color:#fff;">All</button>
+          <button onclick="filterPnl('low_conv')" id="pnl-filter-low_conv" class="pnl-filter-btn px-2.5 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">Low Conversion</button>
+          <button onclick="filterPnl('high_block')" id="pnl-filter-high_block" class="pnl-filter-btn px-2.5 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">High Block Rate</button>
+          <button onclick="filterPnl('negative_net')" id="pnl-filter-negative_net" class="pnl-filter-btn px-2.5 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">Negative Score</button>
+          <button onclick="filterPnl('high_complaints')" id="pnl-filter-high_complaints" class="pnl-filter-btn px-2.5 py-1 rounded border text-xs" style="border-color:var(--border);color:var(--text-secondary);">High Complaints</button>
+        </div>
+        <div class="overflow-x-auto">
+          <div id="pnl-table-loading" class="p-6 text-sm" style="color:var(--text-muted);">Loading product performance data...</div>
+          <table id="pnl-table" class="w-full text-xs hidden">
+            <thead>
+              <tr class="text-left uppercase tracking-wider" style="border-bottom:2px solid var(--border);color:var(--text-muted);">
+                <th class="px-4 py-3 font-medium" style="min-width:160px;">Product</th>
+                <th class="px-3 py-3 font-medium text-right">Generated</th>
+                <th class="px-3 py-3 font-medium text-right">Sent</th>
+                <th class="px-3 py-3 font-medium text-right">Activated</th>
+                <th class="px-3 py-3 font-medium text-right">Blocked</th>
+                <th class="px-3 py-3 font-medium text-right">Compliance %</th>
+                <th class="px-3 py-3 font-medium text-right">Biz Score</th>
+                <th class="px-3 py-3 font-medium text-right">Risk Pen.</th>
+                <th class="px-3 py-3 font-medium text-right">Final Score ▼</th>
+              </tr>
+            </thead>
+            <tbody id="pnl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Playbook recommendations -->
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--text-muted);">Playbook Recommendations</p>
+        <div id="pnl-playbook-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"></div>
+      </div>
+
+    </section>
+
+    <!-- ===== AUDIT DETAIL MODAL ===== -->
+    <div id="audit-detail-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4" style="background: rgba(0,0,0,0.35);">
+      <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto" style="background: var(--bg-raised); border: 1px solid var(--border);">
+        <div class="flex items-center justify-between px-6 py-4" style="border-bottom: 1px solid var(--border);">
+          <div>
+            <h2 class="text-sm font-semibold" style="color: var(--text-primary);">Audit Record Detail</h2>
+            <p id="audit-detail-id" class="font-mono text-xs mt-0.5" style="color: var(--text-muted);"></p>
+          </div>
+          <button onclick="closeAuditDetail()" class="text-xl leading-none transition" style="color: var(--text-muted);">&times;</button>
+        </div>
+        <div id="audit-detail-body" class="px-6 py-5 space-y-5 text-sm" style="color: var(--text-primary);">
+          <p style="color: var(--text-muted);">Loading...</p>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 <script>
@@ -1424,7 +1536,7 @@ function showSection(name) {
   document.querySelectorAll('.admin-nav').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-section="${name}"]`).classList.add('active');
 
-  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', connectors: 'Connectors', intelligence: 'Intelligence Hub', config: 'admin.system_config', audit: 'admin.audit_log' };
+  const titleKeys = { overview: 'admin.overview', users: 'admin.users', security: 'admin.security', aiact: 'admin.aiact', tokens: 'admin.api_tokens', products: 'admin.products', consent: 'admin.consent_registry', connectors: 'Connectors', intelligence: 'Intelligence Hub', config: 'admin.system_config', audit: 'admin.audit_log', pnl: 'Product P&L' };
   const titleEl = document.getElementById('sectionTitle');
   titleEl.dataset.i18n = titleKeys[name] || '';
   titleEl.textContent = t(titleKeys[name] || name);
@@ -1436,6 +1548,7 @@ function showSection(name) {
   if (name === 'consent') loadConsentRegistry();
   if (name === 'connectors') loadConnectors();
   if (name === 'intelligence') loadIntelligence();
+  if (name === 'pnl') loadPnL();
 }
 
 async function loadOverview() {
@@ -2514,7 +2627,12 @@ async function loadAuditLog() {
 
     data.forEach(r => {
       html += `<tr class="table-row border-b border-border">
-        <td class="py-2.5 pr-3 font-mono text-xs text-accent-blue">${r.recommendation_id.slice(0,8)}...</td>
+        <td class="py-2.5 pr-3">
+          <button onclick="showAuditDetail('${r.recommendation_id}')"
+            class="font-mono text-xs underline underline-offset-2 text-left transition-opacity hover:opacity-70"
+            style="color: var(--accent);"
+            title="Click to view full audit record">${r.recommendation_id.slice(0,8)}...</button>
+        </td>
         <td class="py-2.5 pr-3 text-ink">${r.customer_id}</td>
         <td class="py-2.5 pr-3 text-accent-green">${r.num_offers}</td>
         <td class="py-2.5 pr-3 text-accent-red">${r.num_excluded}</td>
@@ -2528,6 +2646,403 @@ async function loadAuditLog() {
   } catch (e) {
     document.getElementById('audit-table-container').innerHTML = `<p class="text-accent-red text-sm">Failed to load: ${e.message}</p>`;
   }
+}
+
+function _auditSection(label, data) {
+  if (!data) return '';
+  const json = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  return `
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--text-muted);">${label}</p>
+      <pre class="text-xs p-3 overflow-x-auto rounded" style="background: var(--bg-sunken); border: 1px solid var(--border); color: var(--text-secondary); white-space: pre-wrap; word-break: break-word;">${json}</pre>
+    </div>`;
+}
+
+async function showAuditDetail(recommendationId) {
+  const modal = document.getElementById('audit-detail-modal');
+  const body  = document.getElementById('audit-detail-body');
+  const idEl  = document.getElementById('audit-detail-id');
+
+  idEl.textContent = recommendationId;
+  body.innerHTML = '<p style="color: var(--text-muted);">Loading...</p>';
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  try {
+    const resp = await fetch(`${API}/compliance/audit/${recommendationId}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const r = await resp.json();
+
+    const suitability = r.suitability_checks;
+    let suitabilityHtml = '';
+    if (suitability && typeof suitability === 'object' && !Array.isArray(suitability)) {
+      // Object form: { gdpr: true, mifid: false, ... }
+      const rows = Object.entries(suitability).map(([k, v]) => {
+        const pass = v === true || v === 'pass' || v === 'ok';
+        const color = pass ? 'var(--accent-green, #2D7D46)' : 'var(--accent-red, #C1403D)';
+        const label = pass ? 'PASS' : 'FAIL';
+        return `<tr><td class="pr-4 py-1 font-mono text-xs" style="color: var(--text-secondary);">${k}</td>
+                    <td class="py-1 text-xs font-semibold" style="color: ${color};">${label}</td>
+                    <td class="py-1 text-xs pl-3" style="color: var(--text-muted);">${typeof v === 'object' ? JSON.stringify(v) : String(v)}</td></tr>`;
+      }).join('');
+      suitabilityHtml = `
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Suitability Checks</p>
+          <table class="w-full text-sm" style="border: 1px solid var(--border);">
+            <thead><tr class="text-left text-xs uppercase tracking-wider" style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
+              <th class="pr-4 pb-2 pt-2 pl-2">Check</th><th class="pb-2 pt-2">Result</th><th class="pb-2 pt-2 pl-3">Value</th>
+            </tr></thead>
+            <tbody class="divide-y" style="--tw-divide-opacity:1;">${rows}</tbody>
+          </table>
+        </div>`;
+    } else {
+      suitabilityHtml = _auditSection('Suitability Checks', suitability);
+    }
+
+    const finalOffers = Array.isArray(r.final_offers) ? r.final_offers : (r.final_offers ? [r.final_offers] : []);
+    const offersHtml = finalOffers.length ? `
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Final Offers (${finalOffers.length})</p>
+        <div class="space-y-2">
+          ${finalOffers.map(o => `
+            <div class="px-3 py-2 text-xs" style="border: 1px solid var(--border); background: var(--bg-sunken);">
+              <span class="font-medium" style="color: var(--text-primary);">${o.product_name || o.product_id || '—'}</span>
+              ${o.score !== undefined ? `<span class="ml-3" style="color: var(--text-muted);">Score: ${(o.score * 100).toFixed(1)}%</span>` : ''}
+              ${o.reason ? `<span class="ml-3" style="color: var(--text-muted);">${o.reason}</span>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const excluded = Array.isArray(r.excluded_products) ? r.excluded_products : [];
+    const excludedHtml = excluded.length ? `
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--text-muted);">Excluded Products (${excluded.length})</p>
+        <div class="space-y-1">
+          ${excluded.map(e => `
+            <div class="px-3 py-1.5 text-xs" style="border: 1px solid var(--border); background: var(--bg-sunken);">
+              <span style="color: var(--text-primary);">${e.product_name || e.product_id || '—'}</span>
+              ${e.reason ? `<span class="ml-3" style="color: var(--accent-red, #C1403D);">${e.reason}</span>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    body.innerHTML = `
+      <div class="grid grid-cols-2 gap-4 text-xs pb-4" style="border-bottom: 1px solid var(--border);">
+        <div><span style="color: var(--text-muted);">Customer ID</span><br><span class="font-mono font-medium">${r.customer_id}</span></div>
+        <div><span style="color: var(--text-muted);">External ID</span><br><span class="font-mono font-medium">${r.external_customer_id || '—'}</span></div>
+        <div><span style="color: var(--text-muted);">Model Version</span><br><span class="font-medium">${r.model_version}</span></div>
+        <div><span style="color: var(--text-muted);">Created</span><br><span class="font-medium">${new Date(r.created_at).toLocaleString()}</span></div>
+      </div>
+      ${offersHtml}
+      ${excludedHtml}
+      ${suitabilityHtml}
+      ${_auditSection('Input Features', r.input_features)}
+      ${_auditSection('Profile Result', r.profile_result)}
+      ${_auditSection('Scored Products', r.scored_products)}
+      ${_auditSection('Consent Snapshot', r.consent_snapshot)}
+    `;
+  } catch (e) {
+    body.innerHTML = `<p class="text-sm" style="color: var(--accent-red, #C1403D);">Failed to load audit detail: ${e.message}</p>`;
+  }
+}
+
+function closeAuditDetail() {
+  const modal = document.getElementById('audit-detail-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+// Close on backdrop click
+document.addEventListener('click', e => {
+  const modal = document.getElementById('audit-detail-modal');
+  if (e.target === modal) closeAuditDetail();
+});
+
+// ===== PRODUCT P&L =====
+
+let _pnlDays = 30;
+let _pnlData = null;
+let _pnlActiveFilter = 'all';
+
+function setPnlPeriod(d) {
+  _pnlDays = d;
+  document.querySelectorAll('.pnl-period-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--text-secondary)';
+    b.style.background = 'transparent';
+  });
+  const btn = document.getElementById(`pnl-btn-${d}`);
+  if (btn) { btn.style.borderColor = 'var(--accent)'; btn.style.color = 'var(--accent)'; }
+  loadPnL();
+}
+
+async function loadPnL() {
+  document.getElementById('pnl-table-loading').style.display = '';
+  document.getElementById('pnl-table').classList.add('hidden');
+  document.getElementById('pnl-alerts').classList.add('hidden');
+  try {
+    const resp = await fetch(`${API}/products-catalog/performance?days=${_pnlDays}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    _pnlData = await resp.json();
+    renderPnL(_pnlData);
+  } catch(e) {
+    document.getElementById('pnl-table-loading').textContent = `Failed to load: ${e.message}`;
+  }
+}
+
+function _eur(v) {
+  if (v === 0) return '—';
+  return (v < 0 ? '-€' : '€') + Math.abs(v).toLocaleString('ro-RO', { maximumFractionDigits: 0 });
+}
+function _pct(v) { return v === 0 ? '—' : v.toFixed(1) + '%'; }
+function _scoreColor(v) {
+  if (v > 40)  return '#2D7D46';
+  if (v > 10)  return '#D4A843';
+  return '#C1403D';
+}
+function _complianceColor(v) {
+  if (v >= 95) return '#2D7D46';
+  if (v >= 80) return '#D4A843';
+  return '#C1403D';
+}
+
+const _pnlFilters = {
+  all:             () => true,
+  low_conv:        p => p.compliance_pass_rate >= 50 && p.e2e_conversion < 2 && p.offers_generated > 0,
+  high_block:      p => p.blocked_by_compliance > 0 && p.offers_generated > 0,
+  negative_net:    p => p.final_score < 0,
+  high_complaints: p => p.complaint_rate > 2 && p.contracts_activated > 0,
+};
+
+function filterPnl(key) {
+  _pnlActiveFilter = key;
+  document.querySelectorAll('.pnl-filter-btn').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text-secondary)';
+    b.style.border = '1px solid var(--border)';
+  });
+  const active = document.getElementById(`pnl-filter-${key}`);
+  if (active) { active.style.background = 'var(--accent)'; active.style.color = '#fff'; active.style.border = 'none'; }
+  if (_pnlData) _renderPnlTable(_pnlData.products || []);
+}
+
+function renderPnL(data) {
+  const products = data.products || [];
+  const alerts   = data.alerts   || [];
+
+  // KPI cards
+  const active = products.filter(p => p.offers_generated > 0);
+  const totalNet = active.reduce((s, p) => s + p.net_contribution, 0);
+  const avgE2E   = active.length ? active.reduce((s, p) => s + p.e2e_conversion, 0) / active.length : 0;
+  const avgComp  = active.length ? active.reduce((s, p) => s + p.compliance_pass_rate, 0) / active.length : 0;
+  const flagCount = alerts.filter(a => a.level === 'HIGH').length;
+
+  document.getElementById('pnl-kpi-net').textContent  = _eur(totalNet);
+  document.getElementById('pnl-kpi-net').style.color  = totalNet > 0 ? '#2D7D46' : totalNet < 0 ? '#C1403D' : 'var(--text-primary)';
+  document.getElementById('pnl-kpi-e2e').textContent  = _pct(avgE2E);
+  document.getElementById('pnl-kpi-comp').textContent = _pct(avgComp);
+  document.getElementById('pnl-kpi-comp').style.color = _complianceColor(avgComp);
+  document.getElementById('pnl-kpi-flags').textContent = flagCount > 0 ? `${flagCount}` : '0';
+  document.getElementById('pnl-kpi-flags').style.color = flagCount > 0 ? '#C1403D' : '#2D7D46';
+
+  // Alerts (collapsed by default — show only if there are any)
+  const alertsEl = document.getElementById('pnl-alerts');
+  if (alerts.length) {
+    alertsEl.classList.remove('hidden');
+    alertsEl.innerHTML = alerts.map(a => {
+      const col = a.level === 'HIGH' ? '#C1403D' : '#D4A843';
+      return `<div class="flex items-center gap-3 px-4 py-2 text-xs" style="background:${col}18;border-left:3px solid ${col};">
+        <span class="font-bold text-[10px] uppercase" style="color:${col};">${a.level}</span>
+        <span style="color:var(--text-primary);">${a.product}</span>
+        <span style="color:var(--text-secondary);">${a.msg}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Table + chart
+  _renderPnlTable(products);
+  _renderPnlScatter(products);
+  _renderPnlPlaybook();
+}
+
+function _renderPnlTable(products) {
+  const filterFn = _pnlFilters[_pnlActiveFilter] || _pnlFilters.all;
+  const sorted = [...products].sort((a, b) => b.final_score - a.final_score);
+  const filtered = sorted.filter(filterFn);
+
+  document.getElementById('pnl-tbody').innerHTML = filtered.map(p => {
+    const scoreColor = _scoreColor(p.final_score);
+    const compColor  = _complianceColor(p.compliance_pass_rate);
+    return `<tr class="border-b table-row" style="border-color:var(--border);">
+      <td class="px-4 py-2.5">
+        <div class="font-medium" style="color:var(--text-primary);">${p.product_name}</div>
+        <div class="text-[10px]" style="color:var(--text-muted);">${p.category || ''}</div>
+      </td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.offers_generated.toLocaleString()}</td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.offers_sent.toLocaleString()}</td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.contracts_activated}</td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.blocked_by_compliance}</td>
+      <td class="px-3 py-2.5 text-right font-semibold" style="color:${compColor};">${_pct(p.compliance_pass_rate)}</td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.business_score.toFixed(0)}</td>
+      <td class="px-3 py-2.5 text-right" style="color:var(--text-secondary);">${p.risk_penalty.toFixed(0)}</td>
+      <td class="px-3 py-2.5 text-right font-bold" style="color:${scoreColor};font-size:.8rem;">${p.final_score.toFixed(0)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="px-4 py-6 text-center text-xs" style="color:var(--text-muted);">No products match this filter.</td></tr>`;
+
+  document.getElementById('pnl-table-loading').style.display = 'none';
+  document.getElementById('pnl-table').classList.remove('hidden');
+}
+
+function _renderPnlScatter(products) {
+  const el = document.getElementById('pnl-scatter');
+  if (!el) return;
+
+  const W = el.clientWidth || 700;
+  const H = 300;
+  const pad = { t: 16, r: 28, b: 44, l: 54 };
+  const pw = W - pad.l - pad.r;
+  const ph = H - pad.t - pad.b;
+
+  const all = products.filter(p => p.offers_generated > 0);
+  if (!all.length) {
+    el.innerHTML = '<p class="text-xs p-4" style="color:var(--text-muted);">No data for this period.</p>';
+    return;
+  }
+
+  const scores = all.map(p => p.final_score);
+  const comps  = all.map(p => p.compliance_pass_rate);
+  const vols   = all.map(p => p.offers_generated);
+  const maxVol = Math.max(...vols);
+  let minS = Math.min(...scores), maxS = Math.max(...scores);
+  if (minS === maxS) { minS -= 5; maxS += 5; }
+  // Add 10% padding on each side of score axis
+  const scoreRange = maxS - minS;
+  minS -= scoreRange * 0.1;
+  maxS += scoreRange * 0.1;
+
+  const sx = v => pad.l + (v - minS) / (maxS - minS) * pw;
+  const sy = v => pad.t + ph - (v / 100 * ph);
+  const sr = v => Math.max(6, Math.min(22, (v / maxVol) * 22));
+
+  // Y-axis gridlines + labels
+  let grid = '';
+  [0, 25, 50, 75, 100].forEach(v => {
+    const y = sy(v);
+    grid += `<line x1="${pad.l}" y1="${y}" x2="${pad.l+pw}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>
+             <text x="${pad.l - 7}" y="${y + 3.5}" text-anchor="end" font-size="9" fill="var(--text-muted)">${v}%</text>`;
+  });
+
+  // X-axis labels
+  let xLabels = '';
+  const ticks = 5;
+  for (let i = 0; i <= ticks; i++) {
+    const v = minS + (maxS - minS) * i / ticks;
+    const x = sx(v);
+    xLabels += `<text x="${x}" y="${pad.t + ph + 14}" text-anchor="middle" font-size="9" fill="var(--text-muted)">${v.toFixed(0)}</text>`;
+  }
+
+  // Zero-score vertical line
+  const zeroX = sx(0);
+  const zeroLine = (zeroX > pad.l + 4 && zeroX < pad.l + pw - 4)
+    ? `<line x1="${zeroX}" y1="${pad.t}" x2="${zeroX}" y2="${pad.t+ph}" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="4,3"/>`
+    : '';
+
+  const bubbles = all.map((p, i) => {
+    const x = sx(scores[i]), y = sy(comps[i]), r = sr(vols[i]);
+    const color = _scoreColor(p.final_score);
+    const short = p.product_name.split(' ').slice(0, 2).join('\u00A0');
+    return `<g>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="0.65" stroke="${color}" stroke-width="1.5"/>
+      <text x="${x}" y="${y - r - 5}" text-anchor="middle" font-size="8.5" fill="var(--text-secondary)" pointer-events="none">${short}</text>
+    </g>`;
+  }).join('');
+
+  el.innerHTML = `<svg width="${W}" height="${H}" style="display:block;overflow:visible;">
+    <rect x="${pad.l}" y="${pad.t}" width="${pw}" height="${ph}" fill="var(--bg-sunken)" stroke="var(--border)" stroke-width="1"/>
+    ${grid}
+    ${zeroLine}
+    ${bubbles}
+    ${xLabels}
+    <text x="${pad.l + pw/2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--text-muted)">&#x2190; Final Priority Score &#x2192;</text>
+    <text transform="rotate(-90)" x="${-(pad.t + ph/2)}" y="14" text-anchor="middle" font-size="9" fill="var(--text-muted)">Compliance %</text>
+  </svg>`;
+}
+
+function _renderPnlPlaybook() {
+  const grid = document.getElementById('pnl-playbook-grid');
+  if (!grid) return;
+  // Show the prompt button — user decides when to run AI
+  grid.innerHTML = `<div class="col-span-1 md:col-span-2 flex items-center gap-4 p-4" style="background:var(--bg-raised);border:1px solid var(--border);">
+    <div class="flex-1">
+      <div class="text-xs font-medium mb-0.5" style="color:var(--text-primary);">AI Analysis not yet run</div>
+      <div class="text-xs" style="color:var(--text-muted);">Analyse all product metrics with the active AI connector and get per-product recommendations.</div>
+    </div>
+    <button onclick="_loadPlaybookAI()" id="pnl-ai-run-btn"
+      class="flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors"
+      style="background:var(--accent);color:#fff;border:none;white-space:nowrap;">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Run AI Analysis
+    </button>
+  </div>`;
+}
+
+async function _loadPlaybookAI() {
+  const grid = document.getElementById('pnl-playbook-grid');
+  if (!grid) return;
+
+  // Show loading state
+  grid.innerHTML = `<div class="col-span-1 md:col-span-2 flex items-center gap-3 p-4 text-xs" style="color:var(--text-muted);">
+    <span class="pulse-dot inline-block w-2 h-2 rounded-full flex-shrink-0" style="background:var(--accent);"></span>
+    Analysing with AI — this may take a few seconds...
+  </div>`;
+
+  try {
+    const resp = await fetch(`${API}/intelligence/playbook-analysis?days=${_pnlDays}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const priorityColor = { high: '#C1403D', medium: '#D4A843', low: '#2D7D46' };
+
+    const header = `<div class="col-span-1 md:col-span-2 flex items-center justify-between px-1 mb-1">
+      <div class="flex items-center gap-2 text-[10px] uppercase tracking-wider font-semibold" style="color:var(--text-muted);">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        AI Analysis &mdash; ${escHtml(data.connector)}
+      </div>
+      <button onclick="_loadPlaybookAI()" class="text-[10px] px-2 py-1 transition-colors"
+        style="border:1px solid var(--border);color:var(--text-secondary);">Refresh</button>
+    </div>`;
+
+    const summaryCard = data.summary ? `<div class="col-span-1 md:col-span-2 p-3 text-xs" style="background:var(--accent)0D;border:1px solid var(--accent)33;">
+      <div class="font-semibold mb-1" style="color:var(--accent);">Portfolio Summary</div>
+      <div style="color:var(--text-primary);">${escHtml(data.summary)}</div>
+    </div>` : '';
+
+    const recCards = (data.recommendations || []).map(r => {
+      const pColor = priorityColor[r.priority] || '#999';
+      return `<div class="p-3 text-xs" style="background:var(--bg-raised);border:1px solid var(--border);border-left:3px solid ${pColor};">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="font-semibold" style="color:var(--text-primary);">${escHtml(r.product_name)}</div>
+          <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded" style="background:${pColor}18;color:${pColor};">${r.priority}</span>
+        </div>
+        <div class="mb-1" style="color:var(--text-primary);">${escHtml(r.situation)}</div>
+        <div class="mb-1" style="color:var(--text-secondary);"><span style="color:var(--text-muted);">Root cause:</span> ${escHtml(r.root_cause)}</div>
+        <div style="color:var(--accent);font-weight:500;">&#x2192; ${escHtml(r.action)}</div>
+      </div>`;
+    }).join('');
+
+    grid.innerHTML = header + summaryCard + (recCards || `<div class="col-span-2 p-3 text-xs" style="color:var(--text-muted);">No issues detected by AI.</div>`);
+
+  } catch(e) {
+    grid.innerHTML = `<div class="col-span-1 md:col-span-2 flex items-center gap-4 p-4" style="background:var(--bg-raised);border:1px solid var(--border);">
+      <div class="flex-1 text-xs" style="color:var(--accent-red,#C1403D);">AI analysis failed: ${escHtml(e.message)}</div>
+      <button onclick="_loadPlaybookAI()" class="px-3 py-2 text-xs transition-colors"
+        style="border:1px solid var(--border);color:var(--text-secondary);">Retry</button>
+    </div>`;
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ===== CONNECTORS =====
@@ -2607,9 +3122,10 @@ function renderConnectors() {
         <button onclick="approveConnector(${c.id}, 'reject')" class="flex-1 px-3 py-1.5 rounded bg-accent-red/10 text-accent-red text-xs font-medium hover:bg-accent-red/20 transition">Reject</button>
       </div>`;
     } else if (c.status === 'available' || c.status === 'approved') {
+      const canActivate = c.status === 'approved' || (c.status === 'available' && c.config_values && Object.keys(c.config_values).length > 0);
       actions = `<div class="flex gap-2 mt-3">
         <button onclick="openConfigModal(${c.id})" class="flex-1 px-3 py-1.5 rounded bg-accent-blue/10 text-accent-blue text-xs font-medium hover:bg-accent-blue/20 transition">Configure</button>
-        ${c.status === 'approved' ? `<button onclick="toggleConnector(${c.id})" class="px-3 py-1.5 rounded bg-accent-green/10 text-accent-green text-xs font-medium hover:bg-accent-green/20 transition">Activate</button>` : ''}
+        ${canActivate ? `<button onclick="toggleConnector(${c.id})" class="px-3 py-1.5 rounded bg-accent-green/10 text-accent-green text-xs font-medium hover:bg-accent-green/20 transition">Activate</button>` : ''}
       </div>`;
     } else if (c.status === 'active') {
       actions = `<div class="flex gap-2 mt-3">
@@ -2810,6 +3326,7 @@ async function saveConnectorConfig() {
 
 let _allIntel = [];
 let _allSuggestions = [];
+let _activeAiConnectors = [];
 let _intelFilter = 'all';
 let _sugFilter = 'all';
 
@@ -2854,15 +3371,18 @@ const PROD_TYPE_STYLES = {
 
 async function loadIntelligence() {
   try {
-    const [mResp, sResp] = await Promise.all([
+    const [mResp, sResp, cResp] = await Promise.all([
       fetch(`${API}/intelligence/market-data`),
       fetch(`${API}/intelligence/suggestions`),
+      fetch(`${API}/connectors?category=ai&status=active`),
     ]);
     _allIntel = mResp.ok ? await mResp.json() : [];
     _allSuggestions = sResp.ok ? await sResp.json() : [];
+    _activeAiConnectors = cResp.ok ? await cResp.json() : [];
   } catch (e) {
     _allIntel = [];
     _allSuggestions = [];
+    _activeAiConnectors = [];
   }
   updateIntelStats();
   renderIntelGrid();
@@ -2880,13 +3400,10 @@ function updateIntelStats() {
 
 function updateModelBadge() {
   const badge = document.getElementById('intel-model-badge');
-  const models = [...new Set(_allSuggestions.map(s => s.ai_model_used).filter(Boolean))];
-  if (models.length && models[0] !== 'built-in-engine') {
-    badge.innerHTML = `<span class="w-2 h-2 rounded bg-accent-green inline-block mr-1"></span> ${models[0]}`;
+  if (_activeAiConnectors && _activeAiConnectors.length > 0) {
+    const names = _activeAiConnectors.map(c => c.name).join(', ');
+    badge.innerHTML = `<span class="w-2 h-2 rounded bg-accent-green inline-block mr-1"></span> ${names}`;
     badge.className = 'px-3 py-1.5 rounded text-xs font-medium bg-accent-green/10 text-accent-green border border-accent-green/20';
-  } else if (models.length) {
-    badge.innerHTML = `<span class="w-2 h-2 rounded bg-accent-yellow inline-block mr-1"></span> Built-in Engine`;
-    badge.className = 'px-3 py-1.5 rounded text-xs font-medium bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20';
   } else {
     badge.textContent = 'No AI model connected';
     badge.className = 'px-3 py-1.5 rounded text-xs font-medium bg-surface-sunken text-ink-secondary border border-border';
@@ -3036,9 +3553,13 @@ async function runIntelAnalysis() {
   btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Analyzing...';
   try {
     const resp = await fetch(`${API}/intelligence/analyze`, { method: 'POST' });
-    if (!resp.ok) throw new Error('Analysis failed');
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ detail: `HTTP ${resp.status}` }));
+      throw new Error(err.detail || 'Analysis failed');
+    }
     const data = await resp.json();
-    alert(`Analysis complete!\n\n• ${data.market_intelligence_count} market signals processed\n• ${data.suggestions_created} new product suggestions\n• Model: ${data.model_used}`);
+    const modelNote = data.ai_powered ? `AI: ${data.model_used}` : `Built-in engine (no active AI reached)`;
+    alert(`Analysis complete!\n\n• ${data.market_intelligence_count} market signals processed\n• ${data.suggestions_created} new product suggestions\n• ${modelNote}`);
     loadIntelligence();
   } catch (err) {
     alert('Analysis error: ' + err.message);

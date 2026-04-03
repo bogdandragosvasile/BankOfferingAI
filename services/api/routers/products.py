@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
@@ -162,6 +162,237 @@ async def list_products(request: Request, active_only: bool = False):
         rows = result.mappings().fetchall()
         return [_row_to_product(r) for r in rows]
 
+
+@router.get("/performance", summary="Product P&L and performance metrics")
+async def get_product_performance(
+    request: Request,
+    days: int = Query(default=30, ge=7, le=365, description="Lookback window in days"),
+):
+    """
+    Aggregated per-product metrics: volume funnel, financial P&L, compliance,
+    composite Business/Risk scores. Powers the Product P&L dashboard.
+    """
+    session_factory = request.app.state.db_session_factory
+    async with session_factory() as session:
+        rows = await session.execute(text("""
+            WITH
+            offers_gen AS (
+                SELECT
+                    offer->>'product_name'                        AS product_name,
+                    COUNT(*)                                      AS offers_generated
+                FROM audit_recommendations,
+                     jsonb_array_elements(final_offers) AS offer
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            ),
+            excluded AS (
+                SELECT
+                    exc->>'product_name'   AS product_name,
+                    COUNT(*)               AS blocked_count
+                FROM audit_recommendations,
+                     jsonb_array_elements(
+                         CASE WHEN jsonb_array_length(excluded_products) > 0
+                              THEN excluded_products ELSE '[]'::jsonb END
+                     ) AS exc
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            ),
+            notif AS (
+                SELECT
+                    product_name,
+                    COUNT(*)                                      AS offers_sent,
+                    COUNT(*) FILTER (WHERE read = true)           AS offers_opened,
+                    COUNT(*) FILTER (WHERE action = 'submitted')  AS journey_started
+                FROM notifications
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            ),
+            apps AS (
+                SELECT
+                    product_name,
+                    COUNT(*) FILTER (WHERE status IN ('submitted','approved','rejected'))
+                                                                  AS applications_submitted,
+                    COUNT(*) FILTER (WHERE status = 'approved')   AS contracts_activated
+                FROM application_forms
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            ),
+            ovr AS (
+                SELECT
+                    ro.product_id                                 AS product_id,
+                    COUNT(*)                                      AS override_count
+                FROM recommendation_overrides ro
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            ),
+            complaints AS (
+                SELECT
+                    rf.product_id                                 AS product_id,
+                    COUNT(*) FILTER (WHERE rf.action = 'flagged') AS complaint_count
+                FROM recommendation_feedback rf
+                WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                GROUP BY 1
+            )
+            SELECT
+                p.product_name,
+                p.product_id,
+                p.category,
+                p.type,
+                p.risk_level,
+                COALESCE(og.offers_generated, 0)    AS offers_generated,
+                COALESCE(n.offers_sent, 0)          AS offers_sent,
+                COALESCE(n.offers_opened, 0)        AS offers_opened,
+                COALESCE(n.journey_started, 0)      AS journey_started,
+                COALESCE(a.applications_submitted,0)AS applications_submitted,
+                COALESCE(a.contracts_activated, 0)  AS contracts_activated,
+                COALESCE(exc.blocked_count, 0)      AS blocked_by_compliance,
+                COALESCE(ov.override_count, 0)      AS manual_overrides,
+                COALESCE(c.complaint_count, 0)      AS complaints_30d,
+                COALESCE(pe.avg_ticket_value, 0)                   AS avg_ticket_value,
+                COALESCE(pe.fee_rate, 0)                           AS fee_rate,
+                COALESCE(pe.distribution_cost_per_activation, 0)   AS dist_cost_per_act,
+                COALESCE(pe.risk_cost_rate, 0)                     AS risk_cost_rate
+            FROM products p
+            LEFT JOIN offers_gen og  ON og.product_name  = p.product_name
+            LEFT JOIN excluded exc   ON exc.product_name = p.product_name
+            LEFT JOIN notif n        ON n.product_name   = p.product_name
+            LEFT JOIN apps a         ON a.product_name   = p.product_name
+            LEFT JOIN ovr ov         ON ov.product_id    = p.product_id
+            LEFT JOIN complaints c   ON c.product_id     = p.product_id
+            LEFT JOIN product_economics pe ON pe.product_name = p.product_name
+            WHERE p.active = true
+            ORDER BY COALESCE(og.offers_generated, 0) DESC
+        """), {"days": str(days)})
+
+        raw = rows.mappings().fetchall()
+
+    def _pct(num, den):  # noqa: E306
+        return round(num / den * 100, 2) if den else 0.0
+
+    def _div(num, den):
+        return round(num / den, 4) if den else 0.0
+
+    products_out = []
+    for r in raw:
+        gen      = int(r["offers_generated"])
+        sent     = int(r["offers_sent"])
+        opened   = int(r["offers_opened"])
+        journey  = int(r["journey_started"])
+        apps_sub = int(r["applications_submitted"])
+        activated = int(r["contracts_activated"])
+        blocked   = int(r["blocked_by_compliance"])
+        overrides = int(r["manual_overrides"])
+        complaints = int(r["complaints_30d"])
+
+        avg_ticket    = float(r["avg_ticket_value"])
+        fee_rate      = float(r["fee_rate"])
+        dist_cost_act = float(r["dist_cost_per_act"])
+        risk_rate     = float(r["risk_cost_rate"])
+
+        gross_revenue    = round(avg_ticket * fee_rate * activated, 2)
+        dist_cost        = round(dist_cost_act * activated, 2)
+        risk_cost        = round(gross_revenue * risk_rate, 2)
+        net_contribution = round(gross_revenue - dist_cost - risk_cost, 2)
+
+        ctr             = _pct(opened, sent)
+        journey_rate    = _pct(journey, opened)
+        app_rate        = _pct(apps_sub, journey)
+        activation_rate = _pct(activated, apps_sub)
+        e2e_conversion  = _pct(activated, sent) if sent else _pct(activated, gen)
+
+        revenue_per_sent  = _div(gross_revenue, sent) if sent else _div(gross_revenue, gen)
+        cpa               = _div(dist_cost, activated)
+        net_per_activated = _div(net_contribution, activated)
+        roi               = _div(net_contribution, dist_cost)
+
+        total_scored         = gen + blocked
+        compliance_pass_rate = _pct(gen, total_scored)
+        override_rate        = _pct(overrides, gen)
+        complaint_rate       = _pct(complaints, activated)
+
+        products_out.append({
+            "product_name": r["product_name"],
+            "product_id":   r["product_id"],
+            "category":     r["category"],
+            "type":         r["type"],
+            "risk_level":   r["risk_level"],
+            "offers_generated":       gen,
+            "offers_sent":            sent,
+            "offers_opened":          opened,
+            "journey_started":        journey,
+            "applications_submitted": apps_sub,
+            "contracts_activated":    activated,
+            "ctr":              ctr,
+            "journey_rate":     journey_rate,
+            "app_rate":         app_rate,
+            "activation_rate":  activation_rate,
+            "e2e_conversion":   e2e_conversion,
+            "blocked_by_compliance":  blocked,
+            "manual_overrides":       overrides,
+            "complaints_30d":         complaints,
+            "compliance_pass_rate":   compliance_pass_rate,
+            "override_rate":          override_rate,
+            "complaint_rate":         complaint_rate,
+            "avg_ticket_value":       avg_ticket,
+            "fee_rate":               fee_rate,
+            "gross_revenue":          gross_revenue,
+            "distribution_cost":      dist_cost,
+            "risk_cost":              risk_cost,
+            "net_contribution":       net_contribution,
+            "revenue_per_sent":       revenue_per_sent,
+            "cpa":                    cpa,
+            "net_per_activated":      net_per_activated,
+            "roi":                    roi,
+        })
+
+    def _minmax(vals):
+        mn, mx = min(vals), max(vals)
+        if mx == mn:
+            return [50.0] * len(vals)
+        return [round((v - mn) / (mx - mn) * 100, 1) for v in vals]
+
+    active_idx = [i for i, p in enumerate(products_out) if p["offers_generated"] > 0]
+    if len(active_idx) >= 2:
+        e2e  = [products_out[i]["e2e_conversion"]      for i in active_idx]
+        npac = [products_out[i]["net_per_activated"]    for i in active_idx]
+        comp = [products_out[i]["compliance_pass_rate"] for i in active_idx]
+        compl= [products_out[i]["complaint_rate"]       for i in active_idx]
+        ovr  = [products_out[i]["override_rate"]        for i in active_idx]
+
+        n_e2e  = _minmax(e2e)
+        n_npac = _minmax(npac)
+        n_comp = _minmax(comp)
+        n_cmpl = _minmax([100 - v for v in compl])
+        n_ovr  = _minmax([100 - v for v in ovr])
+
+        for j, i in enumerate(active_idx):
+            biz  = round(0.40 * n_e2e[j] + 0.35 * n_npac[j] + 0.25 * n_comp[j], 1)
+            risk = round((1 - (0.40 * n_cmpl[j] + 0.35 * n_comp[j] + 0.25 * n_ovr[j]) / 100) * 100, 1)
+            products_out[i]["business_score"] = biz
+            products_out[i]["risk_penalty"]   = risk
+            products_out[i]["final_score"]    = round(biz - risk, 1)
+    else:
+        for p in products_out:
+            p["business_score"] = 0.0
+            p["risk_penalty"]   = 0.0
+            p["final_score"]    = 0.0
+
+    alerts = []
+    for p in products_out:
+        name = p["product_name"]
+        if p["compliance_pass_rate"] < 95 and p["offers_generated"] > 0:
+            alerts.append({"level": "HIGH",   "product": name, "msg": f"Compliance pass rate {p['compliance_pass_rate']}% < 95%"})
+        if p["complaint_rate"] > 3 and p["contracts_activated"] > 0:
+            alerts.append({"level": "HIGH",   "product": name, "msg": f"Complaint rate {p['complaint_rate']}% > 3%"})
+        if p["net_contribution"] < 0 and p["contracts_activated"] > 0:
+            alerts.append({"level": "MEDIUM", "product": name, "msg": f"Negative net contribution (€{p['net_contribution']:,.0f})"})
+        if p["e2e_conversion"] < 1 and p["offers_sent"] > 5:
+            alerts.append({"level": "MEDIUM", "product": name, "msg": f"Very low E2E conversion {p['e2e_conversion']}%"})
+
+    return {"period_days": days, "products": products_out, "alerts": alerts}
+
+
+# ─── also remove the duplicate at the bottom, kept below only for the economics PUT ───
 
 @router.get(
     "/{product_id}",
@@ -337,3 +568,44 @@ async def delete_product(product_id: str, request: Request):
         except Exception:
             pass
         return {"status": "deleted", "product_id": product_id, "name": row[0]}
+
+
+@router.put("/{product_name}/economics", summary="Update product economics parameters")
+async def update_product_economics(
+    product_name: str,
+    request: Request,
+):
+    """Update avg_ticket_value, fee_rate, distribution_cost, risk_cost_rate for a product."""
+    body = await request.json()
+    allowed = {"avg_ticket_value", "fee_rate", "distribution_cost_per_activation", "risk_cost_rate"}
+    updates = {k: v for k, v in body.items() if k in allowed}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid fields provided")
+
+    session_factory = request.app.state.db_session_factory
+    async with session_factory() as session:
+        # Fetch current values first, then merge
+        cur = await session.execute(
+            text("SELECT avg_ticket_value, fee_rate, distribution_cost_per_activation, risk_cost_rate FROM product_economics WHERE product_name = :pn"),
+            {"pn": product_name},
+        )
+        row = cur.mappings().fetchone()
+        merged = dict(row) if row else {"avg_ticket_value": 0, "fee_rate": 0, "distribution_cost_per_activation": 0, "risk_cost_rate": 0}
+        merged.update(updates)
+        merged["product_name"] = product_name
+        result = await session.execute(
+            text("""INSERT INTO product_economics
+                        (product_name, avg_ticket_value, fee_rate, distribution_cost_per_activation, risk_cost_rate, updated_at)
+                    VALUES (:product_name, :avg_ticket_value, :fee_rate, :distribution_cost_per_activation, :risk_cost_rate, NOW())
+                    ON CONFLICT (product_name) DO UPDATE SET
+                        avg_ticket_value = EXCLUDED.avg_ticket_value,
+                        fee_rate = EXCLUDED.fee_rate,
+                        distribution_cost_per_activation = EXCLUDED.distribution_cost_per_activation,
+                        risk_cost_rate = EXCLUDED.risk_cost_rate,
+                        updated_at = NOW()
+                    RETURNING product_name, avg_ticket_value, fee_rate, distribution_cost_per_activation, risk_cost_rate"""),
+            merged,
+        )
+        row = result.mappings().fetchone()
+        await session.commit()
+        return dict(row)

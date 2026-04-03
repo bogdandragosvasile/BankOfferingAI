@@ -144,12 +144,18 @@ async def configure_connector(connector_id: int, body: ConnectorUpdate, request:
     session_factory = request.app.state.db_session_factory
     try:
         async with session_factory() as session:
+            # Auto-promote available connectors to approved when an api_key is provided
+            has_api_key = bool(body.config_values.get("api_key", "").strip())
             result = await session.execute(
                 text(f"""UPDATE connectors
-                        SET config_values = :vals, updated_at = NOW()
+                        SET config_values = :vals, updated_at = NOW(),
+                            status = CASE
+                                WHEN status = 'available' AND :has_key THEN 'approved'
+                                ELSE status
+                            END
                         WHERE id = :cid
                         RETURNING {_COLUMNS}"""),
-                {"cid": connector_id, "vals": json.dumps(body.config_values)},
+                {"cid": connector_id, "vals": json.dumps(body.config_values), "has_key": has_api_key},
             )
             row = result.fetchone()
             if not row:
@@ -231,7 +237,7 @@ async def toggle_connector(connector_id: int, request: Request):
             current = row[0]
             if current == "active":
                 new_status = "disabled"
-            elif current in ("approved", "disabled"):
+            elif current in ("approved", "disabled", "available"):
                 new_status = "active"
             else:
                 raise HTTPException(status_code=400, detail=f"Cannot toggle from status '{current}'")

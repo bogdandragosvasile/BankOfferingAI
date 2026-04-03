@@ -255,7 +255,7 @@ async def _call_perplexity(config: dict, market_context: str = "") -> dict | Non
         return None
     model = config.get("model", "sonar-pro")
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(read=90.0, connect=10.0, write=10.0, pool=5.0)) as client:
             resp = await client.post(
                 "https://api.perplexity.ai/chat/completions",
                 headers={
@@ -264,7 +264,7 @@ async def _call_perplexity(config: dict, market_context: str = "") -> dict | Non
                 },
                 json={
                     "model": model,
-                    "max_tokens": 4096,
+                    "max_tokens": 8000,
                     "messages": [
                         {"role": "system", "content": _AI_SYSTEM_PROMPT},
                         {"role": "user", "content": _AI_USER_PROMPT + market_context},
@@ -279,8 +279,17 @@ async def _call_perplexity(config: dict, market_context: str = "") -> dict | Non
             if text_block.startswith("```"):
                 text_block = text_block.split("\n", 1)[1].rsplit("```", 1)[0].strip()
             return json.loads(text_block)
+    except httpx.ConnectTimeout:
+        logger.warning("Perplexity API: connection timed out (host unreachable or no internet access)")
+        return None
+    except httpx.ReadTimeout:
+        logger.warning("Perplexity API: response generation timed out (model too slow for prompt size)")
+        return None
+    except httpx.ConnectError as e:
+        logger.warning("Perplexity API: connection error — %s", e)
+        return None
     except Exception as e:
-        logger.error("Perplexity API error: %s", e)
+        logger.error("Perplexity API error [%s]: %s", type(e).__name__, e)
         return None
 
 
@@ -1229,6 +1238,330 @@ async def get_guardrails():
         "audit_log_immutability": "PostgreSQL trigger prevents UPDATE/DELETE on audit_recommendations",
         "fairness_monitoring": "Prometheus histograms by age bracket and income tier",
         "ai_api_tracking": "success/failure/latency metrics per provider",
+    }
+
+
+# ════════════════════════════════════════════════════════════════
+# AI-powered Playbook Analysis
+# ════════════════════════════════════════════════════════════════
+
+_PLAYBOOK_SYSTEM_PROMPT = """You are a senior banking product performance analyst.
+You receive product KPI metrics and return a structured JSON analysis with concrete, actionable recommendations.
+
+Respond ONLY with valid JSON — no markdown, no text outside the JSON object.
+
+Return this exact structure:
+{
+  "summary": "2-3 sentence overall portfolio assessment with specific numbers",
+  "recommendations": [
+    {
+      "product_name": "exact product name from the input data",
+      "situation": "One sentence describing the specific problem, with actual numbers from the data",
+      "root_cause": "Most likely root cause based on the metrics pattern",
+      "action": "Specific, concrete recommended action the product team can act on",
+      "priority": "high|medium|low"
+    }
+  ]
+}
+
+Include only products that need attention. Order by priority (high first).
+Be specific — quote actual numbers. Do not include generic advice."""
+
+
+async def _call_provider_for_playbook(provider: str, config: dict, system_prompt: str, user_prompt: str) -> str | None:
+    """Call an AI provider with custom prompts for playbook analysis. Returns raw text or None."""
+    api_key   = config.get("api_key", "").strip()
+    api_token = config.get("api_token", "").strip()
+    base_url  = config.get("base_url", "").strip().rstrip("/")
+    try:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(read=60.0, connect=10.0, write=10.0, pool=5.0)
+        ) as client:
+            if provider == "Anthropic":
+                if not api_key:
+                    return None
+                model = config.get("model", "claude-sonnet-4-6")
+                resp = await client.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={"x-api-key": api_key, "anthropic-version": "2023-06-01",
+                             "content-type": "application/json"},
+                    json={"model": model, "max_tokens": 2048,
+                          "system": system_prompt,
+                          "messages": [{"role": "user", "content": user_prompt}]},
+                )
+                resp.raise_for_status()
+                return resp.json()["content"][0]["text"]
+
+            elif provider == "OpenAI":
+                if not api_key:
+                    return None
+                model = config.get("model", "gpt-4o")
+                resp = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={"model": model, "max_tokens": 2048,
+                          "response_format": {"type": "json_object"},
+                          "messages": [{"role": "system", "content": system_prompt},
+                                       {"role": "user",   "content": user_prompt}]},
+                )
+                resp.raise_for_status()
+                return resp.json()["choices"][0]["message"]["content"]
+
+            elif provider == "Perplexity":
+                if not api_key:
+                    return None
+                model = config.get("model", "sonar-pro")
+                resp = await client.post(
+                    "https://api.perplexity.ai/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={"model": model, "max_tokens": 2048,
+                          "messages": [{"role": "system", "content": system_prompt},
+                                       {"role": "user",   "content": user_prompt}]},
+                )
+                resp.raise_for_status()
+                text_val = resp.json()["choices"][0]["message"]["content"].strip()
+                if text_val.startswith("```"):
+                    text_val = text_val.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                return text_val
+
+            elif provider == "Google":
+                if not api_key:
+                    return None
+                model = config.get("model", "gemini-2.0-flash")
+                resp = await client.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+                    headers={"Content-Type": "application/json"},
+                    json={"contents": [{"parts": [{"text": system_prompt + "\n\n" + user_prompt}]}],
+                          "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048,
+                                               "responseMimeType": "application/json"}},
+                )
+                resp.raise_for_status()
+                return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+            elif provider == "Hugging Face":
+                if not api_token:
+                    return None
+                model_id = config.get("model_id", "mistralai/Mixtral-8x7B-Instruct-v0.1")
+                resp = await client.post(
+                    f"https://api-inference.huggingface.co/models/{model_id}/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+                    json={"model": model_id, "max_tokens": 2048,
+                          "messages": [{"role": "system", "content": system_prompt},
+                                       {"role": "user",   "content": user_prompt}]},
+                )
+                resp.raise_for_status()
+                return resp.json()["choices"][0]["message"]["content"]
+
+            elif provider == "Local LLM":
+                if not base_url:
+                    return None
+                ak = api_key or "not-needed"
+                model = config.get("model", "llama3")
+                resp = await client.post(
+                    f"{base_url}/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {ak}", "Content-Type": "application/json"},
+                    json={"model": model, "max_tokens": 2048,
+                          "messages": [{"role": "system", "content": system_prompt},
+                                       {"role": "user",   "content": user_prompt}]},
+                )
+                resp.raise_for_status()
+                text_val = resp.json()["choices"][0]["message"]["content"].strip()
+                if text_val.startswith("```"):
+                    text_val = text_val.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                return text_val
+
+    except Exception as e:
+        logger.error("Playbook AI call (%s) error: %s", provider, e)
+    return None
+
+
+@router.get(
+    "/playbook-analysis",
+    summary="AI-powered product performance playbook analysis",
+)
+async def get_playbook_analysis(
+    request: Request,
+    days: int = Query(30, ge=7, le=90),
+):
+    """Fetch product performance metrics from DB and analyse them with the first
+    available active AI connector. Returns per-product recommendations + portfolio summary."""
+    session_factory = request.app.state.db_session_factory
+
+    async with session_factory() as session:
+        # Load active AI connectors
+        conn_result = await session.execute(
+            text("""SELECT name, provider, config_values
+                    FROM connectors
+                    WHERE category = 'ai' AND status = 'active'
+                    ORDER BY name""")
+        )
+        connectors = [
+            {"name": r[0], "provider": r[1],
+             "config": r[2] if isinstance(r[2], dict) else json.loads(r[2]) if r[2] else {}}
+            for r in conn_result.fetchall()
+        ]
+
+        # Fetch product KPIs (simplified — just what AI needs for analysis)
+        days_str = str(days)
+        perf_result = await session.execute(
+            text("""
+                WITH offers_gen AS (
+                    SELECT offer->>'product_name' AS product_name,
+                           COUNT(*) AS offers_generated
+                    FROM audit_recommendations,
+                         jsonb_array_elements(final_offers) AS offer
+                    WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                    GROUP BY 1
+                ),
+                excluded AS (
+                    SELECT exc->>'product_name' AS product_name,
+                           COUNT(*) AS blocked_count
+                    FROM audit_recommendations,
+                         jsonb_array_elements(
+                             CASE WHEN jsonb_array_length(excluded_products) > 0
+                                  THEN excluded_products ELSE '[]'::jsonb END
+                         ) AS exc
+                    WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                    GROUP BY 1
+                ),
+                notif AS (
+                    SELECT product_name,
+                           COUNT(*)                                     AS offers_sent,
+                           COUNT(*) FILTER (WHERE read = true)          AS offers_opened,
+                           COUNT(*) FILTER (WHERE action = 'submitted') AS journey_started
+                    FROM notifications
+                    WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                    GROUP BY 1
+                ),
+                apps AS (
+                    SELECT product_name,
+                           COUNT(*) FILTER (WHERE status = 'approved') AS activated
+                    FROM application_forms
+                    WHERE created_at >= NOW() - (:days || ' days')::INTERVAL
+                    GROUP BY 1
+                )
+                SELECT p.product_name, p.category,
+                       COALESCE(og.offers_generated, 0)  AS offers_generated,
+                       COALESCE(ex.blocked_count, 0)      AS blocked,
+                       ROUND(CASE WHEN COALESCE(og.offers_generated, 0) > 0
+                             THEN (COALESCE(og.offers_generated,0) - COALESCE(ex.blocked_count,0)) * 100.0
+                                  / og.offers_generated
+                             ELSE 0 END, 1)               AS compliance_pass_rate,
+                       COALESCE(no.offers_sent, 0)        AS sent,
+                       COALESCE(no.offers_opened, 0)      AS opened,
+                       COALESCE(no.journey_started, 0)    AS journey_started,
+                       COALESCE(ap.activated, 0)          AS activated
+                FROM products p
+                LEFT JOIN offers_gen og ON og.product_name = p.product_name
+                LEFT JOIN excluded   ex ON ex.product_name = p.product_name
+                LEFT JOIN notif      no ON no.product_name = p.product_name
+                LEFT JOIN apps       ap ON ap.product_name = p.product_name
+                WHERE p.active = true
+                ORDER BY COALESCE(og.offers_generated, 0) DESC
+            """),
+            {"days": days_str},
+        )
+        products = [
+            {
+                "product_name":         r[0],
+                "category":             r[1],
+                "offers_generated":     int(r[2]),
+                "blocked":              int(r[3]),
+                "compliance_pass_rate": float(r[4]),
+                "sent":                 int(r[5]),
+                "opened":               int(r[6]),
+                "journey_started":      int(r[7]),
+                "activated":            int(r[8]),
+            }
+            for r in perf_result.fetchall()
+        ]
+
+    if not products:
+        raise HTTPException(status_code=404, detail="No product data for this period")
+
+    # Build compact data table for the AI prompt
+    table_lines = [
+        "Product | Category | Generated | Blocked | Compliance% | Sent | Opened | Journey | Activated",
+        "-" * 95,
+    ]
+    for p in products:
+        table_lines.append(
+            f"{p['product_name']} | {p['category']} | {p['offers_generated']} "
+            f"| {p['blocked']} | {p['compliance_pass_rate']}% "
+            f"| {p['sent']} | {p['opened']} | {p['journey_started']} | {p['activated']}"
+        )
+    data_table = "\n".join(table_lines)
+
+    user_prompt = (
+        f"Analyse the following banking product performance data for the last {days} days "
+        f"and provide specific, actionable recommendations.\n\n"
+        f"{data_table}\n\n"
+        f"Focus on:\n"
+        f"- Products with compliance pass rate below 80% (many offers blocked)\n"
+        f"- Products with high generation but zero activations\n"
+        f"- Products with a good funnel drop-off (generated→sent→opened gap)\n"
+        f"- Products that are performing well (brief positive note)\n\n"
+        f"Return your analysis as JSON per the specified format."
+    )
+
+    # Try each connector in order until one succeeds
+    ai_text = None
+    connector_used = None
+    for conn in connectors:
+        has_cred = any(
+            conn["config"].get(k, "").strip()
+            for k in ("api_key", "api_token", "base_url")
+        )
+        if not has_cred:
+            logger.info("Playbook: skipping %s — no credentials", conn["name"])
+            continue
+        logger.info("Playbook analysis: calling %s (%s)", conn["name"], conn["provider"])
+        ai_text = await _call_provider_for_playbook(
+            conn["provider"], conn["config"], _PLAYBOOK_SYSTEM_PROMPT, user_prompt
+        )
+        if ai_text:
+            connector_used = conn
+            logger.info("Playbook: got response from %s", conn["name"])
+            break
+        logger.warning("Playbook: %s returned nothing, trying next", conn["name"])
+
+    if not ai_text or not connector_used:
+        raise HTTPException(status_code=503, detail="No active AI connector available or all calls failed")
+
+    # Parse AI JSON
+    try:
+        ai_text = ai_text.strip()
+        if ai_text.startswith("```"):
+            ai_text = ai_text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+        parsed = json.loads(ai_text)
+    except Exception:
+        logger.error("Playbook: AI returned non-JSON: %s", ai_text[:200])
+        raise HTTPException(status_code=502, detail="AI returned unparseable response")
+
+    # Sanitize output
+    valid_priorities = {"high", "medium", "low"}
+    recommendations = []
+    for r in parsed.get("recommendations", []):
+        situation, _ = _sanitize_ai_text(str(r.get("situation", "")))
+        root_cause, _ = _sanitize_ai_text(str(r.get("root_cause", "")))
+        action, _     = _sanitize_ai_text(str(r.get("action", "")))
+        recommendations.append({
+            "product_name": str(r.get("product_name", ""))[:200],
+            "situation":    situation,
+            "root_cause":   root_cause,
+            "action":       action,
+            "priority":     r.get("priority", "medium") if r.get("priority") in valid_priorities else "medium",
+        })
+
+    summary, _ = _sanitize_ai_text(str(parsed.get("summary", "")))
+
+    return {
+        "connector":       connector_used["name"],
+        "provider":        connector_used["provider"],
+        "generated_at":    datetime.utcnow().isoformat() + "Z",
+        "days":            days,
+        "summary":         summary,
+        "recommendations": recommendations,
     }
 
 
