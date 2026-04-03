@@ -61,6 +61,11 @@ ingressCustomer:
   tls: null   # TLS terminated by Pangolin/Traefik externally
 
 postgresql:
+  auth:
+    # Terraform pre-creates 'bankoffer-platform-creds' with key 'postgres-password'
+    existingSecret: bankoffer-platform-creds
+    secretKeys:
+      adminPasswordKey: postgres-password
   primary:
     persistence:
       size: 5Gi
@@ -73,13 +78,18 @@ postgresql:
         memory: 128Mi
 
 redis:
+  auth:
+    # Terraform pre-creates 'bankoffer-platform-creds' with key 'redis-password'
+    existingSecret: bankoffer-platform-creds
+    existingSecretPasswordKey: redis-password
   master:
     persistence:
       size: 1Gi
 
 keycloakSync:
   enabled: true
-  # adminPassword is injected via --set keycloakSync.adminPassword=$KC_ADMIN_PASS
+  # Terraform pre-creates 'bankoffer-platform-creds' with key 'adminPassword'
+  existingSecret: bankoffer-platform-creds
 
 keycloak:
   enabled: false   # staging uses external Keycloak at auth.lupulup.com

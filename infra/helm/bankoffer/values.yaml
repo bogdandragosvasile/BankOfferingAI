@@ -129,7 +129,8 @@ keycloakSync:
   realm: "bankofferai"
   clientId: "bankofferai-app"
   adminUser: "admin"
-  adminPassword: ""  # inject via --set keycloakSync.adminPassword=...
+  adminPassword: ""         # inject via --set OR use existingSecret
+  existingSecret: ""        # if set, use this Secret's 'adminPassword' key instead
 
 # ---------------------------------------------------------------------------
 # Seed job (one-shot DB initialiser — runs as a Helm post-install/upgrade hook)

@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: pangolin-stack
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"   # deploy before bankoffer so tunnel is up first
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -13,32 +15,17 @@ spec:
     path: infra/helm/pangolin-stack
     helm:
       releaseName: pangolin-stack
-      # Credentials are injected via ArgoCD secret parameters.
-      # Register them in ArgoCD → Settings → Repositories or use External Secrets.
-      #
-      # Required parameters (provide via ArgoCD UI or sealed secrets):
-      #   newt.credentials.id              - Pangolin site newt ID
-      #   newt.credentials.secret          - Pangolin site newt secret
-      #   operator.credentials.pangolinEmail
-      #   operator.credentials.pangolinPassword
-      #   operator.credentials.cfApiToken  - Cloudflare API token (dns:edit)
-      #   operator.credentials.cfZoneId    - Cloudflare zone ID for lupulup.com
-      #
-      # Example (for manual bootstrap only):
-      # parameters:
-      #   - name: newt.credentials.id
-      #     value: $argocd:pangolin-newt-id
-      #   - name: newt.credentials.secret
-      #     value: $argocd:pangolin-newt-secret
-      #   - name: operator.credentials.pangolinEmail
-      #     value: $argocd:pangolin-admin-email
-      #   - name: operator.credentials.pangolinPassword
-      #     value: $argocd:pangolin-admin-password
-      #   - name: operator.credentials.cfApiToken
-      #     value: $argocd:cloudflare-api-token
-      #   - name: operator.credentials.cfZoneId
-      #     value: $argocd:cloudflare-zone-id
-      parameters: []
+      # Credentials are pre-created by Terraform as K8s Secrets:
+      #   pangolin-system/pangolin-stack-newt-creds     (key: config.json)
+      #   pangolin-system/pangolin-stack-operator-creds (keys: PANGOLIN_EMAIL,
+      #                                                   PANGOLIN_PASSWORD,
+      #                                                   CF_API_TOKEN, CF_ZONE_ID)
+      # See openstack-gitops/terraform/bankoffer-cluster/02-platform/secrets.tf
+      parameters:
+        - name: newt.credentials.existingSecret
+          value: pangolin-stack-newt-creds
+        - name: operator.credentials.existingSecret
+          value: pangolin-stack-operator-creds
   destination:
     server: https://kubernetes.default.svc
     namespace: pangolin-system
@@ -56,7 +43,6 @@ spec:
         duration: 10s
         factor: 2
         maxDuration: 3m
-  # ClusterRole/ClusterRoleBinding are cluster-scoped — ignore namespace diff
   ignoreDifferences:
     - group: rbac.authorization.k8s.io
       kind: ClusterRoleBinding

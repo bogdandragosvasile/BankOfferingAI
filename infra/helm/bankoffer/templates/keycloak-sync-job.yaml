@@ -40,7 +40,7 @@ spec:
             - name: KC_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "bankoffer.fullname" . }}-kc-sync
+                  name: {{ .Values.keycloakSync.existingSecret | default (printf "%s-kc-sync" (include "bankoffer.fullname" .)) }}
                   key: adminPassword
             # Comma-separated list of hostnames this deployment exposes.
             # The job will ensure redirect/webOrigins/post-logout URIs for
@@ -134,6 +134,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
+{{- if not .Values.keycloakSync.existingSecret }}
 ---
 apiVersion: v1
 kind: Secret
@@ -150,4 +151,5 @@ metadata:
 type: Opaque
 stringData:
   adminPassword: {{ .Values.keycloakSync.adminPassword | quote }}
+{{- end }}
 {{- end }}

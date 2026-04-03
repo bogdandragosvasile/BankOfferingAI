@@ -12,7 +12,7 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "10"
     # Remove the completed job pod to keep the namespace clean.
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: {{ .Values.seed.backoffLimit }}
   # Give the seed job 10 minutes before timing out (Keycloak takes a while).
