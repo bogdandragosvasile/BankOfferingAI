@@ -29,7 +29,7 @@ seed:
   enabled: true
 
 ingressEmployee:
-  host: bankoffer.k8s.openstack.lupulup.com
+  host: bankoffer-k8s.lupulup.com
   annotations:
     # Pangolin's Traefik terminates TLS externally — disable in-cluster SSL redirect
     # so ingress-nginx doesn't loop on HTTP traffic arriving from the newt pod.
@@ -38,7 +38,7 @@ ingressEmployee:
     nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
     nginx.ingress.kubernetes.io/server-snippet: |
       location = /portal {
-        return 302 https://my-bankoffer.k8s.openstack.lupulup.com/;
+        return 302 https://my-bankoffer-k8s.lupulup.com/;
       }
     # Opt this Ingress into Pangolin tunnel exposure (operator creates Pangolin
     # resource + Cloudflare CNAME automatically).
@@ -46,7 +46,7 @@ ingressEmployee:
   tls: null   # TLS terminated by Pangolin/Traefik externally
 
 ingressCustomer:
-  host: my-bankoffer.k8s.openstack.lupulup.com
+  host: my-bankoffer-k8s.lupulup.com
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"

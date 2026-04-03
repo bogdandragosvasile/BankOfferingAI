@@ -39,11 +39,9 @@ spec:
               add: ["NET_ADMIN"]
             allowPrivilegeEscalation: true
           volumeMounts:
-            # Mount the full config.yml from the Secret directly at the path
-            # that fosrl/newt expects.
             - name: newt-config
-              mountPath: /app/config.yml
-              subPath: config.yml
+              mountPath: /root/.config/newt-client/config.json
+              subPath: config.json
               readOnly: true
           resources:
             {{- toYaml .Values.newt.resources | nindent 12 }}
