@@ -117,6 +117,21 @@ api:
             topologyKey: kubernetes.io/hostname
 
 # ---------------------------------------------------------------------------
+# Keycloak sync job
+# Runs as a Helm post-install/post-upgrade hook and additively registers
+# the deployment's ingress hostnames as redirect_uri / web_origin /
+# post_logout_redirect_uri in the external Keycloak client.
+# Requires keycloakSync.adminPassword (inject via --set, never commit).
+# ---------------------------------------------------------------------------
+keycloakSync:
+  enabled: false
+  url: "https://auth.lupulup.com"
+  realm: "bankofferai"
+  clientId: "bankofferai-app"
+  adminUser: "admin"
+  adminPassword: ""  # inject via --set keycloakSync.adminPassword=...
+
+# ---------------------------------------------------------------------------
 # Seed job (one-shot DB initialiser — runs as a Helm post-install/upgrade hook)
 # ---------------------------------------------------------------------------
 seed:
