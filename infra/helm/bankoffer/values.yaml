@@ -23,7 +23,7 @@ api:
   image:
     repository: git.lupulup.com/admin/bankoffer-api
     pullPolicy: Always
-    tag: "2.9.0"
+    tag: "2.10.3"
 
   nameOverride: ""
   fullnameOverride: ""
