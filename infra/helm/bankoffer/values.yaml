@@ -7,8 +7,12 @@
 # Global image pull settings
 # ---------------------------------------------------------------------------
 global:
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: dockerhub-pull
+    - name: gitea-pull
   # imageRegistry: ""  # override to use a private registry mirror
+  security:
+    allowInsecureImages: true
 
 # ---------------------------------------------------------------------------
 # API service (FastAPI)
@@ -17,10 +21,9 @@ api:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/bogdandragosvasile/bankoffer-api
-    pullPolicy: IfNotPresent
-    # tag defaults to .Chart.AppVersion if not set
-    tag: ""
+    repository: git.lupulup.com/admin/bankoffer-api
+    pullPolicy: Always
+    tag: "2.9.0"
 
   nameOverride: ""
   fullnameOverride: ""
@@ -119,9 +122,10 @@ api:
 seed:
   enabled: true
   image:
-    repository: ghcr.io/bogdandragosvasile/bankoffer-api
-    pullPolicy: IfNotPresent
-    tag: ""
+    repository: git.lupulup.com/admin/bankoffer-api
+    pullPolicy: Always
+    tag: "2.9.0"
+  initImage: git.lupulup.com/admin/postgres16-alpine
   # Restart policy for the Job pod
   restartPolicy: OnFailure
   backoffLimit: 3
@@ -186,9 +190,10 @@ networkPolicy:
 # ---------------------------------------------------------------------------
 postgresql:
   enabled: true
-  # Pin to PostgreSQL 16 image despite the chart being 18.x
   image:
-    tag: "16.8.0-debian-12-r0"
+    registry: git.lupulup.com
+    repository: admin/bitnami-postgresql
+    tag: "16"
   auth:
     database: bankofferingai
     username: postgres
@@ -212,9 +217,7 @@ postgresql:
       # executes it via the initdb scripts mechanism.
       scriptsConfigMap: ""   # set to "" — schema is applied by the seed Job
   metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: false  # enable when Prometheus Operator is installed
+    enabled: false   # disabled — postgres-exporter cannot pull from Docker Hub on this cluster
 
 # ---------------------------------------------------------------------------
 # Redis sub-chart (bitnami/redis)

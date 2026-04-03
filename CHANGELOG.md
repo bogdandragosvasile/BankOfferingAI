@@ -2,6 +2,42 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.9.1] — 2026-04-03
+
+### Fixed
+
+- **k8s staging deployment — image pull failures resolved**: All container images that were
+  failing with `ImagePullBackOff` (Docker Hub rate limits for `bitnami/postgresql:16.8.0-debian-12-r0`
+  and missing GHCR image `ghcr.io/bogdandragosvasile/bankoffer-api`) are now mirrored to the
+  Gitea registry at `git.lupulup.com/admin/`:
+  - `bankoffer-api:2.9.0` — built fresh from source
+  - `bitnami-postgresql:16` — mirrored from `bitnami/postgresql:latest`
+  - `postgres16-alpine:latest` — mirrored from `postgres:16-alpine` (seed job init container)
+- **Helm values updated**: `values.yaml` now references `git.lupulup.com` registry for all
+  custom images; `global.imagePullSecrets` references `dockerhub-pull` and `gitea-pull` k8s secrets
+- **PostgreSQL metrics sidecar disabled**: `postgresql.metrics.enabled: false` — `bitnami/postgres-exporter`
+  cannot pull from Docker Hub on this cluster; metrics via Prometheus will be re-enabled when an
+  image mirror is in place
+- **Keycloak disabled in staging**: `keycloak.enabled: false` in `values-staging.yaml` — staging
+  uses external Keycloak at `auth.lupulup.com`; the bitnami/keycloak image (Docker Hub) was also
+  unavailable; the k8s-resident Keycloak StatefulSet was deleted
+- **schema.sql index ordering bug**: `CREATE INDEX idx_audit_log_*` statements were placed before
+  the `CREATE TABLE audit_log` statement, causing `UndefinedTable` errors when running `seed_data.py`
+  on a fresh database. Indexes moved to after all audit table definitions and immutability triggers.
+- **seed job init image configurable**: `seed.initImage` value added so the `wait-for-postgres`
+  init container can use a mirrored image instead of `postgres:16-alpine` from Docker Hub
+- **Employee portal version badge**: Updated sidebar badge from `v2.7` to `v2.9`
+
+### Infrastructure
+
+- **k8s staging database seeded**: Schema applied and 50 customers + 12 products seeded via
+  port-forward from the docker-compose API container; the k8s API pod now serves real data.
+- **CSI**: Cluster uses `nfs-subdir-external-provisioner` (NFS) as the default StorageClass.
+  No block-storage CSI driver is installed.
+- **TLS pending**: DNS A record `*.k8s.openstack.lupulup.com → 192.168.1.142` not yet created;
+  cert-manager ACME HTTP-01 challenges are blocked. Add the record in lupulup.com's DNS zone
+  to unblock Let's Encrypt certificate issuance.
+
 ## [2.8.1] — 2026-04-03
 
 ### Fixed

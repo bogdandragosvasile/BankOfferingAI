@@ -353,17 +353,6 @@ CREATE INDEX idx_notifications_read ON notifications(read, created_at DESC);
 CREATE INDEX idx_notifications_customer ON notifications(customer_id);
 CREATE INDEX idx_forms_customer ON application_forms(customer_id);
 CREATE INDEX idx_forms_status ON application_forms(status);
-CREATE INDEX idx_audit_log_actor ON audit_log(actor, created_at DESC);
-CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
-CREATE INDEX idx_audit_log_action ON audit_log(action, created_at DESC);
-CREATE INDEX idx_audit_log_created ON audit_log(created_at DESC);
-CREATE INDEX idx_audit_log_request ON audit_log(request_id);
-CREATE INDEX idx_ai_api_log_provider ON ai_api_call_log(provider, created_at DESC);
-CREATE INDEX idx_ai_api_log_outcome ON ai_api_call_log(outcome, created_at DESC);
-CREATE INDEX idx_ai_api_log_created ON ai_api_call_log(created_at DESC);
-CREATE INDEX idx_consent_history_customer ON consent_history(customer_id, created_at DESC);
-CREATE INDEX idx_consent_history_type ON consent_history(consent_type, created_at DESC);
-
 -- Insert default kill-switch state (inactive)
 INSERT INTO model_kill_switch (active, reason) VALUES (FALSE, 'System initialized — model active');
 
@@ -512,6 +501,18 @@ DROP TRIGGER IF EXISTS consent_history_immutable ON consent_history;
 CREATE TRIGGER consent_history_immutable
     BEFORE UPDATE OR DELETE ON consent_history
     FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
+
+-- Audit table indexes (must come after table creation above)
+CREATE INDEX idx_audit_log_actor ON audit_log(actor, created_at DESC);
+CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
+CREATE INDEX idx_audit_log_action ON audit_log(action, created_at DESC);
+CREATE INDEX idx_audit_log_created ON audit_log(created_at DESC);
+CREATE INDEX idx_audit_log_request ON audit_log(request_id);
+CREATE INDEX idx_ai_api_log_provider ON ai_api_call_log(provider, created_at DESC);
+CREATE INDEX idx_ai_api_log_outcome ON ai_api_call_log(outcome, created_at DESC);
+CREATE INDEX idx_ai_api_log_created ON ai_api_call_log(created_at DESC);
+CREATE INDEX idx_consent_history_customer ON consent_history(customer_id, created_at DESC);
+CREATE INDEX idx_consent_history_type ON consent_history(consent_type, created_at DESC);
 
 -- Seed initial risk register entries (AI Act Art. 9)
 INSERT INTO ai_act_risk_register (risk_id, category, description, severity, mitigation, status, owner, model_version) VALUES

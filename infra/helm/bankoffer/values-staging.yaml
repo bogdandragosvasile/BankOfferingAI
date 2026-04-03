@@ -56,11 +56,4 @@ redis:
       size: 1Gi
 
 keycloak:
-  production: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 768Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi
+  enabled: false   # staging uses external Keycloak at auth.lupulup.com

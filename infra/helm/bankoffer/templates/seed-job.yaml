@@ -32,8 +32,8 @@ spec:
       # Wait for postgres to be ready before running the seed script.
       initContainers:
         - name: wait-for-postgres
-          image: postgres:16-alpine
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.seed.initImage | default "postgres:16-alpine" }}
+          imagePullPolicy: Always
           command:
             - sh
             - -c
