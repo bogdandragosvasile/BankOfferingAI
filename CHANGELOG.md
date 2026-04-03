@@ -2,6 +2,19 @@
 
 All notable changes to BankOffer AI are documented in this file.
 
+## [2.8.1] — 2026-04-03
+
+### Fixed
+
+- **Presentation: replaced OS emoji icons with inline SVG** — the three portal cards in the
+  "How It Works" slide (slide 15) previously used `🏛️`, `👤`, and `📱` emoji as primary visuals.
+  Replaced with hand-crafted inline SVGs on a 48×48 viewBox:
+  - **Admin Portal**: classical columns + pediment + door — institutional, structured
+  - **Employee Portal**: head + shoulders + ID badge — internal operator silhouette
+  - **Customer Portal**: app window frame + offer rows + CTA pill — offer inbox feel
+  - All icons: `stroke="var(--accent)"`, `stroke-width="2"`, `stroke-linecap="square"`,
+    `aria-hidden="true"` — theme-adaptive, no hardcoded hex, no external libraries
+
 ## [2.7.0] — 2026-04-02
 
 ### Changed
