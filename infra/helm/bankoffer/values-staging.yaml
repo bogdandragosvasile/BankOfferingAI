@@ -29,14 +29,14 @@ seed:
   enabled: true
 
 ingressEmployee:
-  host: bankoffer-staging.lupulup.com
+  host: bankoffer.k8s.openstack.lupulup.com
   tls:
-    secretName: bankoffer-staging-employee-tls
+    secretName: bankoffer-k8s-employee-tls
 
 ingressCustomer:
-  host: my-bankoffer-staging.lupulup.com
+  host: my-bankoffer.k8s.openstack.lupulup.com
   tls:
-    secretName: bankoffer-staging-customer-tls
+    secretName: bankoffer-k8s-customer-tls
 
 postgresql:
   primary:
