@@ -16,6 +16,9 @@ spec:
       app.kubernetes.io/component: operator
   template:
     metadata:
+      annotations:
+        # Force pod rollout whenever the operator script ConfigMap changes.
+        checksum/script: {{ include (print $.Template.BasePath "/operator-script-configmap.yaml") . | sha256sum }}
       labels:
         app.kubernetes.io/name: {{ include "pangolin-stack.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
@@ -63,7 +66,7 @@ spec:
         - name: operator
           image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}"
           imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
-          command: ["python", "/scripts/operator.py"]
+          command: ["python", "/scripts/pangolin_operator.py"]
           env:
             - name: PYTHONPATH
               value: /packages
@@ -78,6 +81,8 @@ spec:
               value: {{ .Values.operator.pangolin.orgId | quote }}
             - name: PANGOLIN_SITE_ID
               value: {{ .Values.operator.pangolin.siteId | quote }}
+            - name: PANGOLIN_DOMAIN_ID
+              value: {{ .Values.operator.pangolin.domainId | default "domain1" | quote }}
             - name: TUNNEL_DOMAIN
               value: {{ .Values.operator.pangolin.tunnelDomain | quote }}
             # -- ingress-nginx target --

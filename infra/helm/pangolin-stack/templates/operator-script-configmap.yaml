@@ -8,7 +8,7 @@ metadata:
     {{- include "pangolin-stack.labels" . | nindent 4 }}
     app.kubernetes.io/component: operator
 data:
-  operator.py: |
+  pangolin_operator.py: |
     #!/usr/bin/env python3
     """
     Pangolin DNS Operator
@@ -16,8 +16,8 @@ data:
     Watches Kubernetes Ingress objects cluster-wide and for each Ingress
     annotated with `pangolin.io/expose: "true"` it:
 
-      1. Creates a Pangolin HTTP resource that routes the hostname to
-         the ingress-nginx ClusterIP (INGRESS_TARGET_IP:INGRESS_TARGET_PORT).
+      1. Creates a Pangolin HTTP resource (sso=false, public) that routes
+         the hostname to ingress-nginx ClusterIP via the WireGuard site.
       2. Creates a Cloudflare CNAME  <hostname> → TUNNEL_DOMAIN  so that
          external DNS resolves to the Pangolin/Traefik endpoint.
 
@@ -28,12 +28,13 @@ data:
     corresponding Pangolin resource and Cloudflare CNAME are removed.
 
     Environment variables (all required unless noted):
-      PANGOLIN_URL          - e.g. https://tunnel.lupulup.com
+      PANGOLIN_URL          - e.g. https://pangolin.lupulup.com
       PANGOLIN_EMAIL        - Pangolin admin email
       PANGOLIN_PASSWORD     - Pangolin admin password
-      PANGOLIN_ORG_ID       - numeric string, e.g. "1"
-      PANGOLIN_SITE_ID      - numeric string, e.g. "1"
-      TUNNEL_DOMAIN         - CNAME target, e.g. tunnel.lupulup.com (default)
+      PANGOLIN_ORG_ID       - org slug, e.g. "lupulup"
+      PANGOLIN_SITE_ID      - numeric string, e.g. "8"
+      PANGOLIN_DOMAIN_ID    - Pangolin domain config key, e.g. "domain1"
+      TUNNEL_DOMAIN         - CNAME target, e.g. pangolin.lupulup.com
       INGRESS_TARGET_IP     - ingress-nginx ClusterIP
       INGRESS_TARGET_PORT   - (default: 80)
       CF_API_TOKEN          - Cloudflare API token with dns:edit scope
@@ -59,20 +60,24 @@ data:
     # ---------------------------------------------------------------------------
     # Configuration
     # ---------------------------------------------------------------------------
-    PANGOLIN_URL       = os.environ["PANGOLIN_URL"]
-    PANGOLIN_EMAIL     = os.environ["PANGOLIN_EMAIL"]
-    PANGOLIN_PASSWORD  = os.environ["PANGOLIN_PASSWORD"]
-    PANGOLIN_ORG_ID    = os.environ["PANGOLIN_ORG_ID"]
-    PANGOLIN_SITE_ID   = os.environ["PANGOLIN_SITE_ID"]
-    TUNNEL_DOMAIN      = os.environ.get("TUNNEL_DOMAIN", "tunnel.lupulup.com")
-    INGRESS_TARGET_IP  = os.environ["INGRESS_TARGET_IP"]
+    PANGOLIN_URL        = os.environ["PANGOLIN_URL"]
+    PANGOLIN_EMAIL      = os.environ["PANGOLIN_EMAIL"]
+    PANGOLIN_PASSWORD   = os.environ["PANGOLIN_PASSWORD"]
+    PANGOLIN_ORG_ID     = os.environ["PANGOLIN_ORG_ID"]
+    PANGOLIN_SITE_ID    = os.environ["PANGOLIN_SITE_ID"]
+    PANGOLIN_DOMAIN_ID  = os.environ.get("PANGOLIN_DOMAIN_ID", "domain1")
+    TUNNEL_DOMAIN       = os.environ.get("TUNNEL_DOMAIN", "pangolin.lupulup.com")
+    INGRESS_TARGET_IP   = os.environ["INGRESS_TARGET_IP"]
     INGRESS_TARGET_PORT = int(os.environ.get("INGRESS_TARGET_PORT", "80"))
-    CF_API_TOKEN       = os.environ["CF_API_TOKEN"]
-    CF_ZONE_ID         = os.environ["CF_ZONE_ID"]
-    EXPOSE_ANNOTATION  = os.environ.get("EXPOSE_ANNOTATION", "pangolin.io/expose")
-    RECONCILE_INTERVAL = int(os.environ.get("RECONCILE_INTERVAL", "60"))
+    CF_API_TOKEN        = os.environ["CF_API_TOKEN"]
+    CF_ZONE_ID          = os.environ["CF_ZONE_ID"]
+    EXPOSE_ANNOTATION   = os.environ.get("EXPOSE_ANNOTATION", "pangolin.io/expose")
+    RECONCILE_INTERVAL  = int(os.environ.get("RECONCILE_INTERVAL", "60"))
 
     CF_BASE = "https://api.cloudflare.com/client/v4"
+
+    # Pangolin uses a fixed custom-header CSRF token for all API calls.
+    CSRF_HEADER = {"X-CSRF-Token": "x-csrf-protection"}
 
 
     # ---------------------------------------------------------------------------
@@ -82,89 +87,107 @@ data:
         def __init__(self):
             self.http = requests.Session()
             self.http.headers.update({"Content-Type": "application/json"})
+            self.http.headers.update(CSRF_HEADER)
             self._login()
 
         def _login(self):
-            r = self.http.post(
-                f"{PANGOLIN_URL}/api/v1/auth/login",
-                json={"email": PANGOLIN_EMAIL, "password": PANGOLIN_PASSWORD},
-                timeout=15,
-                verify=True,
-            )
-            r.raise_for_status()
-            data = r.json().get("data", {})
-            # Pangolin may return a bearer token OR set a session cookie.
-            token = data.get("token") or data.get("accessToken")
-            if token:
-                self.http.headers["Authorization"] = f"Bearer {token}"
-            log.info("Authenticated with Pangolin at %s", PANGOLIN_URL)
-
-        def _base(self):
-            return (
-                f"{PANGOLIN_URL}/api/v1/org/{PANGOLIN_ORG_ID}"
-                f"/site/{PANGOLIN_SITE_ID}/resource"
-            )
+            """Login with retry/backoff. Pangolin uses cookie-based sessions."""
+            for attempt in range(10):
+                r = self.http.post(
+                    f"{PANGOLIN_URL}/api/v1/auth/login",
+                    json={"email": PANGOLIN_EMAIL, "password": PANGOLIN_PASSWORD},
+                    timeout=15,
+                )
+                if r.status_code == 429:
+                    wait = 30 * (attempt + 1)
+                    log.warning("Login rate-limited; retrying in %ds", wait)
+                    time.sleep(wait)
+                    continue
+                r.raise_for_status()
+                # Session stored automatically via requests.Session cookie jar.
+                log.info("Authenticated with Pangolin at %s", PANGOLIN_URL)
+                return
+            raise RuntimeError("Pangolin login failed after 10 retries (rate limited)")
 
         def list_resources(self) -> dict:
-            """Returns {fullDomain: resourceId} for all resources on this site."""
-            r = self.http.get(self._base(), timeout=15)
+            """Returns {fullDomain: resourceId} for all resources in the org."""
+            r = self.http.get(
+                f"{PANGOLIN_URL}/api/v1/org/{PANGOLIN_ORG_ID}/resources",
+                timeout=15,
+            )
             r.raise_for_status()
             items = r.json().get("data", {}).get("resources", [])
             result = {}
             for item in items:
-                # fullDomain is set when isBaseDomain=True, subdomain otherwise
                 domain = item.get("fullDomain") or item.get("subdomain") or ""
-                rid = str(item.get("resourceId", item.get("id", "")))
-                if domain:
+                rid = str(item.get("resourceId") or "")
+                if domain and rid:
                     result[domain] = rid
             return result
 
         def create_resource(self, hostname: str) -> str:
-            """Creates a Pangolin HTTP resource; returns its resourceId."""
+            """Creates a public HTTP resource and its target; returns resourceId."""
+            # Step 1: create the resource — only accepted fields per Pangolin 1.16 API
             payload = {
                 "name": hostname,
-                # Pangolin API accepts different shapes depending on version.
-                # isBaseDomain=True + fullDomain lets us use arbitrary FQDNs
-                # (requires allow_base_domain_resources: true in pangolin config).
                 "subdomain": hostname.split(".")[0],
-                "fullDomain": hostname,
-                "isBaseDomain": True,
-                "ssl": True,
-                "enabled": True,
-                "http": {
-                    "domainType": "base",
-                    "httpMode": "http",
-                    "isBaseDomain": True,
-                },
-                # Target: ingress-nginx ClusterIP — reachable from within the
-                # WireGuard tunnel established by the newt pod.
-                "target": {
-                    "ip": INGRESS_TARGET_IP,
-                    "port": INGRESS_TARGET_PORT,
-                    "method": "http",
-                    "internalPort": INGRESS_TARGET_PORT,
-                },
+                "domainId": PANGOLIN_DOMAIN_ID,
+                "http": True,
+                "protocol": "tcp",
             }
-            r = self.http.post(self._base(), json=payload, timeout=15)
+            r = self.http.put(
+                f"{PANGOLIN_URL}/api/v1/org/{PANGOLIN_ORG_ID}/resource",
+                json=payload,
+                timeout=15,
+            )
             if not r.ok:
-                log.error(
-                    "Pangolin create_resource failed %s: %s", r.status_code, r.text
-                )
+                log.error("Pangolin create_resource failed %s: %s", r.status_code, r.text)
             r.raise_for_status()
-            resp_data = r.json().get("data", {})
-            resource = resp_data.get("resource", resp_data)
+            resp = r.json().get("data", {})
+            resource = resp.get("resource", resp)
             rid = str(resource.get("resourceId") or resource.get("id") or "")
             log.info("Created Pangolin resource '%s' id=%s", hostname, rid)
+
+            # Step 2: disable SSO — resource must be publicly accessible (no auth wall)
+            patch = self.http.post(
+                f"{PANGOLIN_URL}/api/v1/resource/{rid}",
+                json={"sso": False, "ssl": True},
+                timeout=15,
+            )
+            if patch.ok:
+                log.info("Set sso=false on resource %s", rid)
+            else:
+                log.warning("Could not patch sso on resource %s: %s %s", rid, patch.status_code, patch.text)
+
+            # Step 3: add target pointing to ingress-nginx via the WireGuard site
+            target_payload = {
+                "siteId": int(PANGOLIN_SITE_ID),
+                "ip": INGRESS_TARGET_IP,
+                "port": INGRESS_TARGET_PORT,
+                "method": "http",
+                "enabled": True,
+            }
+            rt = self.http.put(
+                f"{PANGOLIN_URL}/api/v1/resource/{rid}/target",
+                json=target_payload,
+                timeout=15,
+            )
+            if not rt.ok:
+                log.warning("Pangolin add_target failed %s: %s", rt.status_code, rt.text)
+            else:
+                log.info("Added target %s:%s to resource %s", INGRESS_TARGET_IP, INGRESS_TARGET_PORT, rid)
+
             return rid
 
         def delete_resource(self, resource_id: str):
-            r = self.http.delete(f"{self._base()}/{resource_id}", timeout=15)
+            r = self.http.delete(
+                f"{PANGOLIN_URL}/api/v1/resource/{resource_id}",
+                timeout=15,
+            )
             if r.ok:
                 log.info("Deleted Pangolin resource id=%s", resource_id)
             else:
-                log.warning(
-                    "Pangolin delete %s → %s: %s", resource_id, r.status_code, r.text
-                )
+                log.warning("Pangolin delete %s → %s: %s", resource_id, r.status_code, r.text)
 
 
     # ---------------------------------------------------------------------------

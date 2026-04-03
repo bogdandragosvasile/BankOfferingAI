@@ -79,10 +79,11 @@ operator:
 
   # Pangolin server connection
   pangolin:
-    url: "https://tunnel.lupulup.com"
-    orgId: "1"                          # Pangolin organisation ID (numeric string)
-    siteId: "1"                         # Pangolin site ID (numeric string)
-    tunnelDomain: "tunnel.lupulup.com"  # CNAME target for all published hostnames
+    url: "https://pangolin.lupulup.com"
+    orgId: "lupulup"                      # Pangolin organisation slug
+    siteId: "8"                           # Pangolin site ID for the K8s cluster
+    domainId: "domain1"                   # Pangolin domain config key
+    tunnelDomain: "pangolin.lupulup.com"  # CNAME target for all published hostnames
 
   # ingress-nginx ClusterIP — all routed traffic lands here
   ingressNginx:
