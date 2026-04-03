@@ -30,13 +30,35 @@ seed:
 
 ingressEmployee:
   host: bankoffer.k8s.openstack.lupulup.com
-  tls:
-    secretName: bankoffer-k8s-employee-tls
+  annotations:
+    # Pangolin's Traefik terminates TLS externally — disable in-cluster SSL redirect
+    # so ingress-nginx doesn't loop on HTTP traffic arriving from the newt pod.
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location = /portal {
+        return 302 https://my-bankoffer.k8s.openstack.lupulup.com/;
+      }
+    # Opt this Ingress into Pangolin tunnel exposure (operator creates Pangolin
+    # resource + Cloudflare CNAME automatically).
+    pangolin.io/expose: "true"
+  tls: null   # TLS terminated by Pangolin/Traefik externally
 
 ingressCustomer:
   host: my-bankoffer.k8s.openstack.lupulup.com
-  tls:
-    secretName: bankoffer-k8s-customer-tls
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/app-root: /portal
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location = /admin { return 403; }
+      location /staff-auth/ { return 403; }
+      location /api-tokens/ { return 403; }
+      location /products-catalog/ { return 403; }
+    pangolin.io/expose: "true"
+  tls: null   # TLS terminated by Pangolin/Traefik externally
 
 postgresql:
   primary:
