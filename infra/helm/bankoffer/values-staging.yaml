@@ -1,0 +1,66 @@
+# =============================================================================
+# Staging overrides — applied on top of values.yaml
+# helm upgrade --install bankoffer ./infra/helm/bankoffer \
+#   -f infra/helm/bankoffer/values-staging.yaml \
+#   --set postgresql.auth.postgresPassword=$DB_PASS \
+#   --set redis.auth.password=$REDIS_PASS \
+#   --set keycloak.auth.adminPassword=$KC_PASS \
+#   -n bankoffer-staging --create-namespace
+# =============================================================================
+
+api:
+  replicaCount: 1
+  config:
+    demoMode: "true"
+    logLevel: "debug"
+  autoscaling:
+    enabled: false
+  pdb:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+seed:
+  enabled: true
+
+ingressEmployee:
+  host: bankoffer-staging.lupulup.com
+  tls:
+    secretName: bankoffer-staging-employee-tls
+
+ingressCustomer:
+  host: my-bankoffer-staging.lupulup.com
+  tls:
+    secretName: bankoffer-staging-customer-tls
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+redis:
+  master:
+    persistence:
+      size: 1Gi
+
+keycloak:
+  production: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 768Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

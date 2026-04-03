@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/ptx37/BankOfferingAI.git
+    repoURL: https://git.lupulup.com/admin/BankOfferingAI.git
     targetRevision: main
     path: gitops/argocd/applications
     directory:

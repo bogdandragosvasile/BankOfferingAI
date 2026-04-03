@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bankoffer-staging
+  namespace: argocd
+  annotations:
+    # ArgoCD Image Updater — watches GHCR for new semver tags and writes back
+    # to Gitea via the write-back-method below.
+    argocd-image-updater.argoproj.io/image-list: api=ghcr.io/bogdandragosvasile/bankoffer-api
+    argocd-image-updater.argoproj.io/api.update-strategy: semver
+    argocd-image-updater.argoproj.io/api.helm.image-name: api.image.repository
+    argocd-image-updater.argoproj.io/api.helm.image-tag: api.image.tag
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # Primary source: Gitea (git.lupulup.com) — authoritative for this cluster.
+    # Credentials stored in ArgoCD as a repository secret (see docs/runbooks/).
+    repoURL: https://git.lupulup.com/admin/BankOfferingAI.git
+    targetRevision: main
+    path: infra/helm/bankoffer
+    helm:
+      releaseName: bankoffer
+      valueFiles:
+        - values.yaml
+        - values-staging.yaml
+      # Passwords injected at sync time from ArgoCD Vault/ESO — do NOT commit.
+      # Register them as ArgoCD secret parameters or use a SealedSecret/ESO
+      # ExternalSecret that creates the bitnami-compatible secret names.
+      parameters: []
+      # Example (for manual bootstrap only — prefer ESO in production):
+      # parameters:
+      #   - name: postgresql.auth.postgresPassword
+      #     value: $argocd:bankoffer-staging-db-password
+      #   - name: redis.auth.password
+      #     value: $argocd:bankoffer-staging-redis-password
+      #   - name: keycloak.auth.adminPassword
+      #     value: $argocd:bankoffer-staging-kc-password
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bankoffer-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+  # Ignore bitnami-generated secret differences (they update on every sync)
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: bankoffer-postgresql
+      namespace: bankoffer-staging
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: bankoffer-redis
+      namespace: bankoffer-staging
+      jsonPointers:
+        - /data
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas   # managed by HPA
