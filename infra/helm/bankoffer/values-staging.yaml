@@ -26,7 +26,7 @@ api:
       memory: 256Mi
 
 seed:
-  enabled: true
+  enabled: false   # DB already initialised; seed job ran (and failed) on first deploy
 
 ingressEmployee:
   host: bankoffer-k8s.lupulup.com
