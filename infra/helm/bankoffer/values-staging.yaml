@@ -87,8 +87,7 @@ redis:
       size: 1Gi
 
 keycloakSync:
-  enabled: true
-  # Terraform pre-creates 'bankoffer-platform-creds' with key 'adminPassword'
+  enabled: false   # Keycloak already configured; sync job credentials are stale
   existingSecret: bankoffer-platform-creds
 
 keycloak:
