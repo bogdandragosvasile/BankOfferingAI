@@ -31,6 +31,7 @@ spec:
     - host: {{ .Values.ingressEmployee.host | quote }}
       http:
         paths:
+          {{- if .Values.keycloak.enabled }}
           # /auth/ → Keycloak (must come before the catch-all)
           - path: /auth/
             pathType: Prefix
@@ -39,6 +40,7 @@ spec:
                 name: {{ include "bankoffer.keycloak.host" . }}
                 port:
                   name: http
+          {{- end }}
           # Everything else → API
           - path: /
             pathType: Prefix

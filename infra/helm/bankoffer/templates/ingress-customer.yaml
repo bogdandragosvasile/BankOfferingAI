@@ -34,7 +34,8 @@ spec:
     - host: {{ .Values.ingressCustomer.host | quote }}
       http:
         paths:
-          # /auth/ → Keycloak
+          {{- if .Values.keycloak.enabled }}
+          # /auth/ → Keycloak (in-cluster only; when disabled, auth.lupulup.com is hit directly)
           - path: /auth/
             pathType: Prefix
             backend:
@@ -42,6 +43,7 @@ spec:
                 name: {{ include "bankoffer.keycloak.host" . }}
                 port:
                   name: http
+          {{- end }}
           # Everything else → API  (access restrictions enforced via server-snippet)
           - path: /
             pathType: Prefix
