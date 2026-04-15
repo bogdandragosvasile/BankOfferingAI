@@ -43,12 +43,18 @@ spec:
               mountPath: /root/.config/newt-client/config.json
               subPath: config.json
               readOnly: true
+            - name: tun-device
+              mountPath: /dev/net/tun
           resources:
             {{- toYaml .Values.newt.resources | nindent 12 }}
       volumes:
         - name: newt-config
           secret:
             secretName: {{ include "pangolin-stack.newt.secretName" . }}
+        - name: tun-device
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
       {{- with .Values.newt.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
