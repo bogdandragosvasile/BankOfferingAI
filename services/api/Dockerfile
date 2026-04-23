@@ -25,6 +25,7 @@ COPY --from=builder /install /usr/local
 
 # Build context must be repo root: docker build -f services/api/Dockerfile .
 COPY services/api/ /app/services/api/
+COPY services/worker/ /app/services/worker/
 COPY presentation.html /app/presentation.html
 
 ENV PYTHONUNBUFFERED=1 \
