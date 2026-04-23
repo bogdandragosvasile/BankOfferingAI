@@ -330,6 +330,39 @@ def seed_profiles(conn, customers_data, features_data):
     logger.info("Seeded customer profiles")
 
 
+def seed_product_economics(conn):
+    """Seed per-product financial parameters used for P&L calculations."""
+    economics = [
+        # (product_name,                    avg_ticket, fee_rate, dist_cost, risk_rate)
+        ("Credit Card",                    3000.0,   0.018, 45.0,  0.12),
+        ("Life Insurance",                 200000.0, 0.008, 120.0, 0.35),
+        ("Travel Insurance",               1500.0,   0.050, 15.0,  0.45),
+        ("ETF Growth Portfolio",           8000.0,   0.006, 30.0,  0.05),
+        ("ETF Starter Portfolio",          2500.0,   0.005, 25.0,  0.05),
+        ("Managed Portfolio",              15000.0,  0.012, 80.0,  0.08),
+        ("Mutual Funds",                   5000.0,   0.015, 35.0,  0.06),
+        ("Mortgage",                       180000.0, 0.002, 350.0, 0.10),
+        ("Personal Loan",                  12000.0,  0.025, 85.0,  0.15),
+        ("Private Pension",                500.0,    0.009, 60.0,  0.04),
+        ("Savings Deposit",                10000.0,  0.004, 10.0,  0.02),
+        ("State Bonds / Treasury Bills",   5000.0,   0.003, 8.0,   0.01),
+    ]
+    with conn.cursor() as cur:
+        cur.executemany("""
+            INSERT INTO product_economics
+                (product_name, avg_ticket_value, fee_rate, distribution_cost_per_activation, risk_cost_rate, updated_at)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (product_name) DO UPDATE SET
+                avg_ticket_value = EXCLUDED.avg_ticket_value,
+                fee_rate = EXCLUDED.fee_rate,
+                distribution_cost_per_activation = EXCLUDED.distribution_cost_per_activation,
+                risk_cost_rate = EXCLUDED.risk_cost_rate,
+                updated_at = NOW()
+        """, economics)
+    conn.commit()
+    logger.info("Seeded %d product_economics rows", len(economics))
+
+
 def seed_staff_auth(conn):
     """Seed demo staff (employee + admin) login accounts."""
     import binascii as _ba
@@ -424,6 +457,7 @@ def main():
         seed_transactions(conn, txn_data)
         seed_events(conn, events_data)
         seed_products(conn, product_data)
+        seed_product_economics(conn)
         seed_profiles(conn, customers_data, features_data)
         seed_staff_auth(conn)
         seed_customer_auth(conn)

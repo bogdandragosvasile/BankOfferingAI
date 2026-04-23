@@ -114,6 +114,15 @@ CREATE TABLE products (
     when_to_recommend TEXT
 );
 
+CREATE TABLE IF NOT EXISTS product_economics (
+    product_name                     VARCHAR(200) PRIMARY KEY REFERENCES products(product_name) ON DELETE CASCADE,
+    avg_ticket_value                 FLOAT NOT NULL DEFAULT 0,
+    fee_rate                         FLOAT NOT NULL DEFAULT 0,
+    distribution_cost_per_activation FLOAT NOT NULL DEFAULT 0,
+    risk_cost_rate                   FLOAT NOT NULL DEFAULT 0,
+    updated_at                       TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE customer_profiles (
     customer_id VARCHAR(50) PRIMARY KEY,
     data JSONB NOT NULL,
