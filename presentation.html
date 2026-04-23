@@ -342,7 +342,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
     <div class="fade-up">
       <div style="border-left: 2px solid var(--accent); padding-left: 24px;">
         <div class="mb-16">
-          <span class="label">v2.8.0 &mdash; April 2026</span>
+          <span class="label">v2.9.0 &mdash; April 2026</span>
         </div>
         <h1 class="mb-24">BankOffer AI</h1>
         <p class="subtitle" style="margin: 0 0 32px;">
@@ -350,14 +350,14 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           Personalized product offers. Full EU regulatory compliance.
         </p>
         <div style="margin-bottom:40px;">
-          <span class="text-xs text-dim">bankoffer.lupulup.com</span>
+          <span class="text-xs text-dim">bankoffer-k8s.lupulup.com</span>
           <span class="text-xs text-dim" style="margin:0 8px;">&middot;</span>
-          <span class="text-xs text-dim">my-bankoffer.lupulup.com</span>
+          <span class="text-xs text-dim">my-bankoffer-k8s.lupulup.com</span>
           <span class="text-xs text-dim" style="margin:0 8px;">&middot;</span>
           <span class="text-xs text-dim">/admin</span>
         </div>
         <div>
-          <a href="https://bankoffer.lupulup.com" target="_blank" class="cta-btn cta-primary">
+          <a href="https://bankoffer-k8s.lupulup.com" target="_blank" class="cta-btn cta-primary">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             Live Demo
           </a>
@@ -382,13 +382,13 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
       </div>
       <div class="stat-divider"></div>
       <div class="stat-item">
-        <div class="stat-value">69+</div>
+        <div class="stat-value">73+</div>
         <div class="stat-label">API Endpoints</div>
         <div class="stat-sub">12 router modules</div>
       </div>
       <div class="stat-divider"></div>
       <div class="stat-item">
-        <div class="stat-value">23</div>
+        <div class="stat-value">31</div>
         <div class="stat-label">Database Tables</div>
         <div class="stat-sub">Core + compliance + audit + auth</div>
       </div>
@@ -439,7 +439,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           <li class="mb-8">&mdash; Notifications &amp; Forms</li>
           <li>&mdash; Compliance &amp; Kill Switch</li>
         </ul>
-        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">bankoffer.lupulup.com /</div>
+        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">bankoffer-k8s.lupulup.com /</div>
       </div>
       <!-- Customer -->
       <div class="card">
@@ -451,7 +451,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           <li class="mb-8">&mdash; Consent Management</li>
           <li>&mdash; Offer History &amp; Feedback</li>
         </ul>
-        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">my-bankoffer.lupulup.com /</div>
+        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">my-bankoffer-k8s.lupulup.com /</div>
       </div>
       <!-- Admin -->
       <div class="card">
@@ -461,9 +461,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           <li class="mb-8">&mdash; Intelligence Hub &amp; AI Connectors</li>
           <li class="mb-8">&mdash; Products &amp; Consent Registry</li>
           <li class="mb-8">&mdash; Regulatory Monitoring</li>
-          <li>&mdash; Users, Tokens &amp; Audit</li>
+          <li>&mdash; Users, Tokens &amp; Audit &amp; Product P&amp;L</li>
         </ul>
-        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">bankoffer.lupulup.com /admin</div>
+        <div class="mt-24" style="font-size:0.9375rem;font-weight:500;color:var(--accent);">bankoffer-k8s.lupulup.com /admin</div>
       </div>
     </div>
   </div>
@@ -859,8 +859,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
       </div>
       <div class="card-sunken card-sm">
         <p class="label mb-12">Infrastructure</p>
-        <p class="text-sm fw-600 mb-8">Docker Compose + Nginx</p>
-        <p class="text-sm text-muted">Multi-service stack on OpenStack VM, Pangolin TLS termination, Cloudflare DNS</p>
+        <p class="text-sm fw-600 mb-8">Kubernetes + ArgoCD + Helm</p>
+        <p class="text-sm text-muted">3-node K8s cluster on OpenStack CAPI, ArgoCD GitOps, Helm charts, Pangolin WireGuard tunnel, Cloudflare DNS</p>
       </div>
       <div class="card-sunken card-sm">
         <p class="label mb-12">Security</p>
@@ -880,7 +880,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
       <p class="subtitle" style="margin: 12px 0 0;">End-to-end request flow from browser to database</p>
     </div>
     <div class="fade-up delay-1" style="overflow-x:auto;padding:24px 0;">
-      <svg viewBox="0 0 1100 550" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;margin:0 auto;display:block;" font-family="Satoshi, system-ui, sans-serif">
+      <svg viewBox="0 0 1100 590" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;margin:0 auto;display:block;" font-family="Satoshi, system-ui, sans-serif">
         <defs>
           <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--text-muted)" stroke-width="1.2"/></marker>
           <marker id="ahA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent)" stroke-width="1.2"/></marker>
@@ -889,29 +889,26 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
         <!-- LAYER LABELS -->
         <text x="16" y="32" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">CLIENT</text>
         <text x="16" y="176" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">EDGE</text>
-        <text x="16" y="318" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">APPLICATION</text>
-        <text x="16" y="458" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">DATA</text>
+        <text x="16" y="318" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">KUBERNETES</text>
+        <text x="16" y="490" fill="var(--text-muted)" font-size="10" font-weight="700" letter-spacing="0.1em">DATA</text>
 
         <!-- SECURITY ZONE 1: Employee Domain -->
         <rect x="118" y="4" width="370" height="90" rx="0" fill="rgba(45,95,154,0.03)" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="6,4"/>
-        <text x="303" y="104" fill="var(--text-muted)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">bankoffer.lupulup.com</text>
+        <text x="303" y="104" fill="var(--text-muted)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">bankoffer-k8s.lupulup.com</text>
 
         <!-- SECURITY ZONE 2: Customer Domain -->
         <rect x="580" y="4" width="210" height="90" rx="0" fill="rgba(45,95,154,0.02)" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="6,4"/>
-        <text x="685" y="104" fill="var(--text-muted)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">my-bankoffer.lupulup.com</text>
+        <text x="685" y="104" fill="var(--text-muted)" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="0.03em">my-bankoffer-k8s.lupulup.com</text>
 
         <!-- ROW 1: BROWSERS -->
-        <!-- Employee Portal -->
         <rect x="130" y="16" width="155" height="52" rx="0" fill="var(--bg-raised)" stroke="var(--accent)" stroke-width="1.2"/>
         <text x="208" y="38" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Employee Portal</text>
         <text x="208" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/ (index.html)</text>
 
-        <!-- Admin Portal -->
         <rect x="300" y="16" width="175" height="52" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
         <text x="388" y="38" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Admin Portal</text>
-        <text x="388" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/admin</text>
+        <text x="388" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/admin (admin.html)</text>
 
-        <!-- Customer Portal -->
         <rect x="592" y="16" width="185" height="52" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
         <text x="685" y="38" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Customer Portal</text>
         <text x="685" y="54" fill="var(--text-muted)" font-size="9" text-anchor="middle">/ (portal.html)</text>
@@ -922,103 +919,108 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
         <line x1="685" y1="68" x2="540" y2="152" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
         <!-- ROW 2: EDGE -->
-        <!-- Cloudflare -->
         <rect x="340" y="150" width="220" height="56" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
         <text x="450" y="170" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Cloudflare DNS</text>
-        <text x="450" y="186" fill="var(--text-muted)" font-size="9" text-anchor="middle">bankoffer.lupulup.com + my-bankoffer.lupulup.com</text>
-        <text x="450" y="199" fill="var(--text-muted)" font-size="8" text-anchor="middle">A record &rarr; 188.24.124.155</text>
+        <text x="450" y="186" fill="var(--text-muted)" font-size="9" text-anchor="middle">bankoffer-k8s + my-bankoffer-k8s .lupulup.com</text>
+        <text x="450" y="199" fill="var(--text-muted)" font-size="8" text-anchor="middle">A record &rarr; 188.24.124.155 (Pangolin)</text>
 
-        <!-- Arrow: Cloudflare to Pangolin -->
         <line x1="450" y1="206" x2="450" y2="224" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
-        <!-- Pangolin -->
-        <rect x="340" y="226" width="220" height="52" rx="0" fill="var(--bg-raised)" stroke="var(--accent)" stroke-width="1.2"/>
+        <rect x="340" y="226" width="220" height="56" rx="0" fill="var(--bg-raised)" stroke="var(--accent)" stroke-width="1.2"/>
         <text x="450" y="247" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Pangolin TLS Proxy</text>
         <text x="450" y="263" fill="var(--text-muted)" font-size="9" text-anchor="middle">192.168.1.161 &mdash; Let's Encrypt ACME</text>
-        <text x="450" y="275" fill="var(--text-muted)" font-size="8" text-anchor="middle">HTTPS termination + cert auto-renewal</text>
+        <text x="450" y="276" fill="var(--text-muted)" font-size="8" text-anchor="middle">WireGuard tunnel &rarr; newt pod in K8s</text>
 
-        <!-- ROW 3: APPLICATION (Docker Compose) -->
-        <!-- Docker boundary box -->
-        <rect x="120" y="300" width="730" height="114" rx="0" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
-        <text x="136" y="316" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">DOCKER COMPOSE &mdash; 192.168.1.141</text>
+        <!-- ROW 3: KUBERNETES CLUSTER -->
+        <!-- K8s outer boundary -->
+        <rect x="110" y="298" width="760" height="160" rx="0" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6,4" opacity="0.5"/>
+        <text x="126" y="314" fill="var(--accent)" font-size="9" font-weight="700" letter-spacing="0.08em" opacity="0.8">KUBERNETES CLUSTER &mdash; 3 nodes (OpenStack CAPI) &mdash; ArgoCD GitOps</text>
 
-        <!-- Arrow: Pangolin to Nginx -->
-        <line x1="450" y1="278" x2="270" y2="322" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
+        <!-- Arrow: Pangolin to ingress-nginx -->
+        <line x1="450" y1="282" x2="270" y2="320" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
 
-        <!-- Nginx -->
-        <rect x="140" y="324" width="170" height="78" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
-        <text x="225" y="346" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Nginx</text>
-        <text x="225" y="360" fill="var(--text-muted)" font-size="9" text-anchor="middle">Reverse proxy :80</text>
-        <text x="225" y="374" fill="var(--text-secondary)" font-size="8" font-weight="600" text-anchor="middle">Hostname-based routing</text>
-        <text x="225" y="388" fill="var(--text-muted)" font-size="8" text-anchor="middle">Origin isolation per domain</text>
+        <!-- ingress-nginx -->
+        <rect x="128" y="322" width="180" height="72" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
+        <text x="218" y="342" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">ingress-nginx</text>
+        <text x="218" y="357" fill="var(--text-muted)" font-size="9" text-anchor="middle">NodePort :80/:443</text>
+        <text x="218" y="370" fill="var(--text-secondary)" font-size="8" font-weight="600" text-anchor="middle">10.102.247.250</text>
+        <text x="218" y="383" fill="var(--text-muted)" font-size="8" text-anchor="middle">Host-based Ingress routing</text>
 
-        <!-- Arrow: Nginx to FastAPI -->
-        <line x1="310" y1="358" x2="378" y2="358" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#ah)"/>
+        <!-- Arrow: ingress to FastAPI -->
+        <line x1="308" y1="358" x2="368" y2="358" stroke="var(--text-muted)" stroke-width="1.2" marker-end="url(#ah)"/>
 
-        <!-- FastAPI -->
-        <rect x="380" y="322" width="240" height="78" rx="0" fill="var(--bg-raised)" stroke="var(--accent)" stroke-width="1.5"/>
-        <text x="500" y="344" fill="var(--accent)" font-size="12" font-weight="800" text-anchor="middle">FastAPI API</text>
-        <text x="500" y="360" fill="var(--text-muted)" font-size="9" text-anchor="middle">Uvicorn :8000 &mdash; 9 routers</text>
-        <text x="500" y="374" fill="var(--text-muted)" font-size="9" text-anchor="middle">Offers &bull; Profiles &bull; Compliance &bull; Auth</text>
-        <text x="500" y="388" fill="var(--text-muted)" font-size="9" text-anchor="middle">Products &bull; Consent &bull; Tokens</text>
+        <!-- FastAPI pod -->
+        <rect x="370" y="320" width="250" height="84" rx="0" fill="var(--bg-raised)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="495" y="341" fill="var(--accent)" font-size="12" font-weight="800" text-anchor="middle">bankoffer-api</text>
+        <text x="495" y="357" fill="var(--text-muted)" font-size="9" text-anchor="middle">FastAPI &bull; Uvicorn :8000 &bull; 12 routers</text>
+        <text x="495" y="371" fill="var(--text-muted)" font-size="9" text-anchor="middle">Offers &bull; Profiles &bull; Compliance &bull; Auth</text>
+        <text x="495" y="385" fill="var(--text-muted)" font-size="9" text-anchor="middle">Products &bull; Consent &bull; Intelligence &bull; P&amp;L</text>
 
-        <!-- Background tasks -->
-        <rect x="660" y="326" width="170" height="64" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
-        <text x="745" y="348" fill="var(--text-secondary)" font-size="10" font-weight="700" text-anchor="middle">Background Tasks</text>
-        <text x="745" y="364" fill="var(--text-muted)" font-size="9" text-anchor="middle">Consent sync (6h)</text>
-        <text x="745" y="378" fill="var(--text-muted)" font-size="9" text-anchor="middle">Source monitor (24h)</text>
+        <!-- Background tasks box -->
+        <rect x="660" y="326" width="190" height="64" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
+        <text x="755" y="347" fill="var(--text-secondary)" font-size="10" font-weight="700" text-anchor="middle">Background Tasks</text>
+        <text x="755" y="363" fill="var(--text-muted)" font-size="9" text-anchor="middle">Consent sync (6h)</text>
+        <text x="755" y="377" fill="var(--text-muted)" font-size="9" text-anchor="middle">Reg. source monitor (24h)</text>
 
         <!-- Arrow: FastAPI to Background -->
         <line x1="620" y1="358" x2="658" y2="358" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
+        <!-- ArgoCD + pangolin-system labels -->
+        <rect x="128" y="410" width="120" height="36" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border)" stroke-width="0.8"/>
+        <text x="188" y="425" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">ArgoCD</text>
+        <text x="188" y="438" fill="var(--text-muted)" font-size="7" text-anchor="middle">GitOps controller</text>
+
+        <rect x="260" y="410" width="130" height="36" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border)" stroke-width="0.8"/>
+        <text x="325" y="425" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">pangolin-stack-newt</text>
+        <text x="325" y="438" fill="var(--text-muted)" font-size="7" text-anchor="middle">WireGuard agent</text>
+
         <!-- ROW 4: DATA -->
         <!-- Arrow: FastAPI to PostgreSQL -->
-        <line x1="450" y1="400" x2="310" y2="450" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
-
+        <line x1="450" y1="404" x2="310" y2="484" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
         <!-- Arrow: FastAPI to Redis -->
-        <line x1="550" y1="400" x2="610" y2="450" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
+        <line x1="545" y1="404" x2="615" y2="484" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#ahA)"/>
 
         <!-- PostgreSQL -->
-        <rect x="180" y="444" width="200" height="68" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
-        <text x="280" y="468" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL 16</text>
-        <text x="280" y="484" fill="var(--text-muted)" font-size="9" text-anchor="middle">17 tables &bull; JSONB profiles</text>
-        <text x="280" y="498" fill="var(--text-muted)" font-size="9" text-anchor="middle">Async pool (asyncpg)</text>
+        <rect x="170" y="478" width="220" height="72" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
+        <text x="280" y="500" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">PostgreSQL 16</text>
+        <text x="280" y="516" fill="var(--text-muted)" font-size="9" text-anchor="middle">31 tables &bull; JSONB profiles</text>
+        <text x="280" y="530" fill="var(--text-muted)" font-size="8" text-anchor="middle">PVC &rarr; NFS 192.168.1.100 (epyc)</text>
 
         <!-- Redis -->
-        <rect x="540" y="444" width="200" height="68" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
-        <text x="640" y="468" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Redis 7</text>
-        <text x="640" y="484" fill="var(--text-muted)" font-size="9" text-anchor="middle">Profile cache (15min TTL)</text>
-        <text x="640" y="498" fill="var(--text-muted)" font-size="9" text-anchor="middle">Session store</text>
+        <rect x="540" y="478" width="200" height="72" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
+        <text x="640" y="500" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Redis 7</text>
+        <text x="640" y="516" fill="var(--text-muted)" font-size="9" text-anchor="middle">Profile cache (15min TTL)</text>
+        <text x="640" y="530" fill="var(--text-muted)" font-size="8" text-anchor="middle">PVC &rarr; NFS 192.168.1.100</text>
 
         <!-- EXTERNAL: Keycloak -->
-        <text x="930" y="316" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">EXTERNAL</text>
+        <text x="920" y="314" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">EXTERNAL</text>
 
         <!-- Arrow: FastAPI to Keycloak -->
-        <line x1="870" y1="358" x2="918" y2="358" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <line x1="870" y1="358" x2="916" y2="358" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
 
         <!-- Keycloak -->
-        <rect x="920" y="322" width="168" height="72" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
-        <text x="1004" y="345" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Keycloak 26.2</text>
-        <text x="1004" y="361" fill="var(--text-muted)" font-size="9" text-anchor="middle">auth.lupulup.com</text>
-        <text x="1004" y="375" fill="var(--text-muted)" font-size="9" text-anchor="middle">OIDC + PKCE S256</text>
-        <text x="1004" y="387" fill="var(--text-muted)" font-size="9" text-anchor="middle">192.168.1.190</text>
+        <rect x="918" y="322" width="168" height="76" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
+        <text x="1002" y="345" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Keycloak 26.2</text>
+        <text x="1002" y="361" fill="var(--text-muted)" font-size="9" text-anchor="middle">auth.lupulup.com</text>
+        <text x="1002" y="375" fill="var(--text-muted)" font-size="9" text-anchor="middle">OIDC + PKCE S256</text>
+        <text x="1002" y="389" fill="var(--text-muted)" font-size="9" text-anchor="middle">192.168.1.190 (keycloak-vm)</text>
 
         <!-- Arrow from browsers to Keycloak (SSO) -->
-        <path d="M740,42 Q920,42 1004,120 Q1050,150 1004,320" fill="none" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+        <path d="M740,42 Q920,42 1002,120 Q1050,150 1002,320" fill="none" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ah)"/>
         <text x="928" y="120" fill="var(--text-muted)" font-size="8" font-weight="600">SSO</text>
 
         <!-- SECURITY LABELS -->
-        <rect x="870" y="150" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
-        <text x="928" y="164" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">ORIGIN ISOLATION</text>
-        <text x="928" y="176" fill="var(--text-muted)" font-size="7" text-anchor="middle">Separate localStorage</text>
+        <rect x="868" y="150" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
+        <text x="926" y="164" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">ORIGIN ISOLATION</text>
+        <text x="926" y="176" fill="var(--text-muted)" font-size="7" text-anchor="middle">Separate localStorage</text>
 
-        <rect x="870" y="194" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
-        <text x="928" y="208" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">TLS PER DOMAIN</text>
-        <text x="928" y="220" fill="var(--text-muted)" font-size="7" text-anchor="middle">Let's Encrypt certs</text>
+        <rect x="868" y="194" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
+        <text x="926" y="208" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">TLS PER DOMAIN</text>
+        <text x="926" y="220" fill="var(--text-muted)" font-size="7" text-anchor="middle">Let's Encrypt certs</text>
 
-        <rect x="870" y="238" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
-        <text x="928" y="252" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">CORS ENFORCEMENT</text>
-        <text x="928" y="264" fill="var(--text-muted)" font-size="7" text-anchor="middle">Per-origin allow list</text>
+        <rect x="868" y="238" width="115" height="34" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--border-strong)" stroke-width="0.8"/>
+        <text x="926" y="252" fill="var(--text-secondary)" font-size="8" font-weight="700" text-anchor="middle">CORS ENFORCEMENT</text>
+        <text x="926" y="264" fill="var(--text-muted)" font-size="7" text-anchor="middle">Per-origin allow list</text>
 
       </svg>
     </div>
@@ -1088,7 +1090,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           <p class="text-sm text-muted">DevOps &amp; Infrastructure</p>
         </div>
         <div class="divider" style="margin:16px 0;"></div>
-        <p class="text-sm" style="color:var(--text-muted);">OpenStack &middot; Docker &middot; Pangolin &middot; Cloudflare &middot; GitOps</p>
+        <p class="text-sm" style="color:var(--text-muted);">OpenStack &middot; Kubernetes &middot; ArgoCD &middot; Pangolin &middot; Cloudflare &middot; GitOps</p>
       </div>
       <div class="card">
         <div>
@@ -1219,8 +1221,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
         <!-- Step 6: Deploy -->
         <rect x="770" y="20" width="120" height="60" rx="0" fill="var(--bg-raised)" stroke="var(--border-strong)" stroke-width="1.2"/>
         <text x="830" y="42" fill="var(--text-primary)" font-size="11" font-weight="700" text-anchor="middle">Deploy</text>
-        <text x="830" y="56" fill="var(--text-muted)" font-size="8" text-anchor="middle">Docker Compose</text>
-        <text x="830" y="68" fill="var(--text-muted)" font-size="7" text-anchor="middle">Auto-sync on push</text>
+        <text x="830" y="56" fill="var(--text-muted)" font-size="8" text-anchor="middle">ArgoCD / Helm / K8s</text>
+        <text x="830" y="68" fill="var(--text-muted)" font-size="7" text-anchor="middle">GitOps auto-sync</text>
 
         <!-- Shift Left bracket -->
         <rect x="314" y="90" width="310" height="32" rx="0" fill="rgba(45,95,154,0.04)" stroke="var(--accent)" stroke-width="0.8" stroke-dasharray="4,3"/>
@@ -1319,7 +1321,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
       </div>
     </div>
     <div class="fade-up delay-2" style="text-align:center;">
-      <a href="https://bankoffer.lupulup.com/static/platform-guide.html" target="_blank" class="cta-link" style="font-size:1.1rem; padding:16px 40px; display:inline-block;">
+      <a href="https://bankoffer-k8s.lupulup.com/static/platform-guide.html" target="_blank" class="cta-link" style="font-size:1.1rem; padding:16px 40px; display:inline-block;">
         Open Full Platform Guide →
       </a>
     </div>
@@ -1332,7 +1334,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
     <div class="mb-48 fade-up">
       <span class="label mb-8" style="display:block;">15 &mdash; Live Demo</span>
       <h2>Try It Now</h2>
-      <p class="subtitle" style="margin: 16px 0 0;">Live at bankoffer.lupulup.com &mdash; use the demo credentials below to explore all three portals.</p>
+      <p class="subtitle" style="margin: 16px 0 0;">Live at bankoffer-k8s.lupulup.com &mdash; use the demo credentials below to explore all three portals.</p>
     </div>
     <div class="grid-asymmetric-reverse fade-up delay-1">
       <div>
@@ -1351,27 +1353,27 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
                 <td style="font-weight:600;color:var(--accent-red);">Admin</td>
                 <td><code>admin@bankofferai.com</code></td>
                 <td class="text-muted">Admin1234!</td>
-                <td><a href="https://bankoffer.lupulup.com/admin" target="_blank" style="color:var(--accent);text-decoration:none;">/admin</a></td>
+                <td><a href="https://bankoffer-k8s.lupulup.com/admin" target="_blank" style="color:var(--accent);text-decoration:none;">/admin</a></td>
               </tr>
               <tr>
                 <td style="font-weight:600;color:var(--accent);">Employee</td>
                 <td><code>manager@bankofferai.com</code></td>
                 <td class="text-muted">Employee1234!</td>
-                <td><a href="https://bankoffer.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">/</a></td>
+                <td><a href="https://bankoffer-k8s.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">/</a></td>
               </tr>
               <tr>
                 <td style="font-weight:600;color:var(--accent-green);">Customer</td>
                 <td><code>demo@bankofferai.com</code></td>
                 <td class="text-muted">Demo1234!</td>
-                <td><a href="https://my-bankoffer.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">my-bankoffer.lupulup.com</a></td>
+                <td><a href="https://my-bankoffer-k8s.lupulup.com/" target="_blank" style="color:var(--accent);text-decoration:none;">my-bankoffer-k8s.lupulup.com</a></td>
               </tr>
             </tbody>
           </table>
         </div>
         <div class="mt-32">
-          <a href="https://bankoffer.lupulup.com" target="_blank" class="cta-link">Open Live Demo &rarr;</a>
+          <a href="https://bankoffer-k8s.lupulup.com" target="_blank" class="cta-link">Open Live Demo &rarr;</a>
           <span style="margin:0 16px;color:var(--border-strong);">&middot;</span>
-          <a href="https://bankoffer.lupulup.com/docs" target="_blank" class="cta-link">API Docs &rarr;</a>
+          <a href="https://bankoffer-k8s.lupulup.com/docs" target="_blank" class="cta-link">API Docs &rarr;</a>
         </div>
       </div>
       <div class="text-center">
@@ -1382,11 +1384,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--focus-ring); ou
           </svg>
         </div>
         <div style="margin-top:16px;">
-          <p style="font-size:1rem;font-weight:700;color:var(--text-primary);">my-bankoffer.lupulup.com</p>
+          <p style="font-size:1rem;font-weight:700;color:var(--text-primary);">my-bankoffer-k8s.lupulup.com</p>
           <p class="text-xs text-dim" style="margin-top:6px;">Scan to register on the Customer Portal. Create an account with any email, complete the onboarding wizard, and receive AI-generated personalized banking offers.</p>
         </div>
         <div style="margin-top:20px;">
-          <a href="https://my-bankoffer.lupulup.com/" target="_blank" class="cta-link">Open Customer Portal &rarr;</a>
+          <a href="https://my-bankoffer-k8s.lupulup.com/" target="_blank" class="cta-link">Open Customer Portal &rarr;</a>
         </div>
       </div>
     </div>
