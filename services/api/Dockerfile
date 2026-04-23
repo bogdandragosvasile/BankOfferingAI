@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY services/api/requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 ### Stage 2: Runtime
@@ -23,7 +23,9 @@ RUN apt-get update && \
 
 COPY --from=builder /install /usr/local
 
-COPY . /app/services/api/
+# Build context must be repo root: docker build -f services/api/Dockerfile .
+COPY services/api/ /app/services/api/
+COPY presentation.html /app/presentation.html
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
