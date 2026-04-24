@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI in BankOffer — Deep Dive</title>
+  <style>
+    :root {
+      --black: #0d0d0d;
+      --white: #f5f5f0;
+      --blue: #2D5F9A;
+      --blue-light: #dbeafe;
+      --blue-dark: #1A4A80;
+      --red: #C1403D;
+      --yellow: #D4A843;
+      --green: #2D7D46;
+      --green-light: #dcfce7;
+      --orange: #ea580c;
+      --orange-light: #ffedd5;
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --gray-50: #fafafa;
+      --gray-100: #f0f0ec;
+      --gray-200: #e2e2dc;
+      --gray-400: #9a9a94;
+      --gray-600: #5a5a54;
+      --gray-700: #3a3a34;
+      --sidebar-w: 280px;
+      --font: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--gray-50);
+      color: var(--black);
+      display: flex;
+      min-height: 100vh;
+    }
+    @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    nav#sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--black);
+      color: var(--white);
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid #222;
+    }
+    .sidebar-brand__shapes {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+    }
+    .sh-circle { width: 16px; height: 16px; border-radius: 50%; background: var(--red); }
+    .sh-square { width: 16px; height: 16px; background: var(--blue); }
+    .sh-tri { width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 16px solid var(--yellow); }
+    .sidebar-brand h1 { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--white); }
+    .sidebar-brand p { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 2px; }
+
+    .sidebar-section { padding: 12px 20px 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--gray-400); margin-top: 8px; }
+    nav#sidebar a {
+      display: block; padding: 8px 20px;
+      font-size: 13px; color: #ccc; text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    nav#sidebar a:hover, nav#sidebar a.active {
+      color: var(--white); background: rgba(255,255,255,0.06); border-left-color: var(--blue);
+    }
+    nav#sidebar a.active { color: var(--white); font-weight: 600; }
+    .back-link {
+      margin: 16px 20px 0;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--gray-400); text-decoration: none;
+      border-left: none !important; padding: 6px 0 !important;
+      background: none !important;
+    }
+    .back-link:hover { color: var(--white) !important; border-left: none !important; background: none !important; }
+
+    /* ── Main content ────────────────────────────────── */
+    main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      max-width: 1100px;
+      padding: 48px 56px;
+    }
+
+    /* ── Typography ──────────────────────────────────── */
+    .section-title {
+      font-size: 28px; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 20px; line-height: 1.1;
+    }
+    .section-title span { color: var(--blue); }
+    .section-intro { font-size: 15px; color: var(--gray-600); line-height: 1.7; margin-bottom: 24px; max-width: 760px; }
+
+    h3 { font-size: 17px; font-weight: 700; margin: 28px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    h4 { font-size: 14px; font-weight: 700; margin: 20px 0 8px; color: var(--gray-700); }
+    p { font-size: 14px; line-height: 1.7; color: var(--gray-700); margin-bottom: 12px; }
+    ul, ol { margin-left: 20px; margin-bottom: 12px; }
+    li { font-size: 14px; line-height: 1.7; color: var(--gray-700); margin-bottom: 4px; }
+    li strong { color: var(--black); }
+
+    /* ── Page sections ───────────────────────────────── */
+    .page-section {
+      border-top: 3px solid var(--black);
+      padding-top: 40px;
+      margin-bottom: 56px;
+    }
+
+    /* ── Cards ───────────────────────────────────────── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .card {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      padding: 20px; border-radius: 2px;
+    }
+    .card--blue { background: var(--blue); color: var(--white); border-color: var(--blue); }
+    .card--blue .card__title, .card--blue .card__body { color: var(--white); }
+    .card--red { background: var(--red); color: var(--white); border-color: var(--red); }
+    .card--red .card__title, .card--red .card__body { color: var(--white); }
+    .card--yellow { background: var(--yellow); border-color: var(--yellow); }
+    .card--green { background: var(--green); color: var(--white); border-color: var(--green); }
+    .card--green .card__title, .card--green .card__body { color: var(--white); }
+    .card--purple { background: var(--purple); color: var(--white); border-color: var(--purple); }
+    .card--purple .card__title, .card--purple .card__body { color: var(--white); }
+    .card__icon { font-size: 24px; margin-bottom: 10px; }
+    .card__title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .card__body { font-size: 13px; line-height: 1.5; color: var(--gray-600); }
+
+    /* ── Code blocks ─────────────────────────────────── */
+    pre {
+      background: #1a1a1a; color: #e2e8f0;
+      padding: 20px 24px; border-radius: 2px;
+      overflow-x: auto; font-family: var(--mono);
+      font-size: 12px; line-height: 1.6;
+      margin: 16px 0 20px;
+      border-left: 4px solid var(--blue);
+    }
+    code { font-family: var(--mono); font-size: 12px; }
+    .inline-code {
+      background: var(--gray-200); color: var(--gray-700);
+      padding: 1px 6px; border-radius: 2px;
+      font-family: var(--mono); font-size: 12px;
+    }
+
+    /* ── Syntax highlight ────────────────────────────── */
+    .kw { color: #93c5fd; }
+    .fn { color: #86efac; }
+    .str { color: #fde68a; }
+    .cmt { color: #6b7280; font-style: italic; }
+    .var { color: #f9a8d4; }
+    .num { color: #fb923c; }
+
+    /* ── Tables ──────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin-bottom: 24px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    thead tr { background: var(--black); color: var(--white); }
+    thead th { padding: 10px 14px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+    tbody tr { border-bottom: 1px solid var(--gray-200); }
+    tbody tr:hover { background: var(--gray-100); }
+    tbody td { padding: 10px 14px; color: var(--gray-700); vertical-align: top; }
+    tbody td strong { color: var(--black); }
+
+    /* ── Badges ──────────────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 2px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .badge-blue { background: var(--blue-light); color: var(--blue-dark); }
+    .badge-green { background: var(--green-light); color: var(--green); }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-orange { background: var(--orange-light); color: var(--orange); }
+    .badge-purple { background: var(--purple-light); color: var(--purple); }
+    .badge-gray { background: var(--gray-200); color: var(--gray-700); }
+
+    /* ── Callout boxes ───────────────────────────────── */
+    .callout {
+      padding: 16px 20px; border-radius: 2px; margin: 16px 0;
+      display: flex; gap: 12px; align-items: flex-start;
+      font-size: 13px; line-height: 1.6;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout-body strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .callout-info { background: var(--blue-light); border-left: 4px solid var(--blue); }
+    .callout-info .callout-body { color: var(--blue-dark); }
+    .callout-warn { background: #fef3c7; border-left: 4px solid var(--yellow); }
+    .callout-warn .callout-body { color: #92400e; }
+    .callout-success { background: var(--green-light); border-left: 4px solid var(--green); }
+    .callout-success .callout-body { color: #064e3b; }
+    .callout-danger { background: #fee2e2; border-left: 4px solid var(--red); }
+    .callout-danger .callout-body { color: #7f1d1d; }
+
+    /* ── Flow diagram ────────────────────────────────── */
+    .flow {
+      display: flex; align-items: center; gap: 0;
+      flex-wrap: wrap; margin: 20px 0; row-gap: 12px;
+    }
+    .flow-box {
+      background: var(--white); border: 2px solid var(--black);
+      padding: 10px 16px; font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      text-align: center; min-width: 120px;
+    }
+    .flow-box--blue { background: var(--blue); color: var(--white); border-color: var(--blue); }
+    .flow-box--red { background: var(--red); color: var(--white); border-color: var(--red); }
+    .flow-box--yellow { background: var(--yellow); border-color: var(--yellow); }
+    .flow-box--green { background: var(--green); color: var(--white); border-color: var(--green); }
+    .flow-box--gray { background: var(--gray-200); border-color: var(--gray-400); }
+    .flow-arrow { font-size: 20px; color: var(--gray-400); padding: 0 4px; font-weight: 300; }
+    .flow-label { font-size: 10px; color: var(--gray-400); text-align: center; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ── Score bar chart ─────────────────────────────── */
+    .score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .score-label { font-size: 12px; font-weight: 700; width: 220px; flex-shrink: 0; font-family: var(--mono); color: var(--gray-700); }
+    .score-bar-wrap { flex: 1; background: var(--gray-200); height: 20px; position: relative; }
+    .score-bar { height: 100%; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── File tree ───────────────────────────────────── */
+    .file-tree { font-family: var(--mono); font-size: 12px; line-height: 1.8; background: var(--gray-100); padding: 20px 24px; border: 1px solid var(--gray-200); }
+    .ft-dir { color: var(--blue-dark); font-weight: 700; }
+    .ft-file { color: var(--gray-700); }
+    .ft-file.ft-highlight { color: var(--black); font-weight: 700; background: #fef3c7; padding: 0 4px; }
+    .ft-comment { color: var(--gray-400); font-style: italic; }
+
+    /* ── SW grid ─────────────────────────────────────── */
+    .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 20px 0; }
+    .sw-col h4 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid; }
+    .sw-col--str h4 { color: var(--green); border-color: var(--green); }
+    .sw-col--wk h4 { color: var(--red); border-color: var(--red); }
+    .sw-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+    .sw-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+    .sw-icon--str { background: var(--green-light); color: var(--green); }
+    .sw-icon--wk { background: #fee2e2; color: var(--red); }
+    .sw-text { font-size: 13px; line-height: 1.5; color: var(--gray-700); }
+    .sw-text strong { color: var(--black); display: block; font-size: 13px; }
+
+    @media (max-width: 900px) {
+      main { margin-left: 0; padding: 24px 20px; }
+      nav#sidebar { display: none; }
+      .sw-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand__shapes">
+      <div class="sh-circle"></div>
+      <div class="sh-square"></div>
+      <div class="sh-tri"></div>
+    </div>
+    <h1>BankOffer AI</h1>
+    <p>AI Deep Dive</p>
+  </div>
+
+  <a href="/presentation" class="back-link">← Back to Presentation</a>
+
+  <div class="sidebar-section">Overview</div>
+  <a href="#intro">What AI Does</a>
+  <a href="#architecture">Architecture</a>
+
+  <div class="sidebar-section">Core Engine</div>
+  <a href="#profiler">Customer Profiler</a>
+  <a href="#scorer">Product Scorer</a>
+  <a href="#ranker">Offer Ranker</a>
+
+  <div class="sidebar-section">Intelligence</div>
+  <a href="#intelligence">Market Intelligence</a>
+  <a href="#guardrails">AI Guardrails</a>
+
+  <div class="sidebar-section">Compliance</div>
+  <a href="#compliance">EU Regulations</a>
+  <a href="#audit">Audit System</a>
+  <a href="#privacy">Privacy by Design</a>
+
+  <div class="sidebar-section">Analysis</div>
+  <a href="#strengths">Strengths</a>
+  <a href="#weaknesses">Weaknesses</a>
+  <a href="#roadmap">Roadmap</a>
+</nav>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<main>
+
+  <!-- ══ HERO ══ -->
+  <div style="margin-bottom: 56px;">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+      <div class="sh-circle" style="width:24px;height:24px;"></div>
+      <div class="sh-square" style="width:24px;height:24px;background:var(--blue);"></div>
+      <div class="sh-tri" style="border-left:13px solid transparent;border-right:13px solid transparent;border-bottom:24px solid var(--yellow);"></div>
+    </div>
+    <h1 style="font-size:42px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;line-height:1.1;margin-bottom:12px;">
+      AI in BankOffer<br><span style="color:var(--blue);">Deep Dive</span>
+    </h1>
+    <p style="font-size:16px;color:var(--gray-600);max-width:680px;line-height:1.6;">
+      A complete technical breakdown of how AI is embedded in BankOffer — the customer profiler, LLM-powered product scorer, offer ranker, market intelligence hub, 10 production guardrails, and full EU compliance architecture.
+    </p>
+    <p style="font-size:12px;color:var(--gray-400);margin-top:8px;">Last updated: April 2026 &nbsp;·&nbsp; Internal use only</p>
+  </div>
+
+  <!-- ══ 01 WHAT AI DOES ══ -->
+  <div class="page-section" id="intro">
+    <h2 class="section-title">What AI <span>Does in BankOffer</span></h2>
+    <p class="section-intro">
+      AI in BankOffer is not a chatbot — it is the core decision engine. It classifies customers, scores products for relevance, ranks offers, generates market intelligence, and proposes new products for the catalog. Every AI call produces structured JSON output, and every action is logged to an immutable audit trail.
+    </p>
+
+    <div class="cards">
+      <div class="card card--blue">
+        <div class="card__icon">🎯</div>
+        <div class="card__title">Offer Personalization</div>
+        <div class="card__body">Claude scores each product against the customer's life stage, risk tolerance, income, and spending patterns. Top 5 ranked offers, no duplicates.</div>
+      </div>
+      <div class="card card--red">
+        <div class="card__icon">👤</div>
+        <div class="card__title">Customer Profiling</div>
+        <div class="card__body">Rule-based life stage classification (5 stages) and weighted risk scoring (1–10) from 5 demographic factors. Segment derivation: high_net_worth, strong_saver, leveraged.</div>
+      </div>
+      <div class="card card--yellow">
+        <div class="card__icon">📊</div>
+        <div class="card__title">Market Intelligence</div>
+        <div class="card__body">5 intelligence categories (Exchange Markets, Geopolitics, Regulations, Economic Indicators, Trends), 16 real-time signals scored for impact and relevance.</div>
+      </div>
+      <div class="card card--green">
+        <div class="card__icon">💡</div>
+        <div class="card__title">AI Product Suggestions</div>
+        <div class="card__body">AI generates new product ideas with confidence scores, target segments, and market drivers. Admin approval workflow with 24h staging cool-down before going live.</div>
+      </div>
+      <div class="card card--purple">
+        <div class="card__icon">🛡️</div>
+        <div class="card__title">Compliance Automation</div>
+        <div class="card__body">MiFID II suitability hard-filter blocks mismatched products before scoring. GDPR Art. 22 automated-decision disclosures generated per offer batch.</div>
+      </div>
+      <div class="card">
+        <div class="card__icon">📋</div>
+        <div class="card__title">Audit &amp; Transparency</div>
+        <div class="card__body">Every AI call logged to <span class="inline-code">ai_api_call_log</span>. Every offer batch snapshotted in <span class="inline-code">audit_recommendations</span>. Public transparency endpoint per AI Act Art. 13.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Zero PII sent to LLMs</strong>
+        Customer emails are stored only as irreversible SHA-256 hashes. Internal customer IDs are replaced with pseudonymized UUIDs before any AI call. Personal data never leaves the platform's boundary.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 02 ARCHITECTURE ══ -->
+  <div class="page-section" id="architecture">
+    <h2 class="section-title">System <span>Architecture</span></h2>
+    <p class="section-intro">
+      Three microservices (API, Worker, Notification) backed by PostgreSQL and Redis. The Worker runs the profiler, scorer, and ranker as Python modules — no inter-service HTTP call for inference. The API handles connectors, intelligence, and offer delivery. Deployed on Kubernetes via ArgoCD GitOps.
+    </p>
+
+    <h3>Component Map</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>File</th><th>Port / Trigger</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>API service</strong></td><td><span class="inline-code">services/api/main.py</span></td><td>:8000</td><td>Offers, profiles, connectors, intelligence hub, compliance, audit</td></tr>
+          <tr><td><strong>profiler.py</strong></td><td><span class="inline-code">services/worker/profiler.py</span></td><td>imported</td><td>Life stage classification, risk scoring, segment derivation</td></tr>
+          <tr><td><strong>scorer.py</strong></td><td><span class="inline-code">services/worker/scorer.py</span></td><td>imported</td><td>LLM-powered per-product relevance scoring (Claude)</td></tr>
+          <tr><td><strong>ranker.py</strong></td><td><span class="inline-code">services/worker/ranker.py</span></td><td>imported</td><td>Threshold filter, cooldown, diversity constraint, top-N selection</td></tr>
+          <tr><td><strong>intelligence.py</strong></td><td><span class="inline-code">services/api/routers/intelligence.py</span></td><td>:8000/api/v1/intel</td><td>Market analysis, AI product suggestions, guardrail enforcement</td></tr>
+          <tr><td><strong>Notification service</strong></td><td><span class="inline-code">services/notification/</span></td><td>internal</td><td>Push, email, in-app adapters; preference-aware delivery</td></tr>
+          <tr><td><strong>PostgreSQL 16</strong></td><td>—</td><td>:5432</td><td>31 tables: profiles, products, offers, 4 immutable audit tables</td></tr>
+          <tr><td><strong>Redis 7</strong></td><td>—</td><td>:6379</td><td>Rate limiting counters (AI Guardrail #2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>LLM Provider Chain</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div>
+        <div class="flow-box flow-box--blue">Claude (Anthropic)</div>
+        <div class="flow-label">Primary scorer</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--red">OpenAI GPT</div>
+        <div class="flow-label">Fallback</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--yellow">Gemini / HuggingFace</div>
+        <div class="flow-label">Fallback</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box">Perplexity AI</div>
+        <div class="flow-label">Live search</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--gray">Local LLM (Ollama)</div>
+        <div class="flow-label">Air-gapped fallback</div>
+      </div>
+    </div>
+
+    <h3>Offer Generation Pipeline</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div>
+        <div class="flow-box flow-box--blue">Customer Request</div>
+        <div class="flow-label">Portal / API</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box">Profiler</div>
+        <div class="flow-label">Life stage + risk</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--red">MiFID II Filter</div>
+        <div class="flow-label">Hard suitability check</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--yellow">LLM Scorer</div>
+        <div class="flow-label">Claude per product</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box">Ranker</div>
+        <div class="flow-label">Diversity + top-5</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--green">Deliver + Audit</div>
+        <div class="flow-label">API + immutable log</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 03 CUSTOMER PROFILER ══ -->
+  <div class="page-section" id="profiler">
+    <h2 class="section-title">Customer <span>Profiler</span></h2>
+    <p class="section-intro">
+      The profiler runs entirely on deterministic rules — no ML model, no LLM call. It outputs a <span class="inline-code">ProfileResult</span> with life stage, risk score (1–10), and derived segments. Results feed directly into the scorer's context.
+    </p>
+
+    <h3>Life Stage Classification</h3>
+    <p>Priority-ordered rule evaluation. The first matching rule wins; falls back to <span class="inline-code">mid_career</span>.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Conditions</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>retired</strong></td><td>age ≥ 67</td></tr>
+          <tr><td><strong>pre_retirement</strong></td><td>55 ≤ age &lt; 67</td></tr>
+          <tr><td><strong>young_family</strong></td><td>25 ≤ age ≤ 40 AND dependents ≥ 1</td></tr>
+          <tr><td><strong>new_graduate</strong></td><td>age &lt; 25 AND account_tenure ≤ 2 years</td></tr>
+          <tr><td><strong>mid_career</strong></td><td>age 35–55 AND income ≥ 60 000 · Default fallback</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Risk Tolerance Scoring — Weighted Formula</h3>
+    <p>Five factors combined with fixed weights into a 1.0–10.0 score (higher = more risk tolerant):</p>
+
+    <div style="margin: 20px 0 28px;">
+      <div class="score-row">
+        <div class="score-label">age factor (25%)</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:25%;background:var(--blue);">younger → more tolerance</div>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">income factor (15%)</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:15%;background:var(--green);">log-scaled</div>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">investment ratio (25%)</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:25%;background:var(--blue);">inv / income</div>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">savings cushion (15%)</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:15%;background:var(--green);">savings_ratio</div>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">leverage penalty (20%)</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" style="width:20%;background:var(--red);">loan / income → penalty</div>
+        </div>
+      </div>
+    </div>
+
+    <pre><span class="cmt"># services/worker/profiler.py:59 — risk tolerance scoring</span>
+<span class="kw">def</span> <span class="fn">score_risk_tolerance</span>(age, annual_income, investment_balance, savings_ratio, loan_to_income):
+    age_factor    = <span class="fn">max</span>(<span class="num">1.0</span>, <span class="fn">min</span>(<span class="num">10.0</span>, <span class="num">10.0</span> - (age - <span class="num">18</span>) * (<span class="num">7.0</span> / <span class="num">62.0</span>)))
+    income_factor = <span class="fn">min</span>(<span class="num">10.0</span>, <span class="num">1.0</span> + math.<span class="fn">log10</span>(<span class="fn">max</span>(<span class="num">1</span>, annual_income / <span class="num">10000</span>)) * <span class="num">3.0</span>)
+    inv_factor    = <span class="fn">min</span>(<span class="num">10.0</span>, <span class="num">1.0</span> + (investment_balance / annual_income) * <span class="num">3.0</span>)
+    savings_factor = <span class="num">1.0</span> + savings_ratio * <span class="num">9.0</span>
+    leverage_penalty = <span class="fn">min</span>(<span class="num">5.0</span>, loan_to_income * <span class="num">5.0</span>)
+
+    <span class="kw">return</span> <span class="fn">round</span>(<span class="fn">max</span>(<span class="num">1.0</span>, <span class="fn">min</span>(<span class="num">10.0</span>,
+        <span class="num">0.25</span> * age_factor + <span class="num">0.15</span> * income_factor + <span class="num">0.25</span> * inv_factor
+        + <span class="num">0.15</span> * savings_factor - <span class="num">0.20</span> * leverage_penalty
+    )), <span class="num">2</span>)</pre>
+
+    <h3>Segment Derivation</h3>
+    <pre><span class="cmt"># services/worker/profiler.py:141 — segment thresholds</span>
+segments = [life_stage]                    <span class="cmt"># always at least one</span>
+<span class="kw">if</span> annual_income >= <span class="num">150_000</span>:
+    segments.append(<span class="str">"high_net_worth"</span>)
+<span class="kw">if</span> savings_ratio >= <span class="num">0.30</span>:
+    segments.append(<span class="str">"strong_saver"</span>)
+<span class="kw">if</span> loan_to_income >= <span class="num">0.50</span>:
+    segments.append(<span class="str">"leveraged"</span>)</pre>
+  </div>
+
+  <!-- ══ 04 PRODUCT SCORER ══ -->
+  <div class="page-section" id="scorer">
+    <h2 class="section-title">Product <span>Scorer</span></h2>
+    <p class="section-intro">
+      The scorer calls Claude once per product. Each call is a focused prompt asking for a <span class="inline-code">relevance_score</span>, <span class="inline-code">confidence_score</span>, and a one-sentence <span class="inline-code">personalization_reason</span>. Failed calls produce a 0.0/0.0 default — the product is included but will be filtered by the ranker's threshold.
+    </p>
+
+    <h3>System Prompt</h3>
+    <pre><span class="cmt"># services/worker/scorer.py:50 — SCORING_SYSTEM_PROMPT</span>
+<span class="str">"""You are a bank product recommendation engine. Given a customer profile and a product,
+output a JSON object with exactly these fields:
+  - relevance_score: float 0.0-1.0 (how relevant this product is to the customer)
+  - confidence_score: float 0.0-1.0 (how confident you are in this assessment)
+  - personalization_reason: string (one sentence explaining the recommendation)
+
+Base your scores on the customer's life stage, risk tolerance, income, segments,
+and spending patterns. Only output valid JSON. No markdown fences."""</span></pre>
+
+    <h3>Prompt Assembly</h3>
+    <pre><span class="cmt"># services/worker/scorer.py:60 — per-product prompt</span>
+<span class="fn">f</span><span class="str">"Customer: id={context.customer_id}, life_stage={context.life_stage}, "</span>
+<span class="fn">f</span><span class="str">"risk_score={context.risk_score}, segments={context.segments}, "</span>
+<span class="fn">f</span><span class="str">"income={context.annual_income}, top_spending={context.spending_categories[:5]}\n\n"</span>
+<span class="fn">f</span><span class="str">"Product: id={product['id']}, name={product['name']}, type={product['type']}\n\n"</span>
+<span class="str">"Score this product for this customer."</span></pre>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Scores are clamped server-side</strong>
+        Even if the LLM returns a value outside 0–1, the scorer clamps it: <span class="inline-code">max(0.0, min(1.0, raw))</span>. JSON extraction falls back to regex for responses wrapped in markdown fences.
+      </div>
+    </div>
+
+    <h3>LLM Protocol (injectable)</h3>
+    <p>The scorer depends on the <span class="inline-code">LLMClient</span> Protocol — any class with <span class="inline-code">create_message(prompt, system, max_tokens) → str</span> works. This makes unit testing trivial and provider swaps zero-cost.</p>
+
+    <h3>Output Schema</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>product_id</strong></td><td>str</td><td>Catalog product ID</td></tr>
+          <tr><td><strong>product_name</strong></td><td>str</td><td>Display name</td></tr>
+          <tr><td><strong>product_type</strong></td><td>str</td><td>credit_card, savings, mortgage, investment, insurance…</td></tr>
+          <tr><td><strong>relevance_score</strong></td><td>float 0–1</td><td>How relevant to this customer</td></tr>
+          <tr><td><strong>confidence_score</strong></td><td>float 0–1</td><td>Model confidence in the assessment</td></tr>
+          <tr><td><strong>personalization_reason</strong></td><td>str</td><td>One-sentence plain-language explanation</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 05 OFFER RANKER ══ -->
+  <div class="page-section" id="ranker">
+    <h2 class="section-title">Offer <span>Ranker</span></h2>
+    <p class="section-intro">
+      The ranker takes the full list of scored products and applies four sequential filters before returning the final offer list. This is where business rules, consumer-protection cooldowns, and diversity constraints are enforced — entirely without another LLM call.
+    </p>
+
+    <h3>Five-Step Ranking Pipeline</h3>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:8px;">
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="flow-box flow-box--blue" style="min-width:200px;">1. Threshold Filter</div>
+        <div class="flow-arrow">→</div>
+        <div style="font-size:13px;color:var(--gray-600);padding-left:8px;">Drop relevance &lt; 0.15 or confidence &lt; 0.10</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="flow-box" style="min-width:200px;">2. Cooldown Filter</div>
+        <div class="flow-arrow">→</div>
+        <div style="font-size:13px;color:var(--gray-600);padding-left:8px;">Skip products dismissed within the last 30 days</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="flow-box flow-box--yellow" style="min-width:200px;">3. Diversity Constraint</div>
+        <div class="flow-arrow">→</div>
+        <div style="font-size:13px;color:var(--gray-600);padding-left:8px;">Max 2 products of the same type (savings, credit_card…)</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="flow-box" style="min-width:200px;">4. Truncate</div>
+        <div class="flow-arrow">→</div>
+        <div style="font-size:13px;color:var(--gray-600);padding-left:8px;">Top 5 by relevance_score</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div class="flow-box flow-box--green" style="min-width:200px;">5. Assign Ranks</div>
+        <div class="flow-arrow">→</div>
+        <div style="font-size:13px;color:var(--gray-600);padding-left:8px;">Generate UUID offer_id, assign rank 1–5</div>
+      </div>
+    </div>
+
+    <h3>Ranking Config Defaults</h3>
+    <pre><span class="cmt"># services/worker/ranker.py:12 — configurable constants</span>
+MAX_OFFERS_PER_BATCH     = <span class="num">5</span>
+COOLDOWN_DAYS            = <span class="num">30</span>     <span class="cmt"># consumer-protection cooldown</span>
+MAX_SAME_TYPE            = <span class="num">2</span>     <span class="cmt"># diversity: max per product type</span>
+MIN_RELEVANCE_THRESHOLD  = <span class="num">0.15</span>  <span class="cmt"># noise floor</span>
+MIN_CONFIDENCE_THRESHOLD = <span class="num">0.10</span>  <span class="cmt"># uncertainty floor</span></pre>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Configurable at runtime</strong>
+        All thresholds are overridable via <span class="inline-code">RankingConfig</span>. A/B testing can swap configs without code changes — and the ranker logs counts at each filter step via <span class="inline-code">logger.debug</span> for Grafana visibility.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 06 INTELLIGENCE HUB ══ -->
+  <div class="page-section" id="intelligence">
+    <h2 class="section-title">Market <span>Intelligence Hub</span></h2>
+    <p class="section-intro">
+      The Intelligence Hub is the admin-facing AI layer. It ingests real-world signals across five categories, scores them for impact, and uses connected LLM providers to generate new product ideas. Every product suggestion enters a gated approval workflow before touching the live catalog.
+    </p>
+
+    <h3>Intelligence Categories</h3>
+    <div class="cards">
+      <div class="card card--blue">
+        <div class="card__title">Exchange Markets</div>
+        <div class="card__body">Equity indices, currency rates, commodity prices — 16 tracked signals with directional impact scores.</div>
+      </div>
+      <div class="card">
+        <div class="card__title">Geopolitics</div>
+        <div class="card__body">Regulatory events, trade policy changes, and regional stability indicators affecting product risk.</div>
+      </div>
+      <div class="card card--yellow">
+        <div class="card__title">Regulations</div>
+        <div class="card__body">EU directive updates, EBA guidelines, and national banking law changes with compliance impact classification.</div>
+      </div>
+      <div class="card card--green">
+        <div class="card__title">Economic Indicators</div>
+        <div class="card__body">Inflation, unemployment, GDP growth — macro context that shifts life-stage product demand.</div>
+      </div>
+      <div class="card card--red">
+        <div class="card__title">Trends</div>
+        <div class="card__body">Consumer behavior shifts, fintech adoption curves, and demographic demand patterns.</div>
+      </div>
+    </div>
+
+    <h3>AI-to-Catalog Pipeline</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div>
+        <div class="flow-box flow-box--blue">LLM Analysis</div>
+        <div class="flow-label">≥ 60% confidence</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box">Suggestion created</div>
+        <div class="flow-label">pending approval</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--yellow">Admin reviews</div>
+        <div class="flow-label">approve / reject</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box">24h staging</div>
+        <div class="flow-label">cool-down</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--green">Live in catalog</div>
+        <div class="flow-label">≤ 50 active cap</div>
+      </div>
+    </div>
+
+    <h3>18 Pre-Seeded Connectors</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Category</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>AI</strong></td><td>Anthropic Claude, OpenAI GPT, Google Gemini, HuggingFace, Perplexity AI, Local LLMs (Ollama / vLLM / LM Studio)</td></tr>
+          <tr><td><strong>Cloud</strong></td><td>AWS, Azure, GCP — usage metrics and cost signals</td></tr>
+          <tr><td><strong>Advertising</strong></td><td>Campaign performance connectors for offer delivery tracking</td></tr>
+          <tr><td><strong>Analytics</strong></td><td>Behavioral analytics platforms for segment validation</td></tr>
+          <tr><td><strong>CRM</strong></td><td>Customer relationship management data sync</td></tr>
+          <tr><td><strong>Messaging</strong></td><td>Push, email, SMS gateway connectors</td></tr>
+          <tr><td><strong>Payments</strong></td><td>Transaction stream ingestion for spending pattern analysis</td></tr>
+          <tr><td><strong>Security</strong></td><td>Fraud scoring and AML signal feeds</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Connector activation: <span class="inline-code">available → pending → approved → active</span>. Admin-gated with configuration modals, dynamic field rendering, and connection testing before activation.</p>
+  </div>
+
+  <!-- ══ 07 AI GUARDRAILS ══ -->
+  <div class="page-section" id="guardrails">
+    <h2 class="section-title">10 AI <span>Guardrails</span></h2>
+    <p class="section-intro">
+      All guardrails are enforced at the API layer in <span class="inline-code">services/api/routers/intelligence.py</span>. They run before any LLM call is made and on every AI-generated output before it is processed.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Guardrail</th><th>Mechanism</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">01</span></td><td><strong>Confidence threshold</strong></td><td>Suggestions with <span class="inline-code">confidence &lt; 0.60</span> are rejected and logged. Prometheus counter <span class="inline-code">AI_SUGGESTIONS_FILTERED</span>.</td></tr>
+          <tr><td><span class="badge badge-blue">02</span></td><td><strong>Rate limiting</strong></td><td>Max 5 <span class="inline-code">/analyze</span> calls per hour per instance. Redis-backed counter. HTTP 429 on breach. Prometheus counter <span class="inline-code">AI_ANALYSIS_RATE_LIMITED</span>.</td></tr>
+          <tr><td><span class="badge badge-orange">03</span></td><td><strong>PII content filter</strong></td><td>Regex strips email, phone, SSN, card numbers, and Romanian IBANs from every AI output before storage or display.</td></tr>
+          <tr><td><span class="badge badge-orange">04</span></td><td><strong>Prompt injection detection</strong></td><td>Pattern match for "ignore previous", "you are now", <span class="inline-code">&lt;|im_start|&gt;</span>, etc. Matched text replaced with <span class="inline-code">[FILTERED]</span>, warning logged.</td></tr>
+          <tr><td><span class="badge badge-gray">05</span></td><td><strong>Product catalog cap</strong></td><td>Max 50 active products. AI-suggested products blocked from publishing if catalog is at capacity.</td></tr>
+          <tr><td><span class="badge badge-gray">06</span></td><td><strong>Dual approval</strong></td><td>The admin who implements a product cannot be the same who approved it. Enforced at DB level.</td></tr>
+          <tr><td><span class="badge badge-gray">07</span></td><td><strong>24-hour staging</strong></td><td><span class="inline-code">COOLDOWN_HOURS = 24</span> — AI products cannot go live immediately after approval.</td></tr>
+          <tr><td><span class="badge badge-gray">08</span></td><td><strong>Auto-expiry</strong></td><td>Pending suggestions older than 30 days are automatically expired. Prevents stale AI decisions from sitting in the queue.</td></tr>
+          <tr><td><span class="badge badge-green">09</span></td><td><strong>Fairness monitoring</strong></td><td>Prometheus histograms track offer acceptance rates by age bracket and income tier. Grafana alert if disparity exceeds threshold.</td></tr>
+          <tr><td><span class="badge badge-red">10</span></td><td><strong>Audit immutability</strong></td><td>PostgreSQL BEFORE UPDATE OR DELETE triggers on all 4 audit tables. HTTP 500 if audit write fails — no offer without a record.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><span class="cmt"># services/api/routers/intelligence.py:34 — guardrail constants</span>
+CONFIDENCE_THRESHOLD     = <span class="num">0.60</span>   <span class="cmt"># Guardrail #1</span>
+RATE_LIMIT_MAX_CALLS     = <span class="num">5</span>     <span class="cmt"># Guardrail #2</span>
+RATE_LIMIT_WINDOW_SECONDS = <span class="num">3600</span> <span class="cmt"># 1 hour window</span>
+STALE_SUGGESTION_DAYS    = <span class="num">30</span>    <span class="cmt"># Guardrail #8</span>
+PRODUCT_CATALOG_CAP      = <span class="num">50</span>    <span class="cmt"># Guardrail #5</span>
+COOLDOWN_HOURS           = <span class="num">24</span>    <span class="cmt"># Guardrail #7</span>
+
+<span class="cmt"># PII patterns stripped from every AI output (Guardrail #3)</span>
+_PII_PATTERNS = [
+    (re.<span class="fn">compile</span>(<span class="str">r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'</span>), <span class="str">'[EMAIL_REDACTED]'</span>),
+    (re.<span class="fn">compile</span>(<span class="str">r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'</span>),                   <span class="str">'[PHONE_REDACTED]'</span>),
+    (re.<span class="fn">compile</span>(<span class="str">r'\b\d{3}-\d{2}-\d{4}\b'</span>),                           <span class="str">'[SSN_REDACTED]'</span>),
+    (re.<span class="fn">compile</span>(<span class="str">r'\b\d{13,19}\b'</span>),                                   <span class="str">'[CARD_REDACTED]'</span>),
+    (re.<span class="fn">compile</span>(<span class="str">r'\bRO\d{2}[A-Z]{4}\d{16}\b'</span>),                       <span class="str">'[IBAN_REDACTED]'</span>),
+]</pre>
+  </div>
+
+  <!-- ══ 08 COMPLIANCE ══ -->
+  <div class="page-section" id="compliance">
+    <h2 class="section-title">EU <span>Compliance</span></h2>
+    <p class="section-intro">
+      Five EU regulatory frameworks apply simultaneously to a banking AI system. Every feature in BankOffer AI was built compliance-first. The Consent Registry syncs from an Excel workbook (5 sheets) with SHA-256 change detection and auto-versioning.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Regulation</th><th>Requirement</th><th>Implementation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GDPR</strong><br><span style="font-size:11px;color:var(--gray-400);">Art. 5, 6, 7, 22, 30</span></td>
+            <td>Consent, pseudonymization, auto-anonymization, automated decision rights, processing records</td>
+            <td>5-tier consent toggles · SHA-256 email pseudonymization · 2-year auto-anonymization · Art. 22 disclosure per offer batch · <span class="inline-code">audit_log</span> as Art. 30 record</td>
+          </tr>
+          <tr>
+            <td><strong>EU AI Act</strong><br><span style="font-size:11px;color:var(--gray-400);">Art. 9, 12, 13, 14</span></td>
+            <td>Risk register, logging, transparency disclosures, human oversight</td>
+            <td>10-entry risk register · <span class="inline-code">ai_api_call_log</span> (full prompt + response) · Public transparency endpoint · Kill switch with full audit trail · Algorithmic explanation panels</td>
+          </tr>
+          <tr>
+            <td><strong>MiFID II</strong></td>
+            <td>Product suitability, risk profile matching, excluded-products disclosure</td>
+            <td>Hard suitability filter before scoring (not a soft recommendation) · Per-product risk profile matching · Excluded products list with reasons shown to customer</td>
+          </tr>
+          <tr>
+            <td><strong>EBA Guidelines</strong></td>
+            <td>Fair treatment, product governance, distribution controls</td>
+            <td>Fairness Prometheus histograms by age/income · Product catalog governance workflow · Distribution consent per channel</td>
+          </tr>
+          <tr>
+            <td><strong>ePrivacy Directive</strong></td>
+            <td>Per-channel marketing consent</td>
+            <td>Separate consent flags for push, email, SMS · Notification service checks flags before delivery · Consent history append-only log</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Kill Switch (AI Act Art. 14)</strong>
+        The kill switch halts all AI offer generation platform-wide. It writes to the <span class="inline-code">audit_log</span> table (immutable), broadcasts a notification to all staff, and causes the offer endpoint to return a compliance-safe empty response until re-enabled by an authorized admin.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 09 AUDIT SYSTEM ══ -->
+  <div class="page-section" id="audit">
+    <h2 class="section-title">Audit <span>System</span></h2>
+    <p class="section-intro">
+      Four immutable PostgreSQL tables. Database-level BEFORE UPDATE OR DELETE triggers prevent any modification or deletion. The offer engine returns HTTP 500 if the audit write fails — recommendations cannot be served without a record.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Table</th><th>What It Captures</th><th>Regulation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>audit_log</strong></td>
+            <td>Every state-changing action: actor, action, resource, before/after values, IP, user-agent, endpoint, HTTP method/status, duration, correlation <span class="inline-code">request_id</span></td>
+            <td><span class="badge badge-blue">GDPR Art. 30</span></td>
+          </tr>
+          <tr>
+            <td><strong>ai_api_call_log</strong></td>
+            <td>Every LLM interaction: request prompt, response text, model, provider, tokens used, latency ms, HTTP status, guardrail outcome, errors</td>
+            <td><span class="badge badge-orange">AI Act Art. 12</span></td>
+          </tr>
+          <tr>
+            <td><strong>consent_history</strong></td>
+            <td>Append-only record of every consent flag change: old value → new value, who changed it, timestamp, channel</td>
+            <td><span class="badge badge-blue">GDPR Art. 7(1)</span></td>
+          </tr>
+          <tr>
+            <td><strong>audit_recommendations</strong></td>
+            <td>Full snapshot per offer batch: input features, profile result, suitability check outcomes, scored products, exclusions, consent state, model version used</td>
+            <td><span class="badge badge-orange">AI Act Art. 12</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-danger">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-body">
+        <strong>Database-level immutability</strong>
+        PostgreSQL BEFORE UPDATE OR DELETE triggers are installed on all four tables. Even a direct <span class="inline-code">psql</span> connection by a DBA cannot modify or delete a row — the trigger raises an exception. The only permitted operation is INSERT.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 10 PRIVACY BY DESIGN ══ -->
+  <div class="page-section" id="privacy">
+    <h2 class="section-title">Privacy <span>by Design</span></h2>
+    <p class="section-intro">
+      Privacy controls are structural — they are embedded in the data model, not bolted on as policies. No personal data is stored in a reversible form, and no PII ever reaches an LLM.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Control</th><th>How It Works</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Email pseudonymization</strong></td><td>SHA-256 hash stored; plaintext email discarded at registration. Hash is used for deduplication only.</td></tr>
+          <tr><td><strong>Customer ID isolation</strong></td><td>Database internal IDs (51, 52…) replaced with pseudonymized UUIDs for all external API responses.</td></tr>
+          <tr><td><strong>Auto-anonymization</strong></td><td>Profiles older than 2 years are automatically stripped of quasi-identifiers by a scheduled background task.</td></tr>
+          <tr><td><strong>LLM context sanitization</strong></td><td>Scorer and intelligence prompts contain only pseudonymized IDs, life stage, risk score, segment labels, and anonymized spending categories — never name, email, or address.</td></tr>
+          <tr><td><strong>Consent-gated AI</strong></td><td>Profiling and automated decision consent flags are checked before any AI inference. No consent = no AI call = no personalized offers.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 11 STRENGTHS ══ -->
+  <div class="page-section" id="strengths">
+    <h2 class="section-title">Strengths <span>&amp; Weaknesses</span></h2>
+
+    <div class="sw-grid">
+      <div class="sw-col sw-col--str">
+        <h4>Strengths</h4>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Compliance-first architecture</strong>
+            Five EU regulations handled simultaneously in the data model. No post-hoc compliance patches needed.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Real code, real guardrails</strong>
+            10 guardrails are enforced in production code (not documentation). PII filter, rate limiter, confidence threshold, and prompt injection detection all run on every AI call.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Injectable LLM protocol</strong>
+            The scorer depends on a Protocol, not a concrete client. Any provider — Claude, GPT, Gemini, or a mock — slots in identically. Testing needs no mocking infrastructure.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Deterministic profiler</strong>
+            Life stage and risk scoring are pure functions — no ML model to retrain, no drift, fully unit-testable. Edge cases are auditable by reading 60 lines of code.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Audit immutability at DB level</strong>
+            PostgreSQL triggers enforce write-once semantics. No application-layer policy can circumvent it.
+          </div>
+        </div>
+      </div>
+      <div class="sw-col sw-col--wk">
+        <h4>Weaknesses</h4>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>One LLM call per product</strong>
+            Scoring N products makes N serial LLM calls. With 8 products that is 8 × latency. No batching or concurrent scoring implemented yet.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>No scoring cache</strong>
+            The same customer profile + product pair is re-scored on every request. Identical inputs produce a fresh LLM call with potentially different outputs (non-determinism).
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>Profiler rule gaps</strong>
+            The <span class="inline-code">classify_life_stage</span> function has a dead branch (line 50: <span class="inline-code">25 ≤ age &lt; 25</span> is always false). Edge cases between stages can produce counterintuitive results.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>Rate limiter is per-instance</strong>
+            The Redis rate limit counter is keyed per API instance, not per customer. In a multi-replica deployment it is effectively 5 × N calls/hour.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>No ML model in production</strong>
+            <span class="inline-code">ml/</span> has training scaffolding but the inference path is not wired into the offer pipeline. Relevance scoring depends entirely on the LLM, with no offline-trained fallback.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 12 ROADMAP ══ -->
+  <div class="page-section" id="roadmap">
+    <h2 class="section-title">AI <span>Roadmap</span></h2>
+    <p class="section-intro">
+      Highest-impact improvements ordered by effort/value ratio.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Item</th><th>Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-red">High</span></td>
+            <td><strong>Parallel product scoring</strong> — <span class="inline-code">asyncio.gather</span> all LLM calls instead of serial loop</td>
+            <td>8× latency reduction for full catalog scoring</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">High</span></td>
+            <td><strong>Score caching</strong> — Redis TTL cache keyed on <span class="inline-code">hash(customer_profile + product_id)</span></td>
+            <td>Eliminates repeated LLM cost for unchanged profiles</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><strong>Profiler rule fix</strong> — remove dead branch, add overlap resolution for customers who match multiple life stages</td>
+            <td>Correctness; reduces support cases</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><strong>Rate limiter per-customer</strong> — Redis key <span class="inline-code">rate:{customer_id}</span> instead of global</td>
+            <td>Correct throttling semantics in multi-replica deployments</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><strong>Wire ML inference path</strong> — connect <span class="inline-code">ml/inference/predict.py</span> as a fast pre-ranker before the LLM scorer</td>
+            <td>Reduces LLM calls by pre-filtering low-probability products offline</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-gray">Low</span></td>
+            <td><strong>Streaming explanations</strong> — stream the <span class="inline-code">personalization_reason</span> text to the portal for perceived speed</td>
+            <td>UX improvement, no backend logic change</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-gray">Low</span></td>
+            <td><strong>Feedback loop</strong> — record offer acceptance/rejection events and use them to fine-tune scoring weights over time</td>
+            <td>Continuous improvement of relevance scores</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Files ready for roadmap items</strong>
+        <span class="inline-code">ml/inference/predict.py</span> — inference scaffolding exists, needs wiring ·
+        <span class="inline-code">ml/training/train_scoring_model.py</span> — XGBoost training pipeline ready ·
+        <span class="inline-code">services/worker/scorer.py</span> — <span class="inline-code">score_products</span> loop is the parallel refactor target
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* Active sidebar link on scroll */
+  const sections = document.querySelectorAll('.page-section[id], div[id="intro"]');
+  const links = document.querySelectorAll('nav#sidebar a[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const match = document.querySelector(`nav#sidebar a[href="#${e.target.id}"]`);
+        if (match) match.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

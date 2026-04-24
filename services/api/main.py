@@ -183,6 +183,14 @@ def create_app() -> FastAPI:
                 return FileResponse(pres_file)
             return {"error": "presentation.html not found"}
 
+        @app.get("/ai-deep-dive", include_in_schema=False)
+        async def ai_deep_dive():
+            """Technical deep-dive: AI engine, profiler, scoring, guardrails."""
+            dive_file = Path(__file__).resolve().parent.parent.parent / "ai-deep-dive.html"
+            if dive_file.is_file():
+                return FileResponse(dive_file)
+            return {"error": "ai-deep-dive.html not found"}
+
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
     return app
