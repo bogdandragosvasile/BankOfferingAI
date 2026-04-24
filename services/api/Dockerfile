@@ -27,6 +27,7 @@ COPY --from=builder /install /usr/local
 COPY services/api/ /app/services/api/
 COPY services/worker/ /app/services/worker/
 COPY presentation.html /app/presentation.html
+COPY ai-deep-dive.html /app/ai-deep-dive.html
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
