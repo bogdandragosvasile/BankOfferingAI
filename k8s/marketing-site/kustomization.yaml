@@ -7,4 +7,4 @@ resources:
   - ingress.yaml
 images:
   - name: git.lupulup.com/admin/marketing-site
-    newTag: latest
+    newTag: 40e27824a7c0ef1cdacd23ebb2d2cf798c321852
