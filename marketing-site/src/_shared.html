@@ -1,0 +1,196 @@
+<!-- ─── SHARED HEAD: token block + theme-init. Must remain byte-identical
+       across index.html / demo.html / info.html / ai-deep-dive.html. ─── -->
+<meta charset="UTF-8">
+<!-- Theme-init runs BEFORE any stylesheet so first paint matches the
+     resolved theme — no flash on hard reload. Reuses the same
+     `cf-theme` localStorage key as the portals' CfThemeToggle. -->
+<script>(function(){try{var s=localStorage.getItem('cf-theme');var t=(s==='dark'||s==='light')?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<style id="cf-tokens">
+  /* ─── CareerForge design tokens — the same vocabulary the four portals
+         use, exposed for the marketing site so cf.lupulup.com reads as
+         the same product. Light is default; explicit data-theme="dark"
+         (and the prefers-color-scheme fallback) re-binds the values. ─── */
+  :root,
+  :root[data-theme="light"] {
+    --bg:           #F4F2EC;
+    --surface:      #FFFFFF;
+    --surface-2:    #ECEAE3;
+    --border:       #D8D5CC;
+    --text:         #14110D;
+    --text-muted:   #5A554C;
+    --text-subtle:  #8A847A;
+    --accent:       #E8552A;
+    --accent-hover: #C9461F;
+    --warn:         #C9A227;
+    --ok:           #2E6F4B;
+    --danger:       #B23B2A;
+    --ambient:      #6E5E4A;
+    --focus:        #14110D;
+    --code-bg:      #1A1814;
+    --code-fg:      #ECEAE3;
+    --font-sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:           #0A0A0A;
+    --surface:      #141312;
+    --surface-2:    #1C1A18;
+    --border:       #2A2724;
+    --text:         #ECEAE3;
+    --text-muted:   #A8A39A;
+    --text-subtle:  #6E685F;
+    --accent:       #E6432A;
+    --accent-hover: #FF5C3F;
+    --warn:         #E8B41E;
+    --ok:           #1F7A3E;
+    --danger:       #C23A24;
+    --ambient:      #5A4A3A;
+    --focus:        #ECEAE3;
+    --code-bg:      #000000;
+    --code-fg:      #ECEAE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --bg:           #0A0A0A;
+      --surface:      #141312;
+      --surface-2:    #1C1A18;
+      --border:       #2A2724;
+      --text:         #ECEAE3;
+      --text-muted:   #A8A39A;
+      --text-subtle:  #6E685F;
+      --accent:       #E6432A;
+      --accent-hover: #FF5C3F;
+      --warn:         #E8B41E;
+      --ok:           #1F7A3E;
+      --danger:       #C23A24;
+      --ambient:      #5A4A3A;
+      --focus:        #ECEAE3;
+      --code-bg:      #000000;
+      --code-fg:      #ECEAE3;
+    }
+  }
+
+  /* Resets + body defaults. */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  p { line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 120ms ease; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  code, kbd, samp, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* Inline <code> — accent-coloured identifier on a subtle inset of
+     the canvas. The accent here is allowed: code is signal-critical,
+     genuinely informational content, and stays rare. */
+  code {
+    background: var(--surface-2);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 0;
+    font-feature-settings: "tnum" 0, "calt" 0;
+    letter-spacing: 0;
+  }
+  /* Multi-line <pre> blocks — same dark code-block treatment in both
+     themes; --code-bg flips between warm-near-black (light) and pure
+     black (dark) so it remains a meaningfully recessed surface. */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0;
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: none;
+    font-feature-settings: "tnum" 0, "calt" 0;
+  }
+  pre code {
+    background: transparent !important;
+    color: var(--code-fg) !important;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  /* Syntax-highlighter classes already in the markup — restrained
+     5-colour Regie 308 palette, applied identically in both themes
+     since the code-block surface is dark in both. */
+  pre .kw, pre .keyword { color: #E6432A; font-weight: 500; }
+  pre .fn, pre .function { color: #ECEAE3; font-weight: 500; }
+  pre .var, pre .variable, pre .type { color: #ECEAE3; font-weight: 400; }
+  pre .str, pre .string { color: #E8B41E; font-weight: 400; }
+  pre .num, pre .number { color: #1F7A3E; font-weight: 400; }
+  pre .cmt, pre .comment { color: #6E685F; font-weight: 400; font-style: italic; }
+  /* Filename caption strip above a <pre>: same surface, fused border. */
+  .code-filename {
+    background: var(--code-bg);
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 16px;
+    margin: 24px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+  }
+  .code-filename + pre {
+    margin-top: 0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .meta {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  }
+
+  /* Theme switch — same affordance as the portals' sidebar-footer toggle. */
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text); }
+  .theme-toggle__icon { font-size: 13px; line-height: 1; }
+</style>

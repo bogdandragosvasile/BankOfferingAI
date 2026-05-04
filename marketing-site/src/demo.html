@@ -1,0 +1,2456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ─── SHARED HEAD: token block + theme-init. Must remain byte-identical
+       across index.html / demo.html / info.html / ai-deep-dive.html. ─── -->
+<meta charset="UTF-8">
+<!-- Theme-init runs BEFORE any stylesheet so first paint matches the
+     resolved theme — no flash on hard reload. Reuses the same
+     `cf-theme` localStorage key as the portals' CfThemeToggle. -->
+<script>(function(){try{var s=localStorage.getItem('cf-theme');var t=(s==='dark'||s==='light')?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<style id="cf-tokens">
+  /* ─── CareerForge design tokens — the same vocabulary the four portals
+         use, exposed for the marketing site so cf.lupulup.com reads as
+         the same product. Light is default; explicit data-theme="dark"
+         (and the prefers-color-scheme fallback) re-binds the values. ─── */
+  :root,
+  :root[data-theme="light"] {
+    --bg:           #F4F2EC;
+    --surface:      #FFFFFF;
+    --surface-2:    #ECEAE3;
+    --border:       #D8D5CC;
+    --text:         #14110D;
+    --text-muted:   #5A554C;
+    --text-subtle:  #8A847A;
+    --accent:       #E8552A;
+    --accent-hover: #C9461F;
+    --warn:         #C9A227;
+    --ok:           #2E6F4B;
+    --danger:       #B23B2A;
+    --ambient:      #6E5E4A;
+    --focus:        #14110D;
+    --code-bg:      #1A1814;
+    --code-fg:      #ECEAE3;
+    --font-sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:           #0A0A0A;
+    --surface:      #141312;
+    --surface-2:    #1C1A18;
+    --border:       #2A2724;
+    --text:         #ECEAE3;
+    --text-muted:   #A8A39A;
+    --text-subtle:  #6E685F;
+    --accent:       #E6432A;
+    --accent-hover: #FF5C3F;
+    --warn:         #E8B41E;
+    --ok:           #1F7A3E;
+    --danger:       #C23A24;
+    --ambient:      #5A4A3A;
+    --focus:        #ECEAE3;
+    --code-bg:      #000000;
+    --code-fg:      #ECEAE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --bg:           #0A0A0A;
+      --surface:      #141312;
+      --surface-2:    #1C1A18;
+      --border:       #2A2724;
+      --text:         #ECEAE3;
+      --text-muted:   #A8A39A;
+      --text-subtle:  #6E685F;
+      --accent:       #E6432A;
+      --accent-hover: #FF5C3F;
+      --warn:         #E8B41E;
+      --ok:           #1F7A3E;
+      --danger:       #C23A24;
+      --ambient:      #5A4A3A;
+      --focus:        #ECEAE3;
+      --code-bg:      #000000;
+      --code-fg:      #ECEAE3;
+    }
+  }
+
+  /* Resets + body defaults. */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  p { line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 120ms ease; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  code, kbd, samp, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* Inline <code> — accent-coloured identifier on a subtle inset of
+     the canvas. The accent here is allowed: code is signal-critical,
+     genuinely informational content, and stays rare. */
+  code {
+    background: var(--surface-2);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 0;
+    font-feature-settings: "tnum" 0, "calt" 0;
+    letter-spacing: 0;
+  }
+  /* Multi-line <pre> blocks — same dark code-block treatment in both
+     themes; --code-bg flips between warm-near-black (light) and pure
+     black (dark) so it remains a meaningfully recessed surface. */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0;
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: none;
+    font-feature-settings: "tnum" 0, "calt" 0;
+  }
+  pre code {
+    background: transparent !important;
+    color: var(--code-fg) !important;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  /* Syntax-highlighter classes already in the markup — restrained
+     5-colour Regie 308 palette, applied identically in both themes
+     since the code-block surface is dark in both. */
+  pre .kw, pre .keyword { color: #E6432A; font-weight: 500; }
+  pre .fn, pre .function { color: #ECEAE3; font-weight: 500; }
+  pre .var, pre .variable, pre .type { color: #ECEAE3; font-weight: 400; }
+  pre .str, pre .string { color: #E8B41E; font-weight: 400; }
+  pre .num, pre .number { color: #1F7A3E; font-weight: 400; }
+  pre .cmt, pre .comment { color: #6E685F; font-weight: 400; font-style: italic; }
+  /* Filename caption strip above a <pre>: same surface, fused border. */
+  .code-filename {
+    background: var(--code-bg);
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 16px;
+    margin: 24px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+  }
+  .code-filename + pre {
+    margin-top: 0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .meta {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  }
+
+  /* Theme switch — same affordance as the portals' sidebar-footer toggle. */
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text); }
+  .theme-toggle__icon { font-size: 13px; line-height: 1; }
+</style>
+
+<title>CareerForge — Demo Guide</title>
+
+<style>
+  /* ─── Compat layer — re-binds legacy class names onto the new
+         tokens. Every prose page (demo / info / ai-deep-dive) uses
+         this so existing markup keeps working without a rewrite. ─── */
+
+  body { font-size: 16px; line-height: 1.5; color: var(--text); background: var(--bg); }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  h4 { font-size: 16px; font-weight: 600; }
+  p { color: var(--text); margin: 0 0 16px 0; }
+  small { font-size: 12px; color: var(--text-subtle); }
+  strong, b { font-weight: 600; }
+  em, i { font-style: italic; }
+  ul, ol { padding-left: 24px; margin: 0 0 16px 0; color: var(--text); }
+  li { margin-bottom: 6px; line-height: 1.5; }
+
+  /* Wipe Bauhaus shapes and any container that only held them. */
+  .b-circle, .b-square, .b-triangle, .b-c, .b-s, .b-t,
+  .bh-circle, .bh-square, .bh-tri, .bh-tri-flat,
+  .bauhaus-logo, .bauhaus, .sidebar-brand__bauhaus,
+  .hero-shapes { display: none !important; }
+
+  /* Tabular figures globally — every number on the marketing site
+     is tabular by default, matching portal behaviour. */
+  body {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Accent discipline: --accent is reserved for actual links, the
+     active TOC rail, and focus rings. Headings, section numbers, and
+     decorative spans inside running prose must NOT use it. */
+  h1 span, h2 span, h3 span, h4 span, h5 span, h6 span {
+    color: inherit !important;
+    font-weight: inherit !important;
+  }
+  /* Inline emphasis spans that legacy markup colored with var(--accent)
+     or other legacy hues — neutralise to text. */
+  p span[style*="color:"], li span[style*="color:"],
+  td span[style*="color:"], summary span[style*="color:"],
+  .step-tip, .step__tip {
+    color: var(--text) !important;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  /* Section numbers (TOC). */
+  .toc-num, .section-num, .section-no {
+    display: inline-block;
+    width: 28px;
+    color: var(--text-subtle) !important;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    margin-right: 8px;
+  }
+
+  /* In-prose Table of Contents (info.html): muted by default, full
+     text on hover, accent rail only when active. No vermilion default. */
+  .toc { list-style: none; padding: 0; margin: 24px 0; }
+  .toc li { margin: 0; padding: 0; }
+  .toc a {
+    display: flex; align-items: baseline; gap: 12px;
+    color: var(--text-muted) !important;
+    font-weight: 400 !important;
+    border-left: 2px solid transparent;
+    padding: 6px 12px;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .toc a:hover {
+    color: var(--text) !important;
+  }
+  .toc a.active, .toc a.is-active {
+    color: var(--text) !important;
+    border-left-color: var(--accent);
+  }
+  .toc a .toc-num {
+    flex: 0 0 auto;
+    color: var(--text-subtle);
+  }
+
+  /* Sidebar wordmark (rendered as a plain <div>, not <h1>). */
+  .sidebar-brand-name {
+    font-size: 16px; font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .sidebar-brand-eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    margin-top: 4px;
+  }
+
+  /* Sidebar bottom: theme-toggle anchored at the bottom of the column. */
+  nav#sidebar { display: flex; flex-direction: column; }
+  .sidebar-toggle-wrap {
+    margin-top: auto;
+    padding: 16px 12px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-toggle-wrap .theme-toggle { width: 100%; justify-content: center; }
+
+  /* Anchor links with arrow trailers / leaders should read as actions —
+     bump weight to 500 across the site. */
+  a[href]:where(:has(*)) { font-weight: inherit; }
+  a.portal__open, a.action-link, a.back-link, .topbar-back,
+  .stats__links a, .footer__links a,
+  .portal__open, .topbar-brand, .topbar-back {
+    font-weight: 500;
+  }
+  /* Catch-all: arrow-suffix or arrow-prefix anchors — any text-link
+     that contains → or ← should render at 500. */
+  a { font-weight: 500; }
+  /* Reset weight on body links nested inside running prose so they
+     don't gain weight from the catch-all when authors expected 400. */
+  p > a, li > a, td > a, summary > a { font-weight: 500; }
+
+  /* ── info.html / ai-deep-dive.html ship a top-level
+        <nav id="sidebar"> + <main>. Wire the body as a flex
+        layout so the sidebar sits on the left and main fills
+        the rest. ── */
+  body:has(> nav#sidebar) {
+    display: flex;
+    align-items: flex-start;
+    background: var(--bg);
+    margin: 0;
+  }
+  nav#sidebar {
+    flex: 0 0 260px;
+    width: 260px;
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky; top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav#sidebar .sidebar-brand {
+    margin-bottom: 24px;
+    padding: 0 12px;
+  }
+  nav#sidebar .sidebar-brand h1 {
+    font-size: 16px; font-weight: 600;
+    color: var(--text); margin: 0;
+    text-transform: none; letter-spacing: 0;
+  }
+  nav#sidebar .sidebar-brand p {
+    font-size: 12px; color: var(--text-subtle);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 4px 0 0;
+  }
+  nav#sidebar .sidebar-section {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    padding: 16px 12px 6px;
+  }
+  nav#sidebar > a, nav#sidebar a {
+    display: block; padding: 6px 12px;
+    color: var(--text-muted) !important;
+    font-size: 14px; font-weight: 400;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  nav#sidebar a:hover { color: var(--text) !important; }
+  nav#sidebar a.active, nav#sidebar a.is-active {
+    color: var(--text) !important; font-weight: 500;
+    border-left-color: var(--accent);
+  }
+  body:has(> nav#sidebar) > main {
+    flex: 1;
+    min-width: 0;
+    max-width: 960px;
+    padding: 48px 32px;
+    background: var(--bg);
+  }
+
+  /* Override the inline-styled hero h1 in info.html / ai-deep-dive.html
+     (font-size:42px;font-weight:900;text-transform:uppercase). The
+     attribute styles win the cascade, so we use a strong selector
+     with !important to bring them down to the marketing scale. */
+  body:has(> nav#sidebar) main h1 {
+    font-size: 32px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: -0.005em !important;
+    line-height: 1.2 !important;
+    margin-bottom: 12px !important;
+    color: var(--text) !important;
+  }
+  /* Sidebar-page headings: spans stay as text — no accent on h1/h2/h3
+     decorations. (Active links handled separately.) */
+  body:has(> nav#sidebar) main h1 span,
+  body:has(> nav#sidebar) main h1 br + span,
+  body:has(> nav#sidebar) main h2 span,
+  body:has(> nav#sidebar) main h3 span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+  body:has(> nav#sidebar) main h2 {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--text) !important;
+  }
+  body:has(> nav#sidebar) main h3 {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    color: var(--text) !important;
+  }
+  /* Info Portal / AI Deep Dive lede paragraph: 16px / 1.5 / muted.
+     Targets the first <p> after the page <h1>. */
+  body:has(> nav#sidebar) main h1 + p {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    color: var(--text-muted) !important;
+    max-width: 720px;
+    margin: 16px 0 0 !important;
+    letter-spacing: 0;
+  }
+  /* Last-updated/internal-use line — 12px small caps, subtle. */
+  body:has(> nav#sidebar) main h1 + p + p {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: var(--text-subtle) !important;
+    margin: 8px 0 0 !important;
+    line-height: 1.4;
+  }
+  /* Section title spans (e.g. "Table of <span>Contents</span>") —
+     same color as the rest of the heading. */
+  body:has(> nav#sidebar) main .section-title span,
+  .section-title span, .ai-section-title span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+
+  /* ── Topbar (demo.html / ai-deep-dive.html). Now a flat hairline
+        bar in canvas tone. ── */
+  .topbar, .top-bar {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .topbar-brand, .top-bar__brand {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-title, .top-bar__title {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    letter-spacing: 0; text-transform: none;
+  }
+  .topbar-back, .top-bar__back, .back-link {
+    font-size: 14px; font-weight: 500; color: var(--text-muted);
+    border: 0; background: transparent; padding: 0;
+    text-transform: none; letter-spacing: 0;
+  }
+  .topbar-back:hover, .top-bar__back:hover, .back-link:hover {
+    color: var(--text);
+  }
+
+  /* ── Hero variants — strip the dark teal panel; use a flat
+        typographic header instead. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    background: var(--bg); color: var(--text);
+    border: 0; border-bottom: 1px solid var(--border);
+    padding: 56px 32px 40px;
+  }
+  .usecase-eyebrow, .hero-eyebrow, .ai-hero-eyebrow,
+  .info-hero__eyebrow, .hero-badge {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle); margin-bottom: 16px;
+  }
+  .usecase-heading, .hero-title, .ai-hero-heading, .ai-hero-title,
+  .info-hero__title {
+    font-size: 32px; font-weight: 600; line-height: 1.2;
+    color: var(--text); letter-spacing: -0.005em; margin: 0 0 8px 0;
+    text-transform: none;
+  }
+  .hero-sub, .ai-hero-sub, .info-hero__sub, .usecase-sub {
+    font-size: 16px; font-weight: 400; color: var(--text-muted);
+    line-height: 1.5; max-width: 720px; text-transform: none;
+    letter-spacing: 0;
+  }
+  .hero-meta, .hero-stamp, .ai-hero-stamp, .last-updated {
+    font-size: 12px; color: var(--text-subtle); margin-top: 16px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .accesa-mark { color: var(--text-muted); font-weight: 500; }
+  .hero-accent { border-left: 0; padding-left: 0; }
+
+  /* ── Section labels & dividers. ── */
+  .section-label {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0;
+    margin: 64px 0 24px 0;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Cards / panels — flat, hairline, no shadow, 4px max radius. ── */
+  .feat-card, .card, .panel, .info-card, .step-card, .demo-card,
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: none !important;
+  }
+  .feat-card *, .card * { box-shadow: none !important; }
+
+  /* ── Feature lists — drop coloured pill backgrounds; switch to
+        a single neutral chip. ── */
+  .feat-tag, .feature-tag, .feature-pill, .tag, .pill,
+  .green-tag, .orange-tag, .purple-tag, .yellow-tag, .blue-tag,
+  .red-tag, .teal-tag {
+    display: inline-block;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 0; padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Drop decorative section-prefix glyphs (▶ ◈ ▦ ◉ etc.) when
+     they're rendered as ::before content. */
+  .feat-card::before, .feature-card::before,
+  .ai-feature::before, .ai-mechanic::before { content: '' !important; }
+
+  /* ── Definition list (demo.html "AI features & what they
+        depend on"): two-column term/dependency. ── */
+  .feat-grid, .feature-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    margin: 0 0 24px 0;
+  }
+  .feat-grid > *, .feature-grid > *, .ai-feature-grid > * {
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    background: transparent !important;
+  }
+  .feat-grid > .term, .feat-grid > dt {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  .feat-grid > .dep, .feat-grid > dd {
+    font-size: 14px; font-weight: 400; color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── Tables. ── */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 12px 16px;
+    background: var(--surface-2);
+    color: var(--text-subtle);
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  td.mono, td .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Code blocks. The actual styling lives in the shared cf-tokens
+        block — only legacy class aliases like `.code-block` are
+        normalised here so they pick up the shipping-label treatment. ── */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 24px 0;
+  }
+
+  /* ── Steps (demo.html walkthrough). ── */
+  .steps { list-style: none; padding: 0; margin: 24px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+  }
+  .step-num, .step__num {
+    width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--text-subtle);
+    border: 1px solid var(--border); border-radius: 50%;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .step--employee, .step--coach, .step--manager, .step--admin {
+    background: transparent !important; color: var(--text-subtle) !important;
+    border-color: var(--border) !important;
+  }
+  .step-title, .step__title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .step-detail, .step__detail { color: var(--text-muted); font-size: 14px; }
+  .step-tip, .step__tip {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── Tabs (demo.html persona tabs). ── */
+  .tabs, .tab-bar, .demo-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin: 24px 0 16px; }
+  .tab, .tab-button {
+    background: transparent; border: 0;
+    padding: 10px 16px;
+    font-family: var(--font-sans); font-size: 14px;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: none; letter-spacing: 0;
+  }
+  .tab.active, .tab-button.active, .tab--active {
+    color: var(--text); font-weight: 500;
+    border-bottom-color: var(--text);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Sidebar (info.html / ai-deep-dive.html). ── */
+  .sidebar, .docs-sidebar, .info-sidebar {
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    width: 260px; padding: 24px 16px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar a, .docs-sidebar a, .info-sidebar a,
+  .sidebar-link, .toc-link {
+    display: block; padding: 6px 12px;
+    color: var(--text-muted); font-size: 14px;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .sidebar a:hover, .docs-sidebar a:hover, .info-sidebar a:hover,
+  .sidebar-link:hover, .toc-link:hover { color: var(--text); }
+  .sidebar a.active, .sidebar-link.active, .toc-link.active,
+  .sidebar a.is-active {
+    color: var(--text); font-weight: 500;
+    border-left-color: var(--accent);
+  }
+  .sidebar-section, .toc-section {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    padding: 16px 12px 6px;
+  }
+  .docs-layout, .info-layout {
+    display: flex; align-items: flex-start; gap: 0;
+    max-width: 1280px; margin: 0 auto;
+  }
+  .docs-content, .info-content, .doc-main {
+    flex: 1; max-width: 960px;
+    padding: 48px 32px;
+  }
+  .docs-content > *, .info-content > * { max-width: 760px; }
+  .docs-content table, .info-content table { max-width: 960px; }
+
+  /* ── Footer / bottom strip. ── */
+  footer, .footer {
+    border-top: 1px solid var(--border);
+    padding: 32px;
+    color: var(--text-subtle);
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  footer a, .footer a { color: var(--text-muted); margin-left: 12px; }
+  footer a:hover, .footer a:hover { color: var(--accent); }
+
+  /* ── Anything else with the legacy --black/--white/--yellow/--blue/
+        --teal/--red CSS variables falls back here. ── */
+  [style*="--black"], [style*="--white"], [style*="--yellow"],
+  [style*="--blue"], [style*="--teal"], [style*="--red"] {
+    color: var(--text);
+  }
+
+  /* Drop drop-shadows everywhere. */
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+
+  /* Border-radius cap. */
+  * { transition-property: color, background-color, border-color, opacity; }
+  .btn, .button, .pill, button, .card, .feat-card, .panel,
+  .info-card, .step-card, .demo-card, .feature-card { border-radius: 4px; }
+
+  /* ── Architecture / system diagrams (info.html). SVG <rect>/<text>
+        elements use legacy presentation attributes; rebind via CSS so
+        the diagram inverts cleanly in dark mode. ── */
+  .arch-diagram, .system-diagram, .data-flow-diagram {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 16px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .arch-diagram svg, .system-diagram svg, .data-flow-diagram svg {
+    color: var(--text);
+    max-width: 100%;
+    height: auto;
+  }
+  .arch-diagram svg rect, .system-diagram svg rect,
+  .data-flow-diagram svg rect {
+    fill: var(--surface);
+    stroke: var(--text);
+  }
+  .arch-diagram svg line, .system-diagram svg line,
+  .data-flow-diagram svg line,
+  .arch-diagram svg polygon, .system-diagram svg polygon,
+  .data-flow-diagram svg polygon {
+    stroke: var(--border);
+    fill: var(--border);
+  }
+  /* Primary heading text inside diagram: use main text token. */
+  .arch-diagram svg text, .system-diagram svg text,
+  .data-flow-diagram svg text { fill: var(--text); }
+  /* Mid-grey labels (#5a5a54 / #9a9a94 / #9ca3af) — soften to muted. */
+  .arch-diagram svg text[fill^="#5"],
+  .arch-diagram svg text[fill^="#9"],
+  .system-diagram svg text[fill^="#5"],
+  .system-diagram svg text[fill^="#9"] { fill: var(--text-muted); }
+
+  /* ── Marketing page width constraints. demo.html / ai-deep-dive.html
+        bodies are flat top-level divs with no wrapper, so target the
+        common section classes directly. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero,
+  .features-grid, .feature-grid, .feat-grid,
+  .ai-features, .ai-mechanics, .ai-stack, .ai-mechanic,
+  .steps, .demo-tabs, .tabs, .tab-bar,
+  .arch-diagram, .system-diagram, .data-flow-diagram,
+  .table-wrap, .ai-stack-table {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    padding-top: 56px; padding-bottom: 40px;
+  }
+  /* Feature cards (demo.html — AI features & what they depend on). */
+  .features-grid, .feat-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px auto;
+  }
+  .feature-card, .feat-card, .ai-feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex; flex-direction: column;
+    gap: 8px;
+  }
+  .feature-header, .feat-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+  }
+  .feature-title, .feat-title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+  }
+  .feature-desc, .feat-desc, .ai-feature-desc {
+    font-size: 14px; line-height: 1.5; color: var(--text-muted);
+  }
+  .feature-needs, .feat-needs, .ai-feature-needs {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-subtle);
+    border-top: 1px solid var(--border);
+    padding-top: 8px; margin-top: 4px;
+  }
+
+  /* Top-level sections that carry their own h2 with a section-label
+     style applied via JS — keep the same width container. */
+  .section-label, .section-title, .ai-section-title,
+  details, p:not([class]), h2:not([class]), h3:not([class]) {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  /* Sidebar layouts override the centred max-width — info / ai-deep-dive
+     prose lives inside .docs-content / .info-content. */
+  .docs-layout *:not([class]), .info-layout *:not([class]),
+  .docs-content *, .info-content *,
+  .docs-content p, .info-content p, .docs-content h2, .info-content h2,
+  .docs-content h3, .info-content h3 {
+    max-width: none;
+    padding-left: 0; padding-right: 0;
+    margin-left: 0; margin-right: 0;
+  }
+
+  /* ── demo.html: 720px centred prose column. The page does not carry
+        a sidebar, so the topbar lives inside the same centred column
+        as the rest of the article — single rhythm, no full-bleed band. ── */
+  body.page-demo > .topbar {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 24px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: nowrap;
+  }
+  body.page-demo > .topbar .topbar-back {
+    order: -1;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-back:hover { color: var(--text); }
+  body.page-demo > .topbar .topbar-brand {
+    flex-direction: row; align-items: baseline; gap: 8px;
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-brand::before { display: none; }
+  body.page-demo > .topbar .topbar-brand .sidebar-brand-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  body.page-demo > .topbar .topbar-eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  body.page-demo > .topbar .topbar-toggle-wrap {
+    margin-left: auto; display: flex; align-items: center;
+  }
+  body.page-demo > *:not(.topbar) {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  body.page-demo > .usecase-hero { padding-top: 48px; }
+  body.page-demo > .usecase-hero {
+    padding-top: 48px; padding-bottom: 32px;
+  }
+  /* Force feature-grid to single column at 720px so cards aren't
+     squashed; auto-fit fallback below 480px stays the same. */
+  body.page-demo .features-grid, body.page-demo .feat-grid {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 600px) {
+    body.page-demo .features-grid, body.page-demo .feat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* TTL bars (ai-deep-dive.html). Bar background uses accent or
+     muted surface; readable text inside. */
+  .ttl-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; margin: 8px 0; }
+  .ttl-label { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .ttl-bar-wrap { background: var(--surface-2); border: 1px solid var(--border); border-radius: 2px; height: 22px; position: relative; }
+  .ttl-bar {
+    background: var(--accent) !important;
+    color: var(--bg-elevated);
+    height: 100%; padding: 0 8px;
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    min-width: 32px;
+    border-radius: 2px;
+  }
+</style>
+
+</head>
+<body class="page-demo">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="sidebar-brand-name" style="font-size:14px;">CareerForge</span><span class="topbar-eyebrow">Demo Guide</span>
+  </div>
+  <div class="topbar-toggle-wrap"><!-- ─── Theme switch markup + behaviour. Same key + DOM contract as
+       the portals' CfThemeToggle. ─── -->
+<button id="cf-theme-toggle" type="button" class="theme-toggle" aria-label="Switch theme">
+  <span class="theme-toggle__icon" id="cf-theme-icon" aria-hidden="true">☀</span>
+  <span id="cf-theme-label">Light</span>
+</button>
+<script>
+  (function () {
+    var btn = document.getElementById('cf-theme-toggle');
+    if (!btn) return;
+    var iconEl  = document.getElementById('cf-theme-icon');
+    var labelEl = document.getElementById('cf-theme-label');
+    var KEY = 'cf-theme';
+    function read() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark' || attr === 'light') return attr;
+      var stored = localStorage.getItem(KEY);
+      if (stored === 'dark' || stored === 'light') return stored;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    function paint(t) {
+      iconEl.textContent  = t === 'dark' ? '◐' : '☀';
+      labelEl.textContent = t === 'dark' ? 'Dark' : 'Light';
+      btn.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme');
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem(KEY, t); } catch (e) { /* quota / private */ }
+      paint(t);
+    }
+    paint(read());
+    btn.addEventListener('click', function () { apply(read() === 'dark' ? 'light' : 'dark'); });
+    /* React to system theme changes only when the user hasn't picked one. */
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var listener = function (e) { if (!localStorage.getItem(KEY)) apply(e.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', listener);
+      else if (mq.addListener) mq.addListener(listener);
+    }
+  })();
+</script>
+</div><a href="index.html" class="topbar-back">← Hub</a>
+</div>
+
+<!-- USE CASE HERO -->
+<div class="usecase-hero">
+  <div class="usecase-eyebrow">Demo Guide · Use Case</div>
+  <h1 class="usecase-heading">Use Case</h1>
+  <p class="usecase-subheading">What does the 70% look like, built? <strong>CareerForge by <span class="accesa-mark">Accesa</span>.</strong></p>
+  <p class="usecase-tagline">Not an AI product. An <u>organisational</u> readiness system that has AI in it — in the right place, on a foundation that earns it.</p>
+</div>
+
+<!-- AI FEATURES -->
+<div class="section-label">AI Features &amp; What They Depend On</div>
+<div class="features-grid">
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Learning paths</div>
+      
+    </div>
+    <p class="feature-desc">Personalised node-graph path spanning skills, certifications, projects, milestones. Generated by AI, grounded in current market data.</p>
+    <div class="feature-needs">structured skill taxonomy</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Role suggestions</div>
+      
+    </div>
+    <p class="feature-desc">5 emerging roles with match scores incl. bench, based on specialisation + seniority. Surfaces internal mobility opportunities automatically.</p>
+    <div class="feature-needs">reliable profile data</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Market intelligence</div>
+      
+    </div>
+    <p class="feature-desc">6 tech trends every 6h, role demand catalogue every 2h. Live web search via Perplexity Sonar Pro — no stale embeddings.</p>
+    <div class="feature-needs">clean, unfragmented data pipeline</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Coaching advice</div>
+      
+    </div>
+    <p class="feature-desc">Coach asks AI about employee via pseudo-ID. Specific, market-grounded, auditable. No PII ever leaves the system boundary.</p>
+    <div class="feature-needs">governance baked into data model</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Skill gap analysis</div>
+      
+    </div>
+    <p class="feature-desc">Top 8 required skills for any target role, with proficiency level + market demand score. Computed against the employee's current skill set.</p>
+    <div class="feature-needs">validated, current skill data</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Intelligence digest</div>
+      
+    </div>
+    <p class="feature-desc">Weekly AI report: top rising skills, role movements, recommended actions for the coaching team. Cached, refreshable on demand.</p>
+    <div class="feature-needs">clean connector data, no silos</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Mentor Matcher</div>
+      
+    </div>
+    <p class="feature-desc">Coach portal ranks available mentors against any employee: 55% skill overlap, 30% seniority fit, 15% assignment load. Deterministic — no LLM cost.</p>
+    <div class="feature-needs">structured skill + seniority data</div>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-header">
+      <div class="feature-title">Opportunity AI Match</div>
+      
+    </div>
+    <p class="feature-desc">Manager publishes an opportunity — AI ranks all 212 employees by skill overlap and produces a narrative for the top 3 candidates. Every result is logged in an append-only audit trail.</p>
+    <div class="feature-needs">reliable profile &amp; skill data</div>
+  </div>
+
+</div>
+
+<!-- DEMO FLOWS -->
+<div class="section-label">Demo Flows by Persona</div>
+<div class="flows">
+
+  <div class="flow-row flow-row--employee">
+    <div class="flow-label">1<br>Employee</div>
+    <div class="flow-steps">
+      <div class="flow-step">Profile</div>
+      <div class="flow-step">Skill heatmap</div>
+      <div class="flow-step">Role suggestions incl. bench</div>
+      <div class="flow-step">AI learning path</div>
+    </div>
+  </div>
+
+  <div class="flow-row flow-row--coach">
+    <div class="flow-label">2<br>Coach</div>
+    <div class="flow-steps">
+      <div class="flow-step">Employees list</div>
+      <div class="flow-step">Employee detail (pseudo-ID)</div>
+      <div class="flow-step">AI coaching question</div>
+      <div class="flow-step">Mentor Match card</div>
+      <div class="flow-step">Analytics &amp; digest</div>
+    </div>
+  </div>
+
+  <div class="flow-row flow-row--manager">
+    <div class="flow-label">3<br>Manager</div>
+    <div class="flow-steps">
+      <div class="flow-step">Publish opportunity</div>
+      <div class="flow-step">AI Match → candidate shortlist</div>
+      <div class="flow-step">Team readiness scores</div>
+      <div class="flow-step">Pending sign-offs</div>
+    </div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-label" style="background:var(--black);color:var(--white);">4<br>Admin</div>
+    <div class="flow-steps">
+      <div class="flow-step">Dashboard stats</div>
+      <div class="flow-step">Configure AI Workflow</div>
+      <div class="flow-step">Suggestion Audit log</div>
+      <div class="flow-step">4.0 Readiness score</div>
+      <div class="flow-step">Users &amp; API keys</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CALLOUT -->
+<div class="callout">
+  <p class="callout-text">None of these six features work without the <em>70%</em> underneath them.<br>That is not a coincidence. That is a design choice.</p>
+  <p class="callout-cta">What would your organisation's readiness score be today?</p>
+</div>
+
+<!-- AUDIT CALLOUT -->
+<div class="callout">
+  <p class="callout-text" style="font-size:16px;">Every AI call is logged in an <em>append-only audit trail</em> — suggestion type, portal, feature, employee pseudo-ID, model used, sources, generated_at, expires_at. Configurable per-feature via the <strong>AI Workflow Connector</strong> in the Admin portal.</p>
+  <p class="callout-cta" style="font-size:13px;margin-top:10px;">One active workflow config drives all portals. Switch provider, TTL, or guardrails without a code deploy.</p>
+</div>
+
+<!-- AI MECHANICS -->
+<div class="section-label">AI Mechanics &mdash; How Each Suggestion Works</div>
+<div class="mechanics">
+
+  <!-- EMPLOYEE PORTAL -->
+  <div class="mechanics-portal mechanics-portal--employee">
+    <div class="mechanics-portal-header">&#9673;&nbsp; Employee Portal</div>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Role Suggestions<span class="mechanic-tag mechanic-tag--llm">LLM + RAG</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Employee&rsquo;s skills, seniority, and specialisation are serialised into a prompt. The active AI Workflow provider (Claude / Perplexity / OpenAI / Gemini / self-hosted) is called via <code>get_role_suggestions_for_profile()</code>.</p>
+          <p>RAG searches <code>ai_documents</code> for relevant roles-catalogue and trend chunks, prepends them as context, then asks the LLM to return the top N most relevant roles for this profile.</p>
+          <p>A deterministic <strong>match_score</strong> (0.0&ndash;1.0) is appended per role: <code>|emp_skills &cap; required| / |required|</code>. Roles below <code>min_match_score</code> are filtered before returning.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; role_suggestions</span>
+{
+  <span class="k">"enabled"</span>:          <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:        <span class="n">24</span>,
+  <span class="k">"model_override"</span>:   <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_roles"</span>:       <span class="n">5</span>,
+    <span class="k">"min_match_score"</span>: <span class="n">0.3</span>
+  }
+}</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>:    <span class="s">"role_suggestions"</span>,
+  <span class="k">"portal"</span>:             <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:            <span class="s">"role_suggestions"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"workflow_config_id"</span>: <span class="n">1</span>,
+  <span class="k">"model_used"</span>:         <span class="s">"claude-sonnet-4-6"</span>,
+  <span class="k">"sources_used"</span>: <span class="s">["ai_documents","roles_catalogue"]</span>,
+  <span class="k">"generated_at"</span>:    <span class="s">"2026-04-27T13:52Z"</span>,
+  <span class="k">"expires_at"</span>:      <span class="s">"2026-04-28T13:52Z"</span>
+  <span class="c">// TTL resolved: coverage_config &rarr; 24h</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Learning Path<span class="mechanic-tag mechanic-tag--llm">LLM + RAG</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Skill set, career goal, and seniority gap are combined with RAG context (skill docs, cert data). The LLM is asked to return a <strong>node-graph JSON</strong> with node types: <code>skill</code>, <code>cert</code>, <code>project</code>, <code>milestone</code>.</p>
+          <p>Output is validated for JSON structure. Nodes exceeding <code>max_nodes</code> are trimmed (lowest-priority last). If <code>include_certs: false</code>, cert nodes are stripped. Cached 48h &mdash; long enough to avoid redundant calls, short enough to reflect market shifts.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; learning_path</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">48</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_nodes"</span>:      <span class="n">12</span>,
+    <span class="k">"include_certs"</span>:  <span class="n">true</span>
+  }
+}</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"learning_path"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"learning_path"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"claude-sonnet-4-6"</span>,
+  <span class="k">"sources_used"</span>: <span class="s">["ai_documents","skill_taxonomy"]</span>,
+  <span class="k">"generated_at"</span>:    <span class="s">"2026-04-27T13:52Z"</span>,
+  <span class="k">"expires_at"</span>:      <span class="s">"2026-04-29T13:52Z"</span>
+  <span class="c">// TTL: 48h</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Opportunity Match Score<span class="mechanic-tag mechanic-tag--det">Deterministic</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>No LLM. For every published opportunity, at query time:</p>
+          <div class="mechanic-pre">overlap = emp_skills &cap; opp.required_skills
+score   = len(overlap) / len(required_skills)
+<span class="c"># if required_skills empty &rarr; 0.0</span></div>
+          <p>Badge colour: green &ge;70%, yellow 40&ndash;69%, grey &lt;40%. Score attached to every row in the opportunities list &mdash; no separate call needed.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; opportunities_matching</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">6</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"min_match_score"</span>: <span class="n">0.2</span>
+  }
+}</div>
+          <p>Opportunities below <code>min_match_score</code> are still shown but de-emphasised. Disabling the feature hides all badges.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <p><em>No row written.</em> The score is computed inline per opportunity in the same SQL query that returns the list &mdash; it is not a discrete suggestion. The coach&rsquo;s &ldquo;Suggest Employees for Opportunity&rdquo; uses the same scoring formula and <strong>does</strong> write an audit row (see Coach Portal &rarr; <em>Suggest Employees</em>).</p>
+          <div class="mechanic-pre"><span class="c">// computed inline; nothing in ai_suggestion_logs</span>
+GET /api/v1/opportunities &rarr;
+  [{ id, title, type, required_skills,
+     <span class="k">match_score</span>: <span class="n">0.67</span>,
+     <span class="k">overlap</span>: [<span class="s">"Python"</span>, <span class="s">"SQL"</span>] }, &hellip;]</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Career Advice (Get Advice)<span class="mechanic-tag mechanic-tag--llm">LLM + 4 pillars</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Single-shot question on the dashboard&rsquo;s <em>Get Advice</em> card. Backend assembles a strict <strong>4-pillar context</strong>: anonymised <strong>profile</strong> (skills resolved from <code>SkillTaxonomy</code> &mdash; UUIDs never sent), top&nbsp;5 active <strong>opportunities</strong> ranked by skill overlap, the latest <strong>Industry 4.0 readiness</strong> snapshot, and the active workflow&rsquo;s <strong>company strategy</strong> notes.</p>
+          <p>Profile too thin (&lt; 3 skills, no specialisation/seniority/career&nbsp;goal) &rarr; 422 refusal rather than fabrication. Off-context questions (e.g. &ldquo;where did I go to university?&rdquo;) get a clean &ldquo;not in your profile, please add it&rdquo; refusal.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; ai_advice</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">2</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"min_profile"</span>:    <span class="s">"spec+seniority+3 skills+goal"</span>,
+    <span class="k">"strip_uuids"</span>:    <span class="n">true</span>,
+    <span class="k">"strip_citations"</span>:<span class="n">true</span>
+  }
+}</div>
+          <p>Output passes a regex scrub for <code>[1][2]</code> / <code>[digest]</code> citation markers and stray UUIDs. Rendered as Markdown via the shared <code>CfMdText</code> component (marked + DOMPurify).</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"coaching_advice"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"ai_advice"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"question"</span>: <span class="s">"&hellip;"</span>,
+    <span class="k">"context_used"</span>: {
+      <span class="k">"skills"</span>:               <span class="n">12</span>,
+      <span class="k">"opportunities_ranked"</span>: <span class="n">5</span>,
+      <span class="k">"has_readiness"</span>:        <span class="n">true</span>,
+      <span class="k">"has_strategy"</span>:         <span class="n">true</span>
+    }
+  }
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">AI Career Advisor (multi-turn chat)<span class="mechanic-tag mechanic-tag--llm">LLM + 4 pillars</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>The conversational Career Advisor in <em>My Profile</em>. Same 4-pillar grounding as Career Advice, but with the last 6 turns of conversation history prepended. Client owns session state &mdash; backend is stateless. History is capped at 10 turns; user message at 1500 chars.</p>
+          <p>Same anti-fabrication system prompt; same UUID / citation scrubber on the way out.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; ai_chat</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">1</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_tokens"</span>:    <span class="n">1024</span>,
+    <span class="k">"history_turns"</span>:<span class="n">10</span>,
+    <span class="k">"safe_mode"</span>:     <span class="n">true</span>
+  }
+}</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"ai_chat"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"ai_chat"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"message"</span>:       <span class="s">"&hellip;"</span>,
+    <span class="k">"history_len"</span>:   <span class="n">4</span>,
+    <span class="k">"context_used"</span>: { &hellip; <span class="c">/* same 4 pillars */</span> }
+  }
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">AI Career Summary<span class="mechanic-tag mechanic-tag--llm">LLM</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>One-click generation of a first-person career narrative on the employee&rsquo;s profile page. Skill UUIDs resolved to taxonomy names before the prompt; <code>education_json</code> is <strong>never</strong> sent (the wizard does not collect it &mdash; any value would be seed-only and would surface as fabrication).</p>
+          <p>Strict system prompt: use only the supplied profile fields; never invent education, certifications, employers, projects, salaries, locations, or numeric metrics. Output split on the literal <code>&quot;Growth trajectory:&quot;</code> token into two displayed blocks.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; profile_summary</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">12</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"min_profile"</span>:   <span class="s">"spec+seniority+3 skills+goal"</span>,
+    <span class="k">"drop_education"</span>:<span class="n">true</span>,
+    <span class="k">"strip_uuids"</span>:   <span class="n">true</span>,
+    <span class="k">"strip_citations"</span>:<span class="n">true</span>
+  }
+}</div>
+          <p>422 refusal when the profile is too thin. Citation markers and UUIDs scrubbed post-LLM.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"profile_summary"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"profile_summary"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"summary"</span>:    <span class="s">"first 300 chars &hellip;"</span>,
+    <span class="k">"trajectory"</span>: <span class="s">"first 200 chars &hellip;"</span>
+  }
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Skill Gap (target role readiness)<span class="mechanic-tag mechanic-tag--llm">LLM + RAG</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Target role title + the employee&rsquo;s current skill set. RAG retrieves role-requirement docs and recent job-posting data. The model returns the top 8 skills the employee is missing or weak in, with <code>required_level</code> and <code>market_demand</code> grounded in connector data.</p>
+          <p>Used both by the employee&rsquo;s Learning page (current vs target role) and surfaced on the dashboard&rsquo;s readiness card.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// employee &rarr; readiness</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">12</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_skills"</span>:     <span class="n">8</span>
+  }
+}</div>
+          <p>Output truncated to <code>max_skills</code>, sorted by <code>market_demand</code> descending. Only absent or below-required-level skills are included.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"skill_gap"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"employee"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"readiness"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"target_role"</span>:       <span class="s">"&hellip;"</span>,
+    <span class="k">"overall_readiness"</span>: <span class="n">0.42</span>,
+    <span class="k">"skill_count"</span>:       <span class="n">8</span>,
+    <span class="k">"gaps"</span>:              <span class="n">5</span>
+  }
+}</div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- COACH PORTAL -->
+  <div class="mechanics-portal mechanics-portal--coach">
+    <div class="mechanics-portal-header">&#9638;&nbsp; Coach Portal</div>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Coaching Advice<span class="mechanic-tag mechanic-tag--llm">LLM + 4 pillars</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Coach submits a question referencing an employee by <strong>pseudo-id</strong>. Backend assembles the same <strong>4-pillar context</strong> as the employee Career Advice: anonymised profile (skills resolved from <code>SkillTaxonomy</code>), top-matched opportunities, latest readiness snapshot, active company strategy.</p>
+          <p><code>require_pseudo_id: true</code> means the endpoint rejects any request without a valid, existing pseudo-id &mdash; no anonymous bulk queries. Strict system prompt forbids invented education, certifications, employer history, projects, salaries, locations, metrics; bans citation markers and raw UUIDs.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// coach &rarr; coaching_advice</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">4</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"require_pseudo_id"</span>: <span class="n">true</span>,
+    <span class="k">"strip_uuids"</span>:       <span class="n">true</span>,
+    <span class="k">"strip_citations"</span>:   <span class="n">true</span>,
+    <span class="k">"safe_mode"</span>:          <span class="n">true</span>
+  }
+}</div>
+          <p>Rendered as Markdown via <code>CfMdText</code>. Post-LLM regex scrub strips <code>[1][2]</code> / <code>[digest]</code> / UUID artefacts.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"coaching_advice"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"coaching_advice"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"question"</span>: <span class="s">"&hellip;"</span>,
+    <span class="k">"context_used"</span>: { <span class="s">"skills"</span>: <span class="n">12</span>, <span class="s">"opportunities_ranked"</span>: <span class="n">5</span>,
+                       <span class="s">"has_readiness"</span>: <span class="n">true</span>, <span class="s">"has_strategy"</span>: <span class="n">true</span> }
+  }
+  <span class="c">// TTL: 4h &mdash; pseudo_id required, PII never leaves boundary</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Market Trends<span class="mechanic-tag mechanic-tag--llm">LLM + RAG</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Connectors (tech news feeds, job market APIs) ingest data hourly via Celery Beat into <code>ai_documents</code>. The RAG layer retrieves the freshest chunks. The LLM synthesises them into trend objects: <code>{ topic, trend_direction, summary, confidence, sources[] }</code>.</p>
+          <p>Not employee-specific &mdash; one shared cache entry per topic. Individual source URLs are cited so coaches can verify any claim.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// coach &rarr; market_intel</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">6</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_trends"</span>:     <span class="n">6</span>
+  }
+}</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"market_trends"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"market_intel"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="n">null</span>,
+  <span class="c">// not employee-scoped</span>
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: { <span class="k">"topic"</span>: <span class="s">"general"</span>, <span class="k">"count"</span>: <span class="n">6</span> }
+  <span class="c">// TTL: 6h</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Emerging Roles (catalogue)<span class="mechanic-tag mechanic-tag--llm">LLM + RAG</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Coach Catalogues page surfaces emerging IT roles per specialisation (or general). RAG retrieves connector docs scoped to the spec; the LLM returns a JSON array of <code>{ role_title, demand_level, avg_salary_range, required_skills[], growth_rate_percent }</code>.</p>
+          <p>Cache is keyed by specialisation, so all coaches looking at the same practice share one warm entry. Distinct from <em>Market Trends</em>: roles &amp; demand levels, not directional signals.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// coach &rarr; market_intel (emerging_roles)</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">2</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_roles"</span>:      <span class="n">10</span>
+  }
+}</div>
+          <p>Output is parsed as JSON; <code>_parse_json()</code> strips fences and falls back to empty list (never free text into the UI).</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"emerging_roles"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"market_intel"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="n">null</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"sonar-pro"</span>,
+  <span class="k">"payload_json"</span>: { <span class="k">"specialization"</span>: <span class="s">"backend"</span>, <span class="k">"count"</span>: <span class="n">8</span> }
+  <span class="c">// TTL: 2h</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Suggest Employees for Opportunity<span class="mechanic-tag mechanic-tag--det">Deterministic</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Coach asks &ldquo;who in the org should I shortlist for this opportunity?&rdquo;. No LLM. Pool: all employees meeting the opportunity&rsquo;s minimum seniority. Score per candidate:</p>
+          <div class="mechanic-pre">skill_score        = |emp_skills &cap; opp.required_skills| / |required|
+seniority_score    = max(0, 1 - |emp_idx - min_idx| * 0.15)
+availability_bonus = 0.1 if emp.available_for_mentoring else 0
+
+match_score        = skill_score        * 0.65
+                   + seniority_score    * 0.25
+                   + availability_bonus</div>
+          <p>Top-N returned (default 5), with skill overlap and mentoring-availability flag.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// coach &rarr; opportunities_ai_match</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">2</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"top_n"</span>:          <span class="n">5</span>,
+    <span class="k">"min_match_score"</span>: <span class="n">0.3</span>
+  }
+}</div>
+          <p>Zero LLM cost. Tagged <code>model_used: &quot;rule_based&quot;</code> so the audit page can distinguish it from LLM rankings.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"opportunity_match"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"opportunities_ai_match"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="n">null</span>,
+  <span class="c">// opp-scoped</span>
+  <span class="k">"model_used"</span>:      <span class="s">"rule_based"</span>,
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"opportunity_id"</span>: <span class="s">"&hellip;"</span>,
+    <span class="k">"matches"</span>: [
+      { <span class="k">"pseudo_id"</span>: <span class="s">"EMP-A"</span>, <span class="k">"match_score"</span>: <span class="n">0.92</span> },
+      &hellip;
+    ]
+  }
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Mentor Match (employee &amp; opportunity)<span class="mechanic-tag mechanic-tag--det">Deterministic</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Two sibling endpoints share one scoring formula:</p>
+          <ul style="margin:8px 0 8px 18px; padding:0;">
+            <li><code>GET /employees/{pseudo}/mentor-suggestions</code> &mdash; on the employee detail page</li>
+            <li><code>GET /opportunities/{id}/mentor-suggestions</code> &mdash; on the opportunity detail page</li>
+          </ul>
+          <p>Pool: employees with <code>available_for_mentoring=true</code>, seniority &ge; target&rsquo;s, <code>pseudo_id &ne; target</code>. Weighted score per candidate:</p>
+          <div class="mechanic-pre">skill_score     = |mentor_skills &cap; target_skills| / |target_skills|
+sen_gap         = seniority_rank(mentor) - seniority_rank(target)
+seniority_score = max(0, 1 - max(0, sen_gap - 2) * 0.15)
+load_score      = 1 - (active_assignments / 10)
+                  <span class="c">// from mentor_assignments table</span>
+
+match_score     = skill_score     * 0.55
+                + seniority_score * 0.30
+                + load_score      * 0.15</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// coach &rarr; opportunities_ai_match</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">24</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"min_match_score"</span>: <span class="n">0.2</span>,
+    <span class="k">"max_mentors"</span>:    <span class="n">5</span>
+  }
+}</div>
+          <p>Candidates below <code>min_match_score</code> excluded. Capped at <code>max_mentors</code>. Zero LLM cost &mdash; entirely data-model driven. Only pseudo-ids exposed &mdash; no names. Tagged <code>model_used: &quot;rule_based&quot;</code> in the audit log.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entries (two distinct types)</div>
+          <div class="mechanic-pre"><span class="c">// employee detail page:</span>
+{
+  <span class="k">"suggestion_type"</span>: <span class="s">"mentor_match_employee"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"opportunities_ai_match"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"rule_based"</span>,
+  <span class="k">"payload_json"</span>: { <span class="k">"matches"</span>: [&hellip;] }
+}
+
+<span class="c">// opportunity detail page:</span>
+{
+  <span class="k">"suggestion_type"</span>: <span class="s">"mentor_match_opportunity"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"coach"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"opportunities_ai_match"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="n">null</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"rule_based"</span>,
+  <span class="k">"payload_json"</span>: { <span class="k">"opportunity_id"</span>: <span class="s">"&hellip;"</span>, <span class="k">"matches"</span>: [&hellip;] }
+}</div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- MANAGER PORTAL -->
+  <div class="mechanics-portal mechanics-portal--manager">
+    <div class="mechanics-portal-header">&#8862;&nbsp; Manager Portal</div>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Opportunity AI Candidate Match<span class="mechanic-tag mechanic-tag--llm">LLM + Deterministic</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p><strong>Phase 1 &mdash; Deterministic</strong> (all 212 employees):</p>
+          <div class="mechanic-pre">for emp in all_employees:
+  overlap     = emp.skills &cap; opp.required_skills
+  score       = len(overlap) / len(required)
+  candidates.append({ emp, score, overlap, missing })</div>
+          <p>Sorted by score desc. Filtered by <code>min_match_score</code>. Capped at <code>max_candidates</code>.</p>
+          <p><strong>Phase 2 &mdash; LLM narrative</strong> (top 3 only): opportunity description + top-3 anonymised profiles sent to the active provider for a concise hiring narrative per candidate.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// manager &rarr; opportunities_ai_match</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">2</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"max_candidates"</span>: <span class="n">10</span>,
+    <span class="k">"min_match_score"</span>:<span class="n">0.3</span>
+  }
+}</div>
+          <p>Short 2h TTL &mdash; opportunity requirements may change. LLM only sees: <code>pseudo_id</code>, <code>specialisation</code>, <code>seniority</code>, <code>skill_list</code>. <strong>No names, no email, no personal data.</strong></p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"opportunities_ai_match"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"manager"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"opportunities_ai_match"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="n">null</span>,
+  <span class="c">// opportunity-scoped, not per-employee</span>
+  <span class="k">"payload_json"</span>: {
+    <span class="k">"opportunity_id"</span>:   <span class="n">42</span>,
+    <span class="k">"total_evaluated"</span>:  <span class="n">212</span>,
+    <span class="k">"candidates_shown"</span>: <span class="n">10</span>
+  },
+  <span class="k">"model_used"</span>:      <span class="s">"claude-sonnet-4-6"</span>,
+  <span class="k">"generated_at"</span>:    <span class="s">"2026-04-27T13:52Z"</span>,
+  <span class="k">"expires_at"</span>:      <span class="s">"2026-04-27T15:52Z"</span>
+  <span class="c">// TTL: 2h</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Team Readiness Score<span class="mechanic-tag mechanic-tag--ml">ML Model</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it&rsquo;s computed</div>
+          <p>Not an LLM &mdash; an <strong>XGBoost model</strong> trained on historical skill progression, certification completions, IDP activity, and engagement data. Produces a score 0&ndash;100 per employee.</p>
+          <p>Features: <code>skill_count</code>, <code>cert_count</code>, <code>idp_completion_rate</code>, <code>seniority_index</code>, <code>last_activity_days</code>, <code>engagement_score</code>. Model version tracked in MLflow; promoted to production by an admin trigger &mdash; no code deploy required.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Guardrails (coverage_config)</div>
+          <div class="mechanic-pre"><span class="c">// manager &rarr; team_readiness</span>
+{
+  <span class="k">"enabled"</span>:         <span class="n">true</span>,
+  <span class="k">"ttl_hours"</span>:       <span class="n">24</span>,
+  <span class="k">"model_override"</span>:  <span class="n">null</span>,
+  <span class="k">"guardrails"</span>: {
+    <span class="k">"show_names"</span>:     <span class="n">false</span>
+  }
+}</div>
+          <p><code>show_names: false</code> enforces pseudo-id display at all times. PII reveal requires an explicit employee consent flow. 24h TTL matches the daily reporting cadence.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Audit log entry</div>
+          <div class="mechanic-pre">{
+  <span class="k">"suggestion_type"</span>: <span class="s">"team_readiness"</span>,
+  <span class="k">"portal"</span>:          <span class="s">"manager"</span>,
+  <span class="k">"feature"</span>:         <span class="s">"team_readiness"</span>,
+  <span class="k">"employee_pseudo_id"</span>: <span class="s">"EMP-XXXXX"</span>,
+  <span class="k">"model_used"</span>:      <span class="s">"xgboost-readiness-v3 (MLflow)"</span>,
+  <span class="k">"sources_used"</span>: <span class="s">["employee_features","skill_records","idp_history"]</span>,
+  <span class="k">"generated_at"</span>:    <span class="s">"2026-04-27T13:52Z"</span>,
+  <span class="k">"expires_at"</span>:      <span class="s">"2026-04-28T13:52Z"</span>
+  <span class="c">// TTL: 24h &mdash; ML model, no API cost</span>
+}</div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ADMIN / AUDIT -->
+  <div class="mechanics-portal mechanics-portal--admin">
+    <div class="mechanics-portal-header">&#8853;&nbsp; AI Workflow Connector &mdash; Audit &amp; Config</div>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Outcome Feedback Loop<span class="mechanic-tag">Did it work?</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it works</div>
+          <p>The audit log answers &ldquo;what did the AI say?&rdquo;. The new <code>ai_suggestion_feedback</code> table answers &ldquo;did it work?&rdquo;. Each suggestion log row can be paired with one or more feedback events:</p>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li><strong>accepted</strong> &mdash; user actioned the suggestion (applied to a role, enrolled in a learning node, asked a follow-up)</li>
+            <li><strong>dismissed</strong> &mdash; user explicitly rejected it</li>
+            <li><strong>rated</strong> &mdash; thumbs / 1&ndash;5 stars; carries a numeric rating</li>
+            <li><strong>auto</strong> &mdash; system-observed outcome (readiness delta 30d after a learning path was generated, application result, etc.)</li>
+          </ul>
+          <p>Joining the two over time gives the platform real signal: <strong>acceptance rate per <code>suggestion_type</code></strong>, average rating, correlation with downstream readiness changes &mdash; the data needed to tune prompts on evidence rather than vibes.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Endpoints</div>
+          <div class="mechanic-pre"><span class="c">// Employee &mdash; record outcome on one of *their* suggestions</span>
+POST /api/v1/ai-suggestions/{log_id}/feedback
+{
+  <span class="k">"action"</span>: <span class="s">"accepted"</span> | <span class="s">"dismissed"</span> | <span class="s">"rated"</span>,
+  <span class="k">"rating"</span>: <span class="n">1..5</span>,                     <span class="c">// required when "rated"</span>
+  <span class="k">"note"</span>:    <span class="s">"free text"</span>,
+  <span class="k">"payload"</span>: { <span class="c">/* action-specific */</span> }
+}
+
+<span class="c">// Employee &mdash; their own feedback history (self-review)</span>
+GET  /api/v1/ai-suggestions/my-feedback
+
+<span class="c">// Admin &mdash; rollup per suggestion_type</span>
+GET  /api/v1/admin/ai-workflow/audit/feedback-summary
+&rarr; [{ suggestion_type, total_suggestions, feedback_events,
+        feedback_rate, accepted, dismissed, rated,
+        avg_rating, acceptance_rate }, &hellip;]
+
+<span class="c">// Admin &mdash; suggestion detail now includes feedback events array</span>
+GET  /api/v1/admin/ai-workflow/audit/suggestions/{log_id}
+&rarr; { &hellip;, <span class="k">feedback</span>: [{ action, rating, recorded_at, &hellip; }] }</div>
+          <p>Authorisation on POST: the suggestion must either belong to the caller (matching <code>employee_pseudo_id</code>) or be portal-wide / unscoped. Bad action / out-of-range rating &rarr; 422.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Telemetry</div>
+          <div class="mechanic-pre"><span class="c">// Prometheus counter, labelled per outcome</span>
+cf_suggestion_calls_total{
+  <span class="k">suggestion_type</span>=<span class="s">"coaching_advice"</span>,
+  <span class="k">portal</span>=<span class="s">"employee"</span>,
+  <span class="k">outcome</span>=<span class="s">"feedback_accepted"</span>
+}
+
+<span class="c">// Sample summary endpoint output</span>
+{
+  <span class="k">"suggestion_type"</span>: <span class="s">"coaching_advice"</span>,
+  <span class="k">"total_suggestions"</span>: <span class="n">16</span>,
+  <span class="k">"feedback_events"</span>:   <span class="n">2</span>,
+  <span class="k">"accepted"</span>:          <span class="n">1</span>,
+  <span class="k">"dismissed"</span>:         <span class="n">0</span>,
+  <span class="k">"rated"</span>:             <span class="n">1</span>,
+  <span class="k">"avg_rating"</span>:        <span class="n">4.0</span>,
+  <span class="k">"acceptance_rate"</span>:   <span class="n">1.0</span>
+}</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">AI Observability &mdash; Prometheus metrics<span class="mechanic-tag">Grafana-ready</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What is captured</div>
+          <p>The HTTP-level instrumentor already records request latency and status. These metrics target the <strong>AI surface</strong> &mdash; the things you can&rsquo;t infer from request logs:</p>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li><strong>cf_llm_calls_total</strong>{provider, model, outcome} &mdash; <em>success / empty / http_error / exception</em></li>
+            <li><strong>cf_llm_call_duration_seconds</strong>{provider, model} &mdash; histogram, 0.5..90s buckets</li>
+            <li><strong>cf_suggestion_calls_total</strong>{suggestion_type, portal, outcome} &mdash; success / empty_answer / refused_thin_profile / feedback_accepted / feedback_dismissed / feedback_rated</li>
+            <li><strong>cf_llm_artifacts_scrubbed_total</strong>{kind} &mdash; <em>citation_numeric / citation_named / uuid</em></li>
+            <li><strong>cf_ai_cache_lookups_total</strong>{cache_kind, outcome} &mdash; <em>hit / miss / expired</em></li>
+          </ul>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Why it matters</div>
+          <p>A regression like the Perplexity citation leak we caught manually mid-test would now <strong>alert itself</strong>: <code>cf_llm_artifacts_scrubbed_total{kind=&quot;citation_numeric&quot;}</code> stops being zero. Same for <em>silent</em> regressions:</p>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li>P95 latency for one provider creeping past 30s &rarr; switch model_override</li>
+            <li><code>refused_thin_profile</code> ratio rising &rarr; onboarding wizard issue</li>
+            <li><code>empty_answer</code> spikes on one suggestion_type &rarr; bad prompt template change</li>
+            <li>Cache hit rate dropping &rarr; TTL too aggressive or fingerprint collision</li>
+          </ul>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Exposed at</div>
+          <div class="mechanic-pre">GET https://api-demo.lupulup.com/metrics
+GET https://api-demo-coach.lupulup.com/metrics
+GET https://api-demo-manager.lupulup.com/metrics
+GET https://api-demo-admin.lupulup.com/metrics
+
+<span class="c">// All four backend services, on the existing Prom endpoint</span>
+<span class="c">// the FastAPI Instrumentator already publishes.</span>
+
+<span class="c">// Sample line:</span>
+cf_llm_call_duration_seconds_sum{
+  model=<span class="s">"sonar-pro"</span>,
+  provider=<span class="s">"perplexity"</span>
+} 5.486678252986167</div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Cost &amp; Abuse Controls<span class="mechanic-tag">Three layers</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Three independent gates</div>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li><strong>Per-employee daily quota</strong> &mdash; default 50 LLM-backed calls per <code>pseudo_id</code> per UTC day. <code>/ai-advice</code> and <code>/ai-chat</code> consume one slot each. Exhausted &rarr; HTTP 429 with a clear message; resets at 00:00 UTC. Redis-backed (<code>INCR + EXPIRE</code>); fail-open if Redis is down.</li>
+            <li><strong>Per-provider circuit breaker</strong> &mdash; after 5 consecutive failures (HTTP error / exception) the breaker opens for 120s. Open-state short-circuits the LLM call and returns <code>""</code>; caller serves the configured fallback. Auto-closes after the cooldown.</li>
+            <li><strong>Monthly token cost cap</strong> &mdash; rough estimate (chars/4) recorded per provider in <code>cf:cost:YYYY-MM</code>. <code>coverage_config.__cost__.monthly_token_cap</code> on the active workflow sets the limit; once hit, every LLM call returns <code>""</code> until the next month. Unset = unlimited.</li>
+          </ul>
+          <p>All three are <strong>fail-open</strong>: if Redis or a counter is unreadable, the call proceeds rather than blocking the portal.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Admin observability</div>
+          <div class="mechanic-pre">GET /api/v1/admin/ai-workflow/cost-summary
+
+{
+  <span class="k">"month_to_date"</span>: {
+    <span class="k">"month"</span>: <span class="s">"2026-04"</span>,
+    <span class="k">"providers"</span>: {
+      <span class="s">"perplexity"</span>: { <span class="k">"in"</span>: <span class="n">647</span>, <span class="k">"out"</span>: <span class="n">274</span> }
+    },
+    <span class="k">"total"</span>: <span class="n">921</span>,
+    <span class="k">"redis"</span>: <span class="s">"ok"</span>
+  },
+  <span class="k">"circuit_breakers"</span>: {
+    <span class="s">"perplexity"</span>: {
+      <span class="k">"consecutive_failures"</span>: <span class="n">0</span>,
+      <span class="k">"open"</span>: <span class="n">false</span>,
+      <span class="k">"open_for_seconds"</span>: <span class="n">0</span>
+    }
+  }
+}</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Telemetry labels</div>
+          <div class="mechanic-pre">cf_suggestion_calls_total{
+  <span class="k">outcome</span>=<span class="s">"quota_exceeded"</span>     <span class="c">// daily quota</span>
+}
+cf_suggestion_calls_total{
+  <span class="k">outcome</span>=<span class="s">"blocked_breaker"</span>     <span class="c">// circuit open</span>
+}
+cf_suggestion_calls_total{
+  <span class="k">outcome</span>=<span class="s">"blocked_monthly_cap"</span> <span class="c">// month cap hit</span>
+}
+
+<span class="c">// Same Grafana dashboards that surface success/empty</span>
+<span class="c">// outcomes already see all three throttle modes by name.</span></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Audit Evidence Trail &mdash; verbatim prompt &amp; answer<span class="mechanic-tag">Compliance-ready</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What is captured</div>
+          <p>Every conversational suggestion (<code>coaching_advice</code>, <code>ai_chat</code>) records into <code>payload_json</code>:</p>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li>The <strong>system prompt</strong> verbatim (the strict-grounding rules + role declaration)</li>
+            <li>The <strong>full user prompt</strong> &mdash; all four PROFILE / OPPORTUNITIES / READINESS / STRATEGY blocks exactly as the model saw them</li>
+            <li>The <strong>full answer</strong> after post-LLM scrub</li>
+            <li>The <strong>context_used</strong> breakdown (skills count, opportunities ranked, readiness/strategy presence)</li>
+            <li>Every recorded <code>ai_suggestion_feedback</code> event (accepted / dismissed / rated&nbsp;1&ndash;5)</li>
+          </ul>
+          <p>This is the artefact HR / compliance / legal asks for when reviewing why the AI made a recommendation. No PII is in any of these blocks &mdash; only pseudo-IDs and aggregated profile fields, by construction.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Markdown export</div>
+          <div class="mechanic-pre">GET /api/v1/admin/ai-workflow/audit/suggestions/{id}/evidence
+Content-Type: text/markdown; charset=utf-8
+Content-Disposition: attachment; filename="suggestion-{id}.md"
+
+<span class="c"># AI Suggestion Evidence — coaching_advice</span>
+
+- **Log ID:** `761026ed-…`
+- **Generated:** 2026-04-28T13:00:20Z
+- **Employee (pseudo):** `EMP-RHABH`
+- **Model used:** `sonar-pro`
+
+## Context-used breakdown
+- skills: `12`
+- opportunities_ranked: `5`
+- has_readiness: `true`
+- has_strategy: `true`
+
+## System prompt
+```
+You are CareerForge AI...
+[strict grounding rules verbatim]
+```
+
+## User prompt (verbatim)
+```
+PROFILE
+- Specialization: architect
+- ...
+[four blocks]
+
+QUESTION (context: career)
+What are the top 3 things...
+```
+
+## Answer
+[full markdown answer rendered as-is]
+
+## Feedback events
+| Recorded at | Action | Rating | Actor | Note |
+| ... | accepted | — | EMP-RHABH | helpful |</div>
+          <p>Browser saves directly. Print-to-PDF for tickets / audits.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Why it matters</div>
+          <p>Three audiences, one artefact:</p>
+          <ul style="margin:8px 0 8px 18px;padding:0;">
+            <li><strong>Compliance / GDPR Article 22</strong> &mdash; demonstrates that any AI-assisted decision had a documented basis (the four pillars) and that the user retained the ability to contest / accept / dismiss.</li>
+            <li><strong>Coach / HR review</strong> &mdash; when an employee disputes advice, the conversation is fully reproducible.</li>
+            <li><strong>Prompt engineering</strong> &mdash; reading the actual prompt the model saw is the fastest way to debug a regression.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Runtime FE Configuration &mdash; one bundle deploys everywhere<span class="mechanic-tag">DevOps</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it works</div>
+          <p>The employee portal reads its environment-specific values (Keycloak URL, realm, client-id, API base URL) from <code>window.__APP_CONFIG__</code> at runtime, populated by a <code>/config.js</code> file rendered from container env at startup.</p>
+          <p>Build-time <code>VITE_*</code> values still work as a fallback so <code>pnpm dev</code> and existing built bundles keep working unchanged.</p>
+          <p>Same image promotes from demo &rarr; staging &rarr; production. Set <code>CF_KEYCLOAK_URL</code>, <code>CF_EMPLOYEE_API_URL</code>, &hellip; on the deployment and they take effect on next pod restart.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Files</div>
+          <div class="mechanic-pre">apps/employee/src/runtime-config.ts
+  &rarr; RUNTIME_CONFIG = pick(window.__APP_CONFIG__,
+                             import.meta.env.VITE_*,
+                             default)
+
+apps/employee/index.html
+  &lt;script src=<span class="s">"/config.js"</span>&gt;&lt;/script&gt;
+  &lt;script type=<span class="s">"module"</span> src=<span class="s">"/src/main.ts"</span>&gt;&lt;/script&gt;
+
+apps/employee/docker-entrypoint.sh
+  rendered into /docker-entrypoint.d/40-write-config-js.sh
+  &rarr; writes /usr/share/nginx/html/config.js from CF_* env vars
+  &rarr; nginx&rsquo;s base image runs every script in
+     /docker-entrypoint.d/ before starting nginx</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Sample rendered config.js</div>
+          <div class="mechanic-pre">window.__APP_CONFIG__ = {
+  KEYCLOAK_URL:       <span class="s">"https://auth-demo.lupulup.com"</span>,
+  KEYCLOAK_REALM:     <span class="s">"employee"</span>,
+  KEYCLOAK_CLIENT_ID: <span class="s">"employee-portal"</span>,
+  EMPLOYEE_API_URL:   <span class="s">"https://api-demo.lupulup.com"</span>,
+};</div>
+          <p>All four portals (employee, coach, manager, admin) ship the same pattern &mdash; each has its own <code>runtime-config.ts</code> + <code>docker-entrypoint.sh</code> + nginx <code>/config.js</code> no-cache block. The cf-portal Helm chart accepts an optional <code>env:</code> array, so a single image promotes from demo &rarr; staging &rarr; production by overriding <code>CF_KEYCLOAK_URL</code> / <code>CF_&lt;APP&gt;_API_URL</code> at deploy time.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Audit Trail &mdash; every suggestion, every portal<span class="mechanic-tag">Append-only</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How it works</div>
+          <p>Every call to any AI function invokes <code>_log_suggestion(portal=, feature=)</code> before returning. The TTL is resolved by <code>_get_feature_ttl(workflow, portal, feature)</code>: reads <code>coverage_config[portal][feature].ttl_hours</code> from the active config, falls back to <code>suggestion_ttl_hours</code> global, then to 24h hardcoded default.</p>
+          <p>The log is <strong>append-only</strong> &mdash; no UPDATE or DELETE is ever issued. Admins browse it via Admin &rarr; Connectors &rarr; Suggestion Audit tab, filterable by portal, feature, pseudo-id, or date range.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Active config resolution (5-min cache)</div>
+          <div class="mechanic-pre"><span class="c"># rag.py &mdash; called on every AI function</span>
+<span class="k">async def</span> _get_active_workflow():
+  <span class="c"># in-process 5-min cache</span>
+  <span class="k">if</span> _cache <span class="k">and</span> (now - _ts) &lt; 300:
+    <span class="k">return</span> _cache
+  cfg = <span class="k">await</span> db.scalar(
+    select(AIWorkflowConfig)
+    .where(AIWorkflowConfig.is_active == True)
+  )
+  _cache = cfg  <span class="c"># update cache</span>
+  <span class="k">return</span> cfg</div>
+          <p>Switching provider in Admin UI takes effect within 5 minutes across all services &mdash; no restart required.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Full log table schema</div>
+          <div class="mechanic-pre"><span class="c">-- ai_suggestion_logs (PostgreSQL)</span>
+id                 SERIAL PRIMARY KEY
+suggestion_type    VARCHAR(64)
+portal             VARCHAR(32)
+feature            VARCHAR(64)
+employee_pseudo_id VARCHAR(32)  <span class="c">-- null if not emp-scoped</span>
+workflow_config_id INT FK
+payload_json       JSONB
+model_used         VARCHAR(128)
+sources_used       TEXT[]
+generated_at       TIMESTAMPTZ DEFAULT now()
+expires_at         TIMESTAMPTZ
+<span class="c">-- expires_at = generated_at + ttl_hours interval</span></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Per-feature Config &mdash; live guardrail changes, no deploy<span class="mechanic-tag">Admin UI</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What you can control</div>
+          <p>In Admin &rarr; Connectors &rarr; AI Workflow, each config has expandable per-feature panels. Per feature you can change:</p>
+          <ul style="font-size:13px;color:var(--gray-700);line-height:1.6;padding-left:18px;margin-top:6px;">
+            <li><strong>Enabled</strong> &mdash; toggle off without a code change</li>
+            <li><strong>TTL hours</strong> &mdash; how long results are cached before re-generation</li>
+            <li><strong>Model override</strong> &mdash; cheaper model for bulk scoring, smarter model for coaching advice</li>
+            <li><strong>Guardrail key/values</strong> &mdash; any key shown above; live after the 5-min cache window</li>
+          </ul>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Self-hosted AI support</div>
+          <p>Set provider to <code>self_hosted</code>. Enter a <code>base_url</code> (e.g. <code>http://ollama:11434</code>). The connector auto-appends <code>/v1</code> and calls <code>/v1/chat/completions</code> (OpenAI-compatible). Bearer auth optional. 120s timeout.</p>
+          <div class="mechanic-pre">{
+  <span class="k">"provider"</span>:   <span class="s">"self_hosted"</span>,
+  <span class="k">"model_name"</span>: <span class="s">"llama3.1:8b"</span>,
+  <span class="k">"base_url"</span>:   <span class="s">"http://ollama:11434"</span>,
+  <span class="k">"api_key"</span>:    <span class="s">""</span>  <span class="c">// optional bearer</span>
+}</div>
+          <p>Works with Ollama, LM Studio, vLLM, or any OpenAI-API-compatible server.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">ai_workflow_configs schema</div>
+          <div class="mechanic-pre"><span class="c">-- ai_workflow_configs (PostgreSQL)</span>
+id                   SERIAL PK
+name                 VARCHAR(128)
+provider             VARCHAR(32)
+<span class="c">-- anthropic/openai/perplexity/gemini/self_hosted</span>
+model_name           VARCHAR(128)
+api_key_encrypted    TEXT  <span class="c">-- AES-256-GCM</span>
+base_url             VARCHAR(512)  <span class="c">-- self-hosted only</span>
+is_active            BOOLEAN
+suggestion_ttl_hours INT   <span class="c">-- global fallback TTL</span>
+coverage_config      JSONB <span class="c">-- per-feature overrides</span>
+sources_config       JSONB
+notes                TEXT</div>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- AI-OPS & COST RESILIENCE (Phase 1) -->
+  <div class="mechanics-portal mechanics-portal--admin">
+    <div class="mechanics-portal-header">&#9673;&nbsp; AI-Ops &amp; Cost Resilience &mdash; cross-cutting</div>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Five-layer cost &amp; resilience stack<span class="mechanic-tag mechanic-tag--llm">all providers</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What it does</div>
+          <p>Sits in front of every conversational AI endpoint. Layers 1&ndash;4 ship benefits regardless of which provider the active workflow uses; layer 5 sits behind a capability predicate that activates only when Anthropic is selected.</p>
+          <ol style="padding-left:18px;line-height:1.55;">
+            <li><strong>Prompt-shape budget</strong> &mdash; top-3 opportunities, strategy 800 chars, chat history 4 turns. 25&ndash;35% input-token cut on every provider.</li>
+            <li><strong>Response-hash cache</strong> &mdash; Redis key <code>cf:airesp:&lt;sha&gt;</code>, 5-min TTL. Double-clicks &amp; reloads cost zero.</li>
+            <li><strong>Multi-replica circuit breaker</strong> &mdash; Redis-backed open state across all replicas.</li>
+            <li><strong>Connector freshness gauge</strong> &mdash; <code>cf_connector_last_sync_seconds</code> + alert at 24h.</li>
+            <li><strong>Anthropic prompt cache</strong> &mdash; ephemeral <code>cache_control</code> on the system prompt; ~90% input-cost cut on cache hits.</li>
+          </ol>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Cache key (layer 2)</div>
+          <div class="mechanic-pre"><span class="c"># services/ai_connector/cache.py</span>
+sha256(
+  pseudo_id |
+  question.strip().lower() |
+  workflow_id |
+  skill_count |
+  ",".join(sorted(opp_top_ids)) |
+  ...extra
+) &rarr; <span class="s">"cf:airesp:&lt;hex&gt;"</span></div>
+          <p><code>/ai-chat</code> additionally folds a hash of recent turns in so a follow-up question with the same words can&rsquo;t collide with the original.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Observability</div>
+          <div class="mechanic-pre"><span class="c"># Prometheus metrics emitted</span>
+cf_suggestion_calls_total{outcome=<span class="s">"cache_hit"</span>}
+cf_prompt_cache_tokens_total{provider,direction}
+cf_connector_last_sync_seconds{connector}
+cf_llm_calls_total{provider,model,outcome}
+cf_llm_artifacts_scrubbed_total{kind}</div>
+          <p><strong>Fail-open everywhere:</strong> cache, breaker, and quota helpers all degrade to no-op when Redis is unreachable.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Vector cosine RAG retrieval<span class="mechanic-tag mechanic-tag--llm">all providers</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What it does</div>
+          <p>Every AI function that needs grounding chunks from <code>ai_documents</code> calls <code>_cached_text_search()</code>. That helper now embeds the query via the configured embedding provider (Ollama <code>nomic-embed-text</code> by default, OpenAI <code>text-embedding-3-large</code> when <code>OPENAI_API_KEY</code> is set) and orders <code>ai_document_vectors</code> by cosine distance.</p>
+          <p>Cosine similarity matches synonyms and paraphrases that LIKE missed: "AWS" &harr; "Amazon Web Services", "k8s" &harr; "Kubernetes", "microservices" &harr; "service-oriented architecture".</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">SQL shape</div>
+          <div class="mechanic-pre"><span class="c"># services/ai_connector/rag.py</span>
+SELECT d.title, d.source_name,
+       substring(v.chunk_text from 1 for 600),
+       1 - (v.embedding &lt;=&gt; CAST(:qvec AS vector)) AS score
+FROM ai_document_vectors v
+JOIN ai_documents d ON d.id = v.document_id
+WHERE :ns = '' OR d.source_name = :ns
+ORDER BY v.embedding &lt;=&gt; CAST(:qvec AS vector)
+LIMIT :k</div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Fallback</div>
+          <p>If embedding generation fails (no embedding service reachable, transient HTTP error) or the vector query returns nothing, falls through to the original LIKE-based search. Both paths return the same dict shape, so every existing caller is unchanged. RAG is never blocked.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Daily AI-quota indicator<span class="mechanic-tag mechanic-tag--ux">UX</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What it does</div>
+          <p>The employee portal sidebar footer shows <code>AI: 48 / 50 today</code> under the user name, polled every 60s. Turns orange when remaining &le; 5 so the user gets a visible heads-up before hitting the daily ceiling. Hidden when Redis is unreachable (<code>remaining = -1</code>) so the chip never lies.</p>
+          <p>Reads from <code>GET /api/v1/quota/me</code> which returns the same Redis counter the Phase 1 daily-quota breaker enforces &mdash; single source of truth, no drift between what the user sees and what the platform actually applies.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Endpoint shape</div>
+          <div class="mechanic-pre"><span class="c"># services/employee/routers/quota.py</span>
+GET /api/v1/quota/me
+&rarr; {
+    "remaining": 48,
+    "limit":     50,
+    "resets_at": "2026-04-30T00:00:00+00:00"
+  }</div>
+          <p>Empty <code>remaining = -1</code> when the Redis sidecar is down &mdash; same fail-open posture as the rest of Phase 1.</p>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">Where it surfaces</div>
+          <p>For now, employee portal only (<code>apps/employee/src/layouts/AppLayout.vue</code>). Coach / manager / admin portals don&rsquo;t have a quota concept on their AI surfaces yet, so no chip there. The endpoint itself is auth-scoped to the calling Keycloak subject so each employee only sees their own counter.</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="mechanic-item">
+      <summary><div class="mechanic-summary-left">Drift gate (two-gate setup)<span class="mechanic-tag mechanic-tag--rule">CI</span></div></summary>
+      <div class="mechanic-body">
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">What it catches</div>
+          <p>Two complementary CI gates, paired so neither bug class slips through:</p>
+          <ul style="padding-left:18px;line-height:1.55;">
+            <li><strong><code>alembic check</code></strong> &mdash; fails when a SQLModel field has no matching migration column. The bug class that manifests as <code>UndefinedColumn</code> 500s after a fresh deploy.</li>
+            <li><strong><code>pytest test_raw_sql_ghost_tables.py</code></strong> &mdash; fails when a router uses raw SQL against a table that has no SQLModel at all. The bug class behind the <code>api_keys</code> incident.</li>
+          </ul>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">How alembic check stays useful</div>
+          <p><code>migrations/env.py</code> ships an <code>_include_object</code> filter that skips index, FK, and unique-constraint <em>naming</em> divergence (cosmetic only &mdash; same b-tree, same referential semantics). Real drift &mdash; missing columns, nullable changes, missing tables &mdash; is still caught.</p>
+          <div class="mechanic-pre"><span class="c"># migrations/env.py</span>
+<span class="k">def</span> <span class="fn">_include_object</span>(obj, name, type_, ...):
+    <span class="k">if</span> type_ <span class="k">in</span> {<span class="s">"index"</span>, <span class="s">"foreign_key_constraint"</span>,
+                 <span class="s">"unique_constraint"</span>}:
+        <span class="k">return</span> <span class="n">False</span>  <span class="c"># skip cosmetic</span>
+    <span class="k">return</span> <span class="n">True</span></div>
+        </div>
+        <div class="mechanic-col">
+          <div class="mechanic-col-label">First catches</div>
+          <p><code>api_keys</code> table: admin <code>/api-keys</code> returned 500 because the table referenced via raw SQL had no SQLModel and no migration. Caught by the ghost-table test.</p>
+          <p><code>coach_forms</code> + <code>skill_taxonomy</code>: SQLModel had fields (<code>employee_committed_at</code>, <code>cc_signed_off_at</code>, <code>manager_signed_off_at</code>, <code>opportunity_id</code>, <code>description</code>) the migrations never created. Caught by <code>alembic check</code> when the strict gate was restored; reconciled via migrations 20260429_0002 + _0003 (both idempotent).</p>
+        </div>
+      </div>
+    </details>
+
+  </div><!-- end AI-Ops panel -->
+
+</div><!-- end mechanics -->
+
+<!-- STEP-BY-STEP WALKTHROUGH -->
+<div class="section-label">Step-by-Step Walkthrough</div>
+<div class="walkthrough">
+
+  <div class="tabs">
+    <button class="tab-btn tab-btn--employee active" onclick="showTab('employee', this)">1 · Employee Demo</button>
+    <button class="tab-btn tab-btn--coach" onclick="showTab('coach', this)">2 · Coach Demo</button>
+    <button class="tab-btn tab-btn--manager" onclick="showTab('manager', this)">3 · Manager Demo</button>
+    <button class="tab-btn tab-btn--admin" onclick="showTab('admin', this)">4 · Admin Demo</button>
+  </div>
+
+  <!-- EMPLOYEE TAB -->
+  <div class="tab-content active" id="tab-employee">
+    <div class="tab-inner">
+      <h3>Employee Demo — Maria Demo</h3>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num step--employee">1</div>
+          <div class="step-body">
+            <div class="step-title">Open Employee Portal &amp; Sign In</div>
+            <div class="step-detail">Navigate to <code>demo.lupulup.com</code> and click <strong>Sign in with SSO</strong>. Use credentials from the tab below. You'll be redirected through Keycloak back to the portal.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--employee">2</div>
+          <div class="step-body">
+            <div class="step-title">Dashboard — the 70% in action</div>
+            <div class="step-detail">The Dashboard loads the employee's readiness score, AI role suggestions, and a learning path preview — all computed from structured data. <span class="step-tip">Show role suggestions card</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--employee">3</div>
+          <div class="step-body">
+            <div class="step-title">Learning Path — AI-generated, not generic</div>
+            <div class="step-detail">Navigate to <strong>Learning Path</strong> in the sidebar. The path is tailored to Maria's current skills and career goals. Hit <strong>Generate New Path</strong> to trigger a live AI call. Note the node types: skill, cert, project, milestone.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--employee">4</div>
+          <div class="step-body">
+            <div class="step-title">Opportunities &amp; Applications</div>
+            <div class="step-detail">Navigate to <strong>Opportunities</strong>. 25 live opportunities across project, bench, L&amp;D, R&amp;D types. Apply to one — watch the cover note flow through to the Coach portal's applications view.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--employee">5</div>
+          <div class="step-body">
+            <div class="step-title">Dashboard AI Advice — ask a real question</div>
+            <div class="step-detail">Back on Dashboard, type a specific question in the AI Advice box (e.g. <em>"What certifications should I pursue to move into a tech lead role?"</em>) and click <strong>Get Advice</strong>. Powered by Perplexity Sonar Pro with live web search. <span class="step-tip">Best demo moment</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--employee">6</div>
+          <div class="step-body">
+            <div class="step-title">My Profile — PII governance demo</div>
+            <div class="step-detail">Navigate to <strong>My Profile</strong>. The profile stores only anonymised data (pseudo-ID: <code>EMP-WUZNZ</code>). Full name and email are AES-256-GCM encrypted at rest — only the employee and authorised coaches can see them.</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="tab-creds">
+      <span class="tab-creds-label">Email</span>
+      <span class="tab-creds-val">maria.demo@accesa.eu</span>
+      <span class="tab-creds-label">Password</span>
+      <span class="tab-creds-pass">Demo2026!</span>
+      <a href="https://demo.lupulup.com" target="_blank" class="tab-creds-link tab-creds-link--employee">Open Portal →</a>
+    </div>
+  </div>
+
+  <!-- COACH TAB -->
+  <div class="tab-content" id="tab-coach">
+    <div class="tab-inner">
+      <h3>Coach Demo — Coach Portal</h3>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num step--coach">1</div>
+          <div class="step-body">
+            <div class="step-title">Open Coach Portal &amp; Sign In</div>
+            <div class="step-detail">Navigate to <code>demo-coach.lupulup.com</code>. Use a coach account (created in the <code>coach</code> Keycloak realm). The Coach Dashboard shows employees, skill heatmap, bench health, and intelligence digest.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--coach">2</div>
+          <div class="step-body">
+            <div class="step-title">Employees — browse 212 anonymised profiles</div>
+            <div class="step-detail">Navigate to <strong>Employees</strong>. All 212 employees are listed by pseudo-ID. Filter by specialisation, seniority, or skill. No PII visible — this is the privacy-by-design architecture. <span class="step-tip">Highlight: pseudo-ID not name</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--coach">3</div>
+          <div class="step-body">
+            <div class="step-title">Employee Detail — AI Coaching in context</div>
+            <div class="step-detail">Click any employee. In the <strong>AI Coaching Advice</strong> card, ask a specific question: <em>"What skills gaps does this engineer have for a senior backend role?"</em>. The AI has access to their anonymised profile and market data. <span class="step-tip">Best demo moment</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--coach">4</div>
+          <div class="step-body">
+            <div class="step-title">Opportunities — manage bench &amp; L&D</div>
+            <div class="step-detail">Navigate to <strong>Opportunities</strong>. Create a new opportunity or review applications. The <strong>Suggestions</strong> button on any opportunity runs AI matching against all 212 employees by skill overlap + seniority.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--coach">5</div>
+          <div class="step-body">
+            <div class="step-title">Analytics — Intelligence Digest</div>
+            <div class="step-detail">Navigate to <strong>Analytics</strong>. The <strong>Intelligence Digest</strong> is a weekly AI-generated report on skill trends, role market movements, and recommended L&amp;D actions. Hit <strong>Refresh</strong> to regenerate live via Perplexity.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--coach">6</div>
+          <div class="step-body">
+            <div class="step-title">Analytics — Skill Heatmap</div>
+            <div class="step-detail">Still in Analytics, the Skill Heatmap shows the most common skills across all employees. Filter by specialisation to see which skills are concentrated in which teams — useful for capacity planning.</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="tab-creds">
+      <span class="tab-creds-label">Email</span>
+      <span class="tab-creds-val">coach.demo@accesa.eu</span>
+      <span class="tab-creds-label">Password</span>
+      <span class="tab-creds-pass">Demo2026!</span>
+      <a href="https://demo-coach.lupulup.com" target="_blank" class="tab-creds-link tab-creds-link--coach">Open Portal →</a>
+    </div>
+  </div>
+
+  <!-- MANAGER TAB -->
+  <div class="tab-content" id="tab-manager">
+    <div class="tab-inner">
+      <h3>Manager Demo — Alex Manager</h3>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num step--manager">1</div>
+          <div class="step-body">
+            <div class="step-title">Open Manager Portal &amp; Sign In</div>
+            <div class="step-detail">Navigate to <code>demo-manager.lupulup.com</code>. Use Alex's credentials below. The system verifies the <code>manager</code> realm role in the JWT — no manager role, no access.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--manager">2</div>
+          <div class="step-body">
+            <div class="step-title">Dashboard — team KPIs at a glance</div>
+            <div class="step-detail">The Dashboard shows: <strong>team size</strong> (10 direct reports), <strong>pending sign-offs</strong>, and <strong>average team Industry 4.0 readiness score</strong>. Computed from real skill data — not a mock number. <span class="step-tip">Key differentiator</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--manager">3</div>
+          <div class="step-body">
+            <div class="step-title">My Team — per-member readiness</div>
+            <div class="step-detail">Navigate to <strong>My Team</strong>. Each of Alex's 10 direct reports is listed with their role, seniority, skills, and individual Industry 4.0 readiness score. Click any member to drill into their forms and dev plan history.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--manager">4</div>
+          <div class="step-body">
+            <div class="step-title">Pending Sign-offs — the governance moment</div>
+            <div class="step-detail">Navigate to <strong>Pending Sign-offs</strong>. Development plan forms sent by coaches that need manager approval appear here. Opening a form shows the commitments, timeline, and the sign-off chain: employee committed → coach signed → manager signs. <span class="step-tip">Show the 3-party sign-off chain</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--manager">7</div>
+          <div class="step-body">
+            <div class="step-title">Sign off a dev plan</div>
+            <div class="step-detail">From the form detail page, click <strong>Sign Off</strong>. The system records the timestamp and marks the form as fully active. The employee will see their dev plan become live in their portal.</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="tab-creds">
+      <span class="tab-creds-label">Email</span>
+      <span class="tab-creds-val">alex.manager@accesa.eu</span>
+      <span class="tab-creds-label">Password</span>
+      <span class="tab-creds-pass">Demo2026!</span>
+      <a href="https://demo-manager.lupulup.com" target="_blank" class="tab-creds-link tab-creds-link--manager">Open Portal →</a>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-admin">
+    <div class="tab-inner">
+      <h3>Admin Demo — admin.demo</h3>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num step--admin">1</div>
+          <div class="step-body">
+            <div class="step-title">Open Admin Portal &amp; Sign In</div>
+            <div class="step-detail">Navigate to <code>demo-admin.lupulup.com</code>. Log in with admin.demo credentials. The system checks the <code>admin</code> realm role in the JWT — no admin role, no access.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">2</div>
+          <div class="step-body">
+            <div class="step-title">Dashboard — live platform stats</div>
+            <div class="step-detail">The Dashboard shows real-time platform health: <strong>total registered employees</strong>, <strong>active coaches</strong>, <strong>enabled/total data connectors</strong>, <strong>indexed documents</strong>, and <strong>chunks ingested in the last 24h</strong>. Everything computed from live data — not mocked. <span class="step-tip">Key differentiator</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">3</div>
+          <div class="step-body">
+            <div class="step-title">Connectors → Data Connectors tab</div>
+            <div class="step-detail">Navigate to <strong>Connectors</strong>. The <strong>Data Connectors</strong> tab lists every data source feeding the RAG pipeline — source type, vector namespace, fetch interval, enabled/disabled status. You can add from catalog or define a custom JSON/Python connector on the spot.</div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">4</div>
+          <div class="step-body">
+            <div class="step-title">Connectors → AI Workflow tab — the control room</div>
+            <div class="step-detail">Switch to the <strong>AI Workflow</strong> tab. This is where the active AI provider is configured — provider (Anthropic / OpenAI / Perplexity / Gemini / self-hosted), model name, API key, and per-portal feature coverage (<code>coverage_config</code>). <strong>Only one config can be active at a time.</strong> Activating a new one deactivates all others instantly — no restart, takes effect within 5 minutes across all services. Show the per-feature guardrails panel: TTL, min match score, max results. <span class="step-tip">Show the self-hosted option (Ollama/LM Studio)</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">5</div>
+          <div class="step-body">
+            <div class="step-title">Connectors → Suggestion Audit tab — append-only trail</div>
+            <div class="step-detail">Switch to the <strong>Suggestion Audit</strong> tab. Every single AI suggestion ever made is logged here: suggestion type, portal, feature, employee pseudo-ID, model used, sources used, generated_at, expires_at. Filter by portal, feature, or pseudo-ID. <strong>No UPDATE or DELETE is ever issued</strong> — the log is fully append-only. <span class="step-tip">This is the governance story — show it</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">6</div>
+          <div class="step-body">
+            <div class="step-title">4.0 Readiness — org-wide score</div>
+            <div class="step-detail">Navigate to <strong>4.0 Readiness</strong>. The company-wide Industry 4.0 readiness score (0–100) is shown with a level label: Leader / Advanced / Developing / Starting. The score aggregates across all registered employees — skill count, IDP completions, seniority distribution, engagement. <span class="step-tip">A number leadership can act on</span></div>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num step--admin">7</div>
+          <div class="step-body">
+            <div class="step-title">Users — cross-realm management</div>
+            <div class="step-detail">Navigate to <strong>Users</strong>. Switch between realms (employee / coach / admin). You can view all users, their roles, and linked portal access. API Keys is available in the sidebar for managing scoped programmatic access tokens — useful for integration demos.</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="tab-creds">
+      <span class="tab-creds-label">Email</span>
+      <span class="tab-creds-val">admin.demo@accesa.eu</span>
+      <span class="tab-creds-label">Password</span>
+      <span class="tab-creds-pass">Demo2026!</span>
+      <a href="https://demo-admin.lupulup.com" target="_blank" class="tab-creds-link" style="background:var(--black);color:var(--white);border-color:var(--black);">Open Portal →</a>
+    </div>
+  </div>
+
+</div><!-- end walkthrough -->
+
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

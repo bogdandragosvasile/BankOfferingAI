@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ─── SHARED HEAD: token block + theme-init. Must remain byte-identical
+       across index.html / demo.html / info.html / ai-deep-dive.html. ─── -->
+<meta charset="UTF-8">
+<!-- Theme-init runs BEFORE any stylesheet so first paint matches the
+     resolved theme — no flash on hard reload. Reuses the same
+     `cf-theme` localStorage key as the portals' CfThemeToggle. -->
+<script>(function(){try{var s=localStorage.getItem('cf-theme');var t=(s==='dark'||s==='light')?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<style id="cf-tokens">
+  /* ─── CareerForge design tokens — the same vocabulary the four portals
+         use, exposed for the marketing site so cf.lupulup.com reads as
+         the same product. Light is default; explicit data-theme="dark"
+         (and the prefers-color-scheme fallback) re-binds the values. ─── */
+  :root,
+  :root[data-theme="light"] {
+    --bg:           #F4F2EC;
+    --surface:      #FFFFFF;
+    --surface-2:    #ECEAE3;
+    --border:       #D8D5CC;
+    --text:         #14110D;
+    --text-muted:   #5A554C;
+    --text-subtle:  #8A847A;
+    --accent:       #E8552A;
+    --accent-hover: #C9461F;
+    --warn:         #C9A227;
+    --ok:           #2E6F4B;
+    --danger:       #B23B2A;
+    --ambient:      #6E5E4A;
+    --focus:        #14110D;
+    --code-bg:      #1A1814;
+    --code-fg:      #ECEAE3;
+    --font-sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:           #0A0A0A;
+    --surface:      #141312;
+    --surface-2:    #1C1A18;
+    --border:       #2A2724;
+    --text:         #ECEAE3;
+    --text-muted:   #A8A39A;
+    --text-subtle:  #6E685F;
+    --accent:       #E6432A;
+    --accent-hover: #FF5C3F;
+    --warn:         #E8B41E;
+    --ok:           #1F7A3E;
+    --danger:       #C23A24;
+    --ambient:      #5A4A3A;
+    --focus:        #ECEAE3;
+    --code-bg:      #000000;
+    --code-fg:      #ECEAE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --bg:           #0A0A0A;
+      --surface:      #141312;
+      --surface-2:    #1C1A18;
+      --border:       #2A2724;
+      --text:         #ECEAE3;
+      --text-muted:   #A8A39A;
+      --text-subtle:  #6E685F;
+      --accent:       #E6432A;
+      --accent-hover: #FF5C3F;
+      --warn:         #E8B41E;
+      --ok:           #1F7A3E;
+      --danger:       #C23A24;
+      --ambient:      #5A4A3A;
+      --focus:        #ECEAE3;
+      --code-bg:      #000000;
+      --code-fg:      #ECEAE3;
+    }
+  }
+
+  /* Resets + body defaults. */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  p { line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 120ms ease; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  code, kbd, samp, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* Inline <code> — accent-coloured identifier on a subtle inset of
+     the canvas. The accent here is allowed: code is signal-critical,
+     genuinely informational content, and stays rare. */
+  code {
+    background: var(--surface-2);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 0;
+    font-feature-settings: "tnum" 0, "calt" 0;
+    letter-spacing: 0;
+  }
+  /* Multi-line <pre> blocks — same dark code-block treatment in both
+     themes; --code-bg flips between warm-near-black (light) and pure
+     black (dark) so it remains a meaningfully recessed surface. */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0;
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: none;
+    font-feature-settings: "tnum" 0, "calt" 0;
+  }
+  pre code {
+    background: transparent !important;
+    color: var(--code-fg) !important;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  /* Syntax-highlighter classes already in the markup — restrained
+     5-colour Regie 308 palette, applied identically in both themes
+     since the code-block surface is dark in both. */
+  pre .kw, pre .keyword { color: #E6432A; font-weight: 500; }
+  pre .fn, pre .function { color: #ECEAE3; font-weight: 500; }
+  pre .var, pre .variable, pre .type { color: #ECEAE3; font-weight: 400; }
+  pre .str, pre .string { color: #E8B41E; font-weight: 400; }
+  pre .num, pre .number { color: #1F7A3E; font-weight: 400; }
+  pre .cmt, pre .comment { color: #6E685F; font-weight: 400; font-style: italic; }
+  /* Filename caption strip above a <pre>: same surface, fused border. */
+  .code-filename {
+    background: var(--code-bg);
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 16px;
+    margin: 24px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+  }
+  .code-filename + pre {
+    margin-top: 0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .meta {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  }
+
+  /* Theme switch — same affordance as the portals' sidebar-footer toggle. */
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text); }
+  .theme-toggle__icon { font-size: 13px; line-height: 1; }
+</style>
+
+<title>AI in CareerForge — Deep Dive</title>
+
+<style>
+  /* ─── Compat layer — re-binds legacy class names onto the new
+         tokens. Every prose page (demo / info / ai-deep-dive) uses
+         this so existing markup keeps working without a rewrite. ─── */
+
+  body { font-size: 16px; line-height: 1.5; color: var(--text); background: var(--bg); }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  h4 { font-size: 16px; font-weight: 600; }
+  p { color: var(--text); margin: 0 0 16px 0; }
+  small { font-size: 12px; color: var(--text-subtle); }
+  strong, b { font-weight: 600; }
+  em, i { font-style: italic; }
+  ul, ol { padding-left: 24px; margin: 0 0 16px 0; color: var(--text); }
+  li { margin-bottom: 6px; line-height: 1.5; }
+
+  /* Wipe Bauhaus shapes and any container that only held them. */
+  .b-circle, .b-square, .b-triangle, .b-c, .b-s, .b-t,
+  .bh-circle, .bh-square, .bh-tri, .bh-tri-flat,
+  .bauhaus-logo, .bauhaus, .sidebar-brand__bauhaus,
+  .hero-shapes { display: none !important; }
+
+  /* Tabular figures globally — every number on the marketing site
+     is tabular by default, matching portal behaviour. */
+  body {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Accent discipline: --accent is reserved for actual links, the
+     active TOC rail, and focus rings. Headings, section numbers, and
+     decorative spans inside running prose must NOT use it. */
+  h1 span, h2 span, h3 span, h4 span, h5 span, h6 span {
+    color: inherit !important;
+    font-weight: inherit !important;
+  }
+  /* Inline emphasis spans that legacy markup colored with var(--accent)
+     or other legacy hues — neutralise to text. */
+  p span[style*="color:"], li span[style*="color:"],
+  td span[style*="color:"], summary span[style*="color:"],
+  .step-tip, .step__tip {
+    color: var(--text) !important;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  /* Section numbers (TOC). */
+  .toc-num, .section-num, .section-no {
+    display: inline-block;
+    width: 28px;
+    color: var(--text-subtle) !important;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    margin-right: 8px;
+  }
+
+  /* In-prose Table of Contents (info.html): muted by default, full
+     text on hover, accent rail only when active. No vermilion default. */
+  .toc { list-style: none; padding: 0; margin: 24px 0; }
+  .toc li { margin: 0; padding: 0; }
+  .toc a {
+    display: flex; align-items: baseline; gap: 12px;
+    color: var(--text-muted) !important;
+    font-weight: 400 !important;
+    border-left: 2px solid transparent;
+    padding: 6px 12px;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .toc a:hover {
+    color: var(--text) !important;
+  }
+  .toc a.active, .toc a.is-active {
+    color: var(--text) !important;
+    border-left-color: var(--accent);
+  }
+  .toc a .toc-num {
+    flex: 0 0 auto;
+    color: var(--text-subtle);
+  }
+
+  /* Sidebar wordmark (rendered as a plain <div>, not <h1>). */
+  .sidebar-brand-name {
+    font-size: 16px; font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .sidebar-brand-eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    margin-top: 4px;
+  }
+
+  /* Sidebar bottom: theme-toggle anchored at the bottom of the column. */
+  nav#sidebar { display: flex; flex-direction: column; }
+  .sidebar-toggle-wrap {
+    margin-top: auto;
+    padding: 16px 12px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-toggle-wrap .theme-toggle { width: 100%; justify-content: center; }
+
+  /* Anchor links with arrow trailers / leaders should read as actions —
+     bump weight to 500 across the site. */
+  a[href]:where(:has(*)) { font-weight: inherit; }
+  a.portal__open, a.action-link, a.back-link, .topbar-back,
+  .stats__links a, .footer__links a,
+  .portal__open, .topbar-brand, .topbar-back {
+    font-weight: 500;
+  }
+  /* Catch-all: arrow-suffix or arrow-prefix anchors — any text-link
+     that contains → or ← should render at 500. */
+  a { font-weight: 500; }
+  /* Reset weight on body links nested inside running prose so they
+     don't gain weight from the catch-all when authors expected 400. */
+  p > a, li > a, td > a, summary > a { font-weight: 500; }
+
+  /* ── info.html / ai-deep-dive.html ship a top-level
+        <nav id="sidebar"> + <main>. Wire the body as a flex
+        layout so the sidebar sits on the left and main fills
+        the rest. ── */
+  body:has(> nav#sidebar) {
+    display: flex;
+    align-items: flex-start;
+    background: var(--bg);
+    margin: 0;
+  }
+  nav#sidebar {
+    flex: 0 0 260px;
+    width: 260px;
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky; top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav#sidebar .sidebar-brand {
+    margin-bottom: 24px;
+    padding: 0 12px;
+  }
+  nav#sidebar .sidebar-brand h1 {
+    font-size: 16px; font-weight: 600;
+    color: var(--text); margin: 0;
+    text-transform: none; letter-spacing: 0;
+  }
+  nav#sidebar .sidebar-brand p {
+    font-size: 12px; color: var(--text-subtle);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 4px 0 0;
+  }
+  nav#sidebar .sidebar-section {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    padding: 16px 12px 6px;
+  }
+  nav#sidebar > a, nav#sidebar a {
+    display: block; padding: 6px 12px;
+    color: var(--text-muted) !important;
+    font-size: 14px; font-weight: 400;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  nav#sidebar a:hover { color: var(--text) !important; }
+  nav#sidebar a.active, nav#sidebar a.is-active {
+    color: var(--text) !important; font-weight: 500;
+    border-left-color: var(--accent);
+  }
+  body:has(> nav#sidebar) > main {
+    flex: 1;
+    min-width: 0;
+    max-width: 960px;
+    padding: 48px 32px;
+    background: var(--bg);
+  }
+
+  /* Override the inline-styled hero h1 in info.html / ai-deep-dive.html
+     (font-size:42px;font-weight:900;text-transform:uppercase). The
+     attribute styles win the cascade, so we use a strong selector
+     with !important to bring them down to the marketing scale. */
+  body:has(> nav#sidebar) main h1 {
+    font-size: 32px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: -0.005em !important;
+    line-height: 1.2 !important;
+    margin-bottom: 12px !important;
+    color: var(--text) !important;
+  }
+  /* Sidebar-page headings: spans stay as text — no accent on h1/h2/h3
+     decorations. (Active links handled separately.) */
+  body:has(> nav#sidebar) main h1 span,
+  body:has(> nav#sidebar) main h1 br + span,
+  body:has(> nav#sidebar) main h2 span,
+  body:has(> nav#sidebar) main h3 span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+  body:has(> nav#sidebar) main h2 {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--text) !important;
+  }
+  body:has(> nav#sidebar) main h3 {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    color: var(--text) !important;
+  }
+  /* Info Portal / AI Deep Dive lede paragraph: 16px / 1.5 / muted.
+     Targets the first <p> after the page <h1>. */
+  body:has(> nav#sidebar) main h1 + p {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    color: var(--text-muted) !important;
+    max-width: 720px;
+    margin: 16px 0 0 !important;
+    letter-spacing: 0;
+  }
+  /* Last-updated/internal-use line — 12px small caps, subtle. */
+  body:has(> nav#sidebar) main h1 + p + p {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: var(--text-subtle) !important;
+    margin: 8px 0 0 !important;
+    line-height: 1.4;
+  }
+  /* Section title spans (e.g. "Table of <span>Contents</span>") —
+     same color as the rest of the heading. */
+  body:has(> nav#sidebar) main .section-title span,
+  .section-title span, .ai-section-title span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+
+  /* ── Topbar (demo.html / ai-deep-dive.html). Now a flat hairline
+        bar in canvas tone. ── */
+  .topbar, .top-bar {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .topbar-brand, .top-bar__brand {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-title, .top-bar__title {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    letter-spacing: 0; text-transform: none;
+  }
+  .topbar-back, .top-bar__back, .back-link {
+    font-size: 14px; font-weight: 500; color: var(--text-muted);
+    border: 0; background: transparent; padding: 0;
+    text-transform: none; letter-spacing: 0;
+  }
+  .topbar-back:hover, .top-bar__back:hover, .back-link:hover {
+    color: var(--text);
+  }
+
+  /* ── Hero variants — strip the dark teal panel; use a flat
+        typographic header instead. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    background: var(--bg); color: var(--text);
+    border: 0; border-bottom: 1px solid var(--border);
+    padding: 56px 32px 40px;
+  }
+  .usecase-eyebrow, .hero-eyebrow, .ai-hero-eyebrow,
+  .info-hero__eyebrow, .hero-badge {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle); margin-bottom: 16px;
+  }
+  .usecase-heading, .hero-title, .ai-hero-heading, .ai-hero-title,
+  .info-hero__title {
+    font-size: 32px; font-weight: 600; line-height: 1.2;
+    color: var(--text); letter-spacing: -0.005em; margin: 0 0 8px 0;
+    text-transform: none;
+  }
+  .hero-sub, .ai-hero-sub, .info-hero__sub, .usecase-sub {
+    font-size: 16px; font-weight: 400; color: var(--text-muted);
+    line-height: 1.5; max-width: 720px; text-transform: none;
+    letter-spacing: 0;
+  }
+  .hero-meta, .hero-stamp, .ai-hero-stamp, .last-updated {
+    font-size: 12px; color: var(--text-subtle); margin-top: 16px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .accesa-mark { color: var(--text-muted); font-weight: 500; }
+  .hero-accent { border-left: 0; padding-left: 0; }
+
+  /* ── Section labels & dividers. ── */
+  .section-label {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0;
+    margin: 64px 0 24px 0;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Cards / panels — flat, hairline, no shadow, 4px max radius. ── */
+  .feat-card, .card, .panel, .info-card, .step-card, .demo-card,
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: none !important;
+  }
+  .feat-card *, .card * { box-shadow: none !important; }
+
+  /* ── Feature lists — drop coloured pill backgrounds; switch to
+        a single neutral chip. ── */
+  .feat-tag, .feature-tag, .feature-pill, .tag, .pill,
+  .green-tag, .orange-tag, .purple-tag, .yellow-tag, .blue-tag,
+  .red-tag, .teal-tag {
+    display: inline-block;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 0; padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Drop decorative section-prefix glyphs (▶ ◈ ▦ ◉ etc.) when
+     they're rendered as ::before content. */
+  .feat-card::before, .feature-card::before,
+  .ai-feature::before, .ai-mechanic::before { content: '' !important; }
+
+  /* ── Definition list (demo.html "AI features & what they
+        depend on"): two-column term/dependency. ── */
+  .feat-grid, .feature-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    margin: 0 0 24px 0;
+  }
+  .feat-grid > *, .feature-grid > *, .ai-feature-grid > * {
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    background: transparent !important;
+  }
+  .feat-grid > .term, .feat-grid > dt {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  .feat-grid > .dep, .feat-grid > dd {
+    font-size: 14px; font-weight: 400; color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── Tables. ── */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 12px 16px;
+    background: var(--surface-2);
+    color: var(--text-subtle);
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  td.mono, td .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Code blocks. The actual styling lives in the shared cf-tokens
+        block — only legacy class aliases like `.code-block` are
+        normalised here so they pick up the shipping-label treatment. ── */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 24px 0;
+  }
+
+  /* ── Steps (demo.html walkthrough). ── */
+  .steps { list-style: none; padding: 0; margin: 24px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+  }
+  .step-num, .step__num {
+    width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--text-subtle);
+    border: 1px solid var(--border); border-radius: 50%;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .step--employee, .step--coach, .step--manager, .step--admin {
+    background: transparent !important; color: var(--text-subtle) !important;
+    border-color: var(--border) !important;
+  }
+  .step-title, .step__title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .step-detail, .step__detail { color: var(--text-muted); font-size: 14px; }
+  .step-tip, .step__tip {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── Tabs (demo.html persona tabs). ── */
+  .tabs, .tab-bar, .demo-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin: 24px 0 16px; }
+  .tab, .tab-button {
+    background: transparent; border: 0;
+    padding: 10px 16px;
+    font-family: var(--font-sans); font-size: 14px;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: none; letter-spacing: 0;
+  }
+  .tab.active, .tab-button.active, .tab--active {
+    color: var(--text); font-weight: 500;
+    border-bottom-color: var(--text);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Sidebar (info.html / ai-deep-dive.html). ── */
+  .sidebar, .docs-sidebar, .info-sidebar {
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    width: 260px; padding: 24px 16px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar a, .docs-sidebar a, .info-sidebar a,
+  .sidebar-link, .toc-link {
+    display: block; padding: 6px 12px;
+    color: var(--text-muted); font-size: 14px;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .sidebar a:hover, .docs-sidebar a:hover, .info-sidebar a:hover,
+  .sidebar-link:hover, .toc-link:hover { color: var(--text); }
+  .sidebar a.active, .sidebar-link.active, .toc-link.active,
+  .sidebar a.is-active {
+    color: var(--text); font-weight: 500;
+    border-left-color: var(--accent);
+  }
+  .sidebar-section, .toc-section {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    padding: 16px 12px 6px;
+  }
+  .docs-layout, .info-layout {
+    display: flex; align-items: flex-start; gap: 0;
+    max-width: 1280px; margin: 0 auto;
+  }
+  .docs-content, .info-content, .doc-main {
+    flex: 1; max-width: 960px;
+    padding: 48px 32px;
+  }
+  .docs-content > *, .info-content > * { max-width: 760px; }
+  .docs-content table, .info-content table { max-width: 960px; }
+
+  /* ── Footer / bottom strip. ── */
+  footer, .footer {
+    border-top: 1px solid var(--border);
+    padding: 32px;
+    color: var(--text-subtle);
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  footer a, .footer a { color: var(--text-muted); margin-left: 12px; }
+  footer a:hover, .footer a:hover { color: var(--accent); }
+
+  /* ── Anything else with the legacy --black/--white/--yellow/--blue/
+        --teal/--red CSS variables falls back here. ── */
+  [style*="--black"], [style*="--white"], [style*="--yellow"],
+  [style*="--blue"], [style*="--teal"], [style*="--red"] {
+    color: var(--text);
+  }
+
+  /* Drop drop-shadows everywhere. */
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+
+  /* Border-radius cap. */
+  * { transition-property: color, background-color, border-color, opacity; }
+  .btn, .button, .pill, button, .card, .feat-card, .panel,
+  .info-card, .step-card, .demo-card, .feature-card { border-radius: 4px; }
+
+  /* ── Architecture / system diagrams (info.html). SVG <rect>/<text>
+        elements use legacy presentation attributes; rebind via CSS so
+        the diagram inverts cleanly in dark mode. ── */
+  .arch-diagram, .system-diagram, .data-flow-diagram {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 16px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .arch-diagram svg, .system-diagram svg, .data-flow-diagram svg {
+    color: var(--text);
+    max-width: 100%;
+    height: auto;
+  }
+  .arch-diagram svg rect, .system-diagram svg rect,
+  .data-flow-diagram svg rect {
+    fill: var(--surface);
+    stroke: var(--text);
+  }
+  .arch-diagram svg line, .system-diagram svg line,
+  .data-flow-diagram svg line,
+  .arch-diagram svg polygon, .system-diagram svg polygon,
+  .data-flow-diagram svg polygon {
+    stroke: var(--border);
+    fill: var(--border);
+  }
+  /* Primary heading text inside diagram: use main text token. */
+  .arch-diagram svg text, .system-diagram svg text,
+  .data-flow-diagram svg text { fill: var(--text); }
+  /* Mid-grey labels (#5a5a54 / #9a9a94 / #9ca3af) — soften to muted. */
+  .arch-diagram svg text[fill^="#5"],
+  .arch-diagram svg text[fill^="#9"],
+  .system-diagram svg text[fill^="#5"],
+  .system-diagram svg text[fill^="#9"] { fill: var(--text-muted); }
+
+  /* ── Marketing page width constraints. demo.html / ai-deep-dive.html
+        bodies are flat top-level divs with no wrapper, so target the
+        common section classes directly. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero,
+  .features-grid, .feature-grid, .feat-grid,
+  .ai-features, .ai-mechanics, .ai-stack, .ai-mechanic,
+  .steps, .demo-tabs, .tabs, .tab-bar,
+  .arch-diagram, .system-diagram, .data-flow-diagram,
+  .table-wrap, .ai-stack-table {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    padding-top: 56px; padding-bottom: 40px;
+  }
+  /* Feature cards (demo.html — AI features & what they depend on). */
+  .features-grid, .feat-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px auto;
+  }
+  .feature-card, .feat-card, .ai-feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex; flex-direction: column;
+    gap: 8px;
+  }
+  .feature-header, .feat-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+  }
+  .feature-title, .feat-title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+  }
+  .feature-desc, .feat-desc, .ai-feature-desc {
+    font-size: 14px; line-height: 1.5; color: var(--text-muted);
+  }
+  .feature-needs, .feat-needs, .ai-feature-needs {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-subtle);
+    border-top: 1px solid var(--border);
+    padding-top: 8px; margin-top: 4px;
+  }
+
+  /* Top-level sections that carry their own h2 with a section-label
+     style applied via JS — keep the same width container. */
+  .section-label, .section-title, .ai-section-title,
+  details, p:not([class]), h2:not([class]), h3:not([class]) {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  /* Sidebar layouts override the centred max-width — info / ai-deep-dive
+     prose lives inside .docs-content / .info-content. */
+  .docs-layout *:not([class]), .info-layout *:not([class]),
+  .docs-content *, .info-content *,
+  .docs-content p, .info-content p, .docs-content h2, .info-content h2,
+  .docs-content h3, .info-content h3 {
+    max-width: none;
+    padding-left: 0; padding-right: 0;
+    margin-left: 0; margin-right: 0;
+  }
+
+  /* ── demo.html: 720px centred prose column. The page does not carry
+        a sidebar, so the topbar lives inside the same centred column
+        as the rest of the article — single rhythm, no full-bleed band. ── */
+  body.page-demo > .topbar {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 24px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: nowrap;
+  }
+  body.page-demo > .topbar .topbar-back {
+    order: -1;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-back:hover { color: var(--text); }
+  body.page-demo > .topbar .topbar-brand {
+    flex-direction: row; align-items: baseline; gap: 8px;
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-brand::before { display: none; }
+  body.page-demo > .topbar .topbar-brand .sidebar-brand-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  body.page-demo > .topbar .topbar-eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  body.page-demo > .topbar .topbar-toggle-wrap {
+    margin-left: auto; display: flex; align-items: center;
+  }
+  body.page-demo > *:not(.topbar) {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  body.page-demo > .usecase-hero { padding-top: 48px; }
+  body.page-demo > .usecase-hero {
+    padding-top: 48px; padding-bottom: 32px;
+  }
+  /* Force feature-grid to single column at 720px so cards aren't
+     squashed; auto-fit fallback below 480px stays the same. */
+  body.page-demo .features-grid, body.page-demo .feat-grid {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 600px) {
+    body.page-demo .features-grid, body.page-demo .feat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* TTL bars (ai-deep-dive.html). Bar background uses accent or
+     muted surface; readable text inside. */
+  .ttl-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; margin: 8px 0; }
+  .ttl-label { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .ttl-bar-wrap { background: var(--surface-2); border: 1px solid var(--border); border-radius: 2px; height: 22px; position: relative; }
+  .ttl-bar {
+    background: var(--accent) !important;
+    color: var(--bg-elevated);
+    height: 100%; padding: 0 8px;
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    min-width: 32px;
+    border-radius: 2px;
+  }
+</style>
+
+</head>
+<body class="page-ai-deep-dive">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    
+    <div class="sidebar-brand-name">CareerForge</div><div class="sidebar-brand-eyebrow">AI Deep Dive</div>
+  </div>
+
+  <a href="index.html" class="back-link">← Back to Info Portal</a>
+
+  <div class="sidebar-section">Overview</div>
+  <a href="#intro">What AI does in CareerForge</a>
+  <a href="#architecture">AI Architecture</a>
+
+  <div class="sidebar-section">Implementation</div>
+  <a href="#rag">RAG Pattern</a>
+  <a href="#caching">Caching Strategy</a>
+  <a href="#ai-ops">AI-Ops &amp; Cost Resilience</a>
+  <a href="#connectors">Connector Ingestion</a>
+  <a href="#pipeline">Celery Pipeline Tasks</a>
+  <a href="#code">Code Walkthrough</a>
+
+  <div class="sidebar-section">Guardrails</div>
+  <a href="#guardrails">Safety &amp; Guardrails</a>
+  <a href="#rbac">Role-Based AI Access</a>
+  <a href="#pii">PII Protection</a>
+
+  <div class="sidebar-section">Analysis</div>
+  <a href="#strengths">Strengths</a>
+  <a href="#weaknesses">Weaknesses</a>
+
+  <div class="sidebar-section">Future</div>
+  <a href="#simulation">Company Simulation</a>
+  <a href="#reconciliation">Reconciliation Loops</a>
+  <a href="#roadmap">Roadmap</a>
+<div class="sidebar-toggle-wrap"><!-- ─── Theme switch markup + behaviour. Same key + DOM contract as
+       the portals' CfThemeToggle. ─── -->
+<button id="cf-theme-toggle" type="button" class="theme-toggle" aria-label="Switch theme">
+  <span class="theme-toggle__icon" id="cf-theme-icon" aria-hidden="true">☀</span>
+  <span id="cf-theme-label">Light</span>
+</button>
+<script>
+  (function () {
+    var btn = document.getElementById('cf-theme-toggle');
+    if (!btn) return;
+    var iconEl  = document.getElementById('cf-theme-icon');
+    var labelEl = document.getElementById('cf-theme-label');
+    var KEY = 'cf-theme';
+    function read() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark' || attr === 'light') return attr;
+      var stored = localStorage.getItem(KEY);
+      if (stored === 'dark' || stored === 'light') return stored;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    function paint(t) {
+      iconEl.textContent  = t === 'dark' ? '◐' : '☀';
+      labelEl.textContent = t === 'dark' ? 'Dark' : 'Light';
+      btn.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme');
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem(KEY, t); } catch (e) { /* quota / private */ }
+      paint(t);
+    }
+    paint(read());
+    btn.addEventListener('click', function () { apply(read() === 'dark' ? 'light' : 'dark'); });
+    /* React to system theme changes only when the user hasn't picked one. */
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var listener = function (e) { if (!localStorage.getItem(KEY)) apply(e.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', listener);
+      else if (mq.addListener) mq.addListener(listener);
+    }
+  })();
+</script>
+</div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<main>
+
+  <!-- ══ HERO ══ -->
+  <div style="margin-bottom: 56px;">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+      </div>
+    <h1>AI in CareerForge</h1>
+    <p>
+      A complete technical breakdown of how artificial intelligence is embedded in CareerForge — architecture, implementation code, guardrails, current strengths and weaknesses, and the path toward a self-improving, simulation-driven platform.
+    </p>
+    <p>Last updated: 23 April 2026 &nbsp;·&nbsp; Internal use only</p>
+  </div>
+
+  <!-- ══ 01 WHAT AI DOES ══ -->
+  <div class="page-section" id="intro">
+    <h2 class="section-title">What AI <span>Does in CareerForge</span></h2>
+    <p class="section-intro">
+      AI in CareerForge is not a single feature — it is an intelligence layer that runs across all four portals, generating personalised career guidance, synthesising market data, and building structured learning paths. Every AI call is grounded in real business context (the employee's profile, skill inventory, anonymised coaching relationship) and constrained to JSON-structured output.
+    </p>
+
+    <div class="cards">
+      <div class="card card--blue">
+        <div class="card__icon">🗺️</div>
+        <div class="card__title">Learning Paths</div>
+        <div class="card__body">Claude generates a personalised node-graph learning path for each employee at registration, spanning skills, certifications, projects, and milestones.</div>
+      </div>
+      <div class="card card--red">
+        <div class="card__icon">🎯</div>
+        <div class="card__title">Role Suggestions</div>
+        <div class="card__body">Based on the employee's specialisation and seniority, AI proposes 5 emerging roles with match scores and required skills.</div>
+      </div>
+      <div class="card card--yellow">
+        <div class="card__icon">📊</div>
+        <div class="card__title">Market Intelligence</div>
+        <div class="card__body">Six technology market trends updated every 6 hours. Role demand catalogue refreshed every 2 hours with high/medium/low distribution.</div>
+      </div>
+      <div class="card card--green">
+        <div class="card__icon">🤝</div>
+        <div class="card__title">Coaching Advice</div>
+        <div class="card__body">Coaches submit a question about an employee (using their pseudo-ID only). AI responds with specific, actionable advice grounded in market context.</div>
+      </div>
+      <div class="card card--purple">
+        <div class="card__icon">🧭</div>
+        <div class="card__title">Skill Gap Analysis</div>
+        <div class="card__body">AI maps the top 8 required skills for any target role, with required proficiency level and market demand score, cached for 12 hours.</div>
+      </div>
+      <div class="card">
+        <div class="card__icon">📰</div>
+        <div class="card__title">Intelligence Digest</div>
+        <div class="card__body">A weekly digest synthesising connector-ingested market data into a structured report: top rising skills, role movements, and recommended actions.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Zero hallucination surface on user identity</strong>
+        Every AI prompt uses anonymised profiles only. The system prompt for coaching advice explicitly says "Never reveal or speculate about personal identity or PII." Employee names, emails, and exact locations are never sent to any LLM.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 02 ARCHITECTURE ══ -->
+  <div class="page-section" id="architecture">
+    <h2 class="section-title">AI <span>Architecture</span></h2>
+    <p class="section-intro">
+      The AI layer is a dedicated microservice (<span class="inline-code">ai-connector-service</span>, port 8001) plus two Celery workers (<span class="inline-code">celery-worker</span>, <span class="inline-code">celery-beat</span>). All other backend services import directly from the shared RAG module — there is no inter-service HTTP call to the AI connector for inference; only for connector management (CRUD) and async task status polling.
+    </p>
+
+    <h3>Component Map</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Component</th><th>File</th><th>Port / Trigger</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>ai-connector-service</strong></td><td><span class="inline-code">services/ai_connector/main.py</span></td><td>:8001</td><td>FastAPI: connector CRUD, task status polling, Prometheus metrics</td></tr>
+          <tr><td><strong>rag.py</strong></td><td><span class="inline-code">services/ai_connector/rag.py</span></td><td>imported</td><td>LLM fallback chain, caching, text search, all public AI functions</td></tr>
+          <tr><td><strong>embeddings.py</strong></td><td><span class="inline-code">services/ai_connector/embeddings.py</span></td><td>imported</td><td>Text chunking + embedding generation (Ollama / OpenAI)</td></tr>
+          <tr><td><strong>celery-worker</strong></td><td><span class="inline-code">tasks/ingestion.py</span>, <span class="inline-code">tasks/pipeline.py</span></td><td>Redis queue</td><td>Connector sync, learning path generation, intelligence digest</td></tr>
+          <tr><td><strong>celery-beat</strong></td><td><span class="inline-code">services/ai_connector/celery_app.py</span></td><td>Cron (hourly)</td><td>Schedules <span class="inline-code">sync_all_connectors</span> every hour</td></tr>
+          <tr><td><strong>PostgreSQL / pgvector</strong></td><td><span class="inline-code">shared/models/ai.py</span></td><td>DB</td><td>Stores ai_documents, vectors (1536 dims), connector configs, ingestion history</td></tr>
+          <tr><td><strong>Redis</strong></td><td><span class="inline-code">celery_app.py</span></td><td>:6379</td><td>Celery broker + result backend</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>LLM Provider — AI Workflow Connector</h3>
+    <p>The LLM provider is no longer hardcoded. Admins configure an <strong>AI Workflow Config</strong> in the Admin portal (Connectors → AI Workflow tab). The active config is loaded from PostgreSQL with a 5-minute in-process cache. Supported providers:</p>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div>
+        <div class="flow-box flow-box--blue">Anthropic</div>
+        <div class="flow-label">Claude models</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--yellow">Perplexity</div>
+        <div class="flow-label">Live web search</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--gray">OpenAI</div>
+        <div class="flow-label">GPT / o-series</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box" style="border:2px solid var(--border);color:var(--text);">Gemini</div>
+        <div class="flow-label">Google models</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--green">Self-hosted</div>
+        <div class="flow-label">Ollama / vLLM / LM Studio</div>
+      </div>
+    </div>
+    <p style="margin-top:12px;">The <code>_ai_chat()</code> dispatcher reads the active workflow config and routes to the correct provider. For self-hosted, it calls an OpenAI-compatible <code>/v1/chat/completions</code> endpoint at the configured <code>base_url</code> (auto-appends <code>/v1</code> if missing; 120s timeout):</p>
+    <pre><span class="kw">async def</span> <span class="fn">_ai_chat</span>(prompt: <span class="var">str</span>, system: <span class="var">str</span> = <span class="str">""</span>) -&gt; <span class="var">str</span>:
+    <span class="cmt"># rag.py — routes to active AI Workflow Config provider</span>
+    workflow = <span class="kw">await</span> _get_active_workflow()
+    provider = workflow.get(<span class="str">"provider"</span>, <span class="str">"anthropic"</span>)
+    <span class="kw">if</span> provider == <span class="str">"anthropic"</span>:   <span class="kw">return await</span> _anthropic_chat(...)
+    <span class="kw">elif</span> provider == <span class="str">"openai"</span>:    <span class="kw">return await</span> _openai_chat(...)
+    <span class="kw">elif</span> provider == <span class="str">"perplexity"</span>: <span class="kw">return await</span> _perplexity_chat(...)
+    <span class="kw">elif</span> provider == <span class="str">"gemini"</span>:    <span class="kw">return await</span> _gemini_chat(...)
+    <span class="kw">elif</span> provider == <span class="str">"self_hosted"</span>:<span class="kw">return await</span> _self_hosted_chat(..., base_url=workflow[<span class="str">"base_url"</span>])
+    <span class="kw">return</span> <span class="str">""</span></pre>
+
+    <h3>Component Map</h3>
+    <p>AI Workflow Config is also stored in PostgreSQL (<code>ai_workflow_configs</code> table) alongside the existing <code>ai_documents</code> and connector tables. The <code>ai_suggestion_logs</code> table records every AI call with portal, feature, pseudo-id, model used, and expiry.</p>
+
+    <h3>Embedding Provider Fallback</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;">
+      <div>
+        <div class="flow-box flow-box--green">Ollama nomic-embed-text</div>
+        <div class="flow-label">Default (Local, free)</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div>
+        <div class="flow-box flow-box--blue">OpenAI text-embedding-3-large</div>
+        <div class="flow-label">Override (OPENAI_API_KEY set)</div>
+      </div>
+    </div>
+    <p>Both providers produce <strong>1536-dimensional vectors</strong>, stored in PostgreSQL with the <span class="inline-code">pgvector</span> extension.</p>
+  </div>
+
+  <!-- ══ 03 RAG PATTERN ══ -->
+  <div class="page-section" id="rag">
+    <h2 class="section-title">The <span>RAG Pattern</span></h2>
+    <p class="section-intro">
+      RAG — Retrieval-Augmented Generation — grounds LLM responses in real documents. In CareerForge the knowledge base is the <span class="inline-code">ai_documents</span> table, populated by connector ingestion. Every AI function first searches this table, prepends relevant chunks to the prompt, then calls the LLM.
+    </p>
+
+    <h3>Request Flow</h3>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:0;">
+      <div style="display:flex;align-items:center;gap:0;width:100%;">
+        <div class="flow-box flow-box--blue" style="min-width:160px;">Portal request<br><span style="font-size:10px;opacity:.8;">(employee / coach)</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="min-width:160px;">Backend service<br><span style="font-size:10px;color:var(--gray-600);">employee/coach svc</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box flow-box--yellow" style="min-width:160px;"><span class="inline-code" style="font-size:11px;">rag.py</span><br><span style="font-size:10px;">cache lookup</span></div>
+      </div>
+      <div style="margin-left:160px;color:var(--gray-400);font-size:20px;padding:4px 8px;">↓ cache miss</div>
+      <div style="display:flex;align-items:center;gap:0;width:100%;margin-left:160px;">
+        <div class="flow-box" style="min-width:160px;">Vector search<br><span style="font-size:10px;color:var(--gray-600);">pgvector cosine</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="min-width:160px;">Build prompt<br><span style="font-size:10px;color:var(--gray-600);">context + task</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box flow-box--red" style="min-width:160px;">LLM call<br><span style="font-size:10px;opacity:.8;">Claude / Perplexity</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box flow-box--green" style="min-width:140px;">Parse JSON<br><span style="font-size:10px;opacity:.8;">+ cache result</span></div>
+      </div>
+    </div>
+
+    <h3>Public AI Functions</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Function</th><th>Consumer</th><th>Output Schema</th><th>Cache TTL</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>get_role_suggestions_for_profile()</strong><br><span style="font-size:11px;color:var(--gray-400);">rag.py:236</span></td>
+            <td>Employee portal</td>
+            <td><span class="inline-code">[{role_title, match_score, description, required_skills[]}]</span></td>
+            <td><span class="badge badge-blue">24 hours</span></td>
+          </tr>
+          <tr>
+            <td><strong>get_role_skill_requirements()</strong><br><span style="font-size:11px;color:var(--gray-400);">rag.py:272</span></td>
+            <td>Employee portal</td>
+            <td><span class="inline-code">[{skill, skill_ids[], required_level, market_demand}]</span></td>
+            <td><span class="badge badge-blue">12 hours</span></td>
+          </tr>
+          <tr>
+            <td><strong>get_coaching_advice()</strong><br><span style="font-size:11px;color:var(--gray-400);">rag.py:301</span></td>
+            <td>Coach portal</td>
+            <td><span class="inline-code">{answer, sources[], model_used, generated_at}</span></td>
+            <td><span class="badge badge-red">No cache</span></td>
+          </tr>
+          <tr>
+            <td><strong>get_emerging_roles()</strong><br><span style="font-size:11px;color:var(--gray-400);">rag.py:340</span></td>
+            <td>Coach portal (Catalogues)</td>
+            <td><span class="inline-code">[{role_title, demand_level, avg_salary_range, required_skills[], growth_rate_percent}]</span></td>
+            <td><span class="badge badge-green">2 hours</span></td>
+          </tr>
+          <tr>
+            <td><strong>get_market_trends()</strong><br><span style="font-size:11px;color:var(--gray-400);">rag.py:373</span></td>
+            <td>Coach portal (Analytics)</td>
+            <td><span class="inline-code">[{topic, trend_direction, summary, confidence, sources[]}]</span></td>
+            <td><span class="badge badge-orange">6 hours</span></td>
+          </tr>
+          <tr>
+            <td><strong>suggest_mentors_for_employee()</strong><br><span style="font-size:11px;color:var(--gray-400);">coach/routers/mentors.py</span></td>
+            <td>Coach portal (Employee Detail)</td>
+            <td><span class="inline-code">[{pseudo_id, specialization, seniority, match_score, skill_overlap, seniority_gap, active_assignments}]</span></td>
+            <td><span class="badge badge-blue">24 hours (configurable)</span></td>
+          </tr>
+          <tr>
+            <td><strong>ai_match_opportunity()</strong><br><span style="font-size:11px;color:var(--gray-400);">manager/routers/opportunities.py</span></td>
+            <td>Manager portal (Opportunities)</td>
+            <td><span class="inline-code">{candidates[{pseudo_id, match_score, matched_skills[], missing_skills[]}], ai_summary}</span></td>
+            <td><span class="badge badge-red">2 hours (configurable)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 04 CACHING ══ -->
+  <div class="page-section" id="caching">
+    <h2 class="section-title">Caching <span>Strategy</span></h2>
+    <p class="section-intro">
+      AI responses are expensive — both in latency (1–5 seconds) and API cost. CareerForge uses the <span class="inline-code">ai_documents</span> PostgreSQL table as a key-value cache. This gives the cache an automatic audit trail: every cache entry is a document with an ingestion timestamp.
+    </p>
+
+    <h3>TTL Tiers (by volatility) — now admin-configurable per feature</h3>
+    <p>TTLs for AI suggestion results (audit log expiry + cache) are configured <strong>per-feature</strong> in the active AI Workflow Config. The defaults below reflect what the system ships with, but any admin can override them without a code deploy:</p>
+
+    <div style="margin: 20px 0 28px;">
+      <div class="ttl-row">
+        <div class="ttl-label">ai_chat (employee)</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:1.2%;background: var(--accent);">1h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">opportunities_ai_match</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:2.4%;background: var(--signal-critical);">2h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">coaching_advice</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:4.7%;background:var(--surface-2);">4h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">market_intelligence</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:7.1%;background:var(--surface-2);">6h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">opportunities_matching</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:7.1%;background:var(--surface-2);">6h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">skill_gap (per role)</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:14.3%;background:var(--surface-2);">12h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">role_suggestions (per employee)</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:28.6%;background:var(--surface-2);">24h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">mentor_matching</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:28.6%;background:var(--surface-2);">24h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">learning_path</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:57.1%;background:var(--surface-2);">48h</div>
+        </div>
+      </div>
+      <div class="ttl-row">
+        <div class="ttl-label">intelligence_digest</div>
+        <div class="ttl-bar-wrap">
+          <div class="ttl-bar" style="width:100%;background: var(--text);">7 days (168h)</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Cache Key Design</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Key Pattern</th><th>Scoped By</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="inline-code">__cache_roles_{pseudo_id}__</span></td><td>Individual employee</td><td><span class="inline-code">__cache_roles_a3f7b2__</span></td></tr>
+          <tr><td><span class="inline-code">__cache_roles_{spec}_{seniority}__</span></td><td>Specialisation + level</td><td><span class="inline-code">__cache_roles_backend_senior__</span></td></tr>
+          <tr><td><span class="inline-code">__cache_roles_catalogue_{spec}__</span></td><td>Specialisation (coach view)</td><td><span class="inline-code">__cache_roles_catalogue_general__</span></td></tr>
+          <tr><td><span class="inline-code">__cache_gap_{safe_role}__</span></td><td>Target role</td><td><span class="inline-code">__cache_gap_data_engineer__</span></td></tr>
+          <tr><td><span class="inline-code">__cache_trends_{topic}__</span></td><td>Topic keyword</td><td><span class="inline-code">__cache_trends_cloud__</span></td></tr>
+          <tr><td><span class="inline-code">__digest__</span></td><td>Global singleton</td><td><span class="inline-code">__digest__</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><span class="cmt"># rag.py:120 — cache lookup with TTL check</span>
+<span class="kw">async def</span> <span class="fn">_get_cached_response</span>(cache_key: <span class="var">str</span>, ttl_hours: <span class="var">int</span>) -&gt; <span class="var">list | dict | None</span>:
+    <span class="kw">async with</span> AsyncSessionLocal() <span class="kw">as</span> session:
+        row = (<span class="kw">await</span> session.execute(
+            sql_text(<span class="str">"SELECT content, ingested_at FROM ai_documents "</span>
+                     <span class="str">"WHERE source_name = :key ORDER BY ingested_at DESC LIMIT 1"</span>),
+            {<span class="str">"key"</span>: cache_key}
+        )).fetchone()
+
+    <span class="kw">if not</span> row:
+        <span class="kw">return None</span>
+    gen_at = datetime.fromisoformat(row.ingested_at)
+    <span class="kw">if</span> (datetime.now(UTC) - gen_at) &gt; timedelta(hours=ttl_hours):
+        <span class="kw">return None</span>              <span class="cmt"># expired — caller will regenerate</span>
+    <span class="kw">return</span> json.loads(row.content)</pre>
+
+    <div class="callout callout-warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Cache accumulation</strong>
+        Old cache entries are never deleted — they simply age past their TTL and become invisible to the lookup query. The table grows over time. A scheduled cleanup task (not yet implemented) should prune entries older than 2× their TTL.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 04b AI-OPS & COST RESILIENCE (Phase 1) ══ -->
+  <div class="page-section" id="ai-ops">
+    <h2 class="section-title">AI-Ops &amp; <span>Cost Resilience</span></h2>
+    <p class="section-intro">
+      A second cost &amp; reliability layer sits in front of every conversational AI endpoint. The goal: shrink the input token bill on every provider, swallow duplicate requests for free, and stop a tripped provider from bleeding the whole replica fleet. Provider-specific optimisations (Anthropic prompt caching) sit behind a capability predicate so deployments on Perplexity / OpenAI / Ollama get the universal wins without any opt-in.
+    </p>
+
+    <h3>Five layers, in order</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>What it does</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Prompt-shape budget</strong><br/><span class="inline-code">grounded.py</span></td>
+            <td>Top-3 opportunities (was 5), strategy block 800 chars (was 1500), chat history 4 turns (was 6).</td>
+            <td>25–35% input-token cut on <em>every</em> provider — universal first.</td>
+          </tr>
+          <tr>
+            <td><strong>2. Response-hash cache</strong><br/><span class="inline-code">cache.py</span></td>
+            <td>Redis key <span class="inline-code">cf:airesp:&lt;sha256&gt;</span>, 5-minute TTL, keyed on pseudo + question + workflow + skill_count + opp_top_ids.</td>
+            <td>Double-clicks, page reloads, and accidental retries hit cache instead of the LLM. Cache hits are recorded as <span class="inline-code">cf_suggestion_calls_total{outcome="cache_hit"}</span>.</td>
+          </tr>
+          <tr>
+            <td><strong>3. Multi-replica circuit breaker</strong><br/><span class="inline-code">quotas.py</span></td>
+            <td>Per-provider open-state lives in Redis (<span class="inline-code">cf:breaker:open_until:{provider}</span>). After N consecutive failures the breaker trips for K seconds across <em>all</em> replicas.</td>
+            <td>3-replica deploy: one tripped replica protects the other two. Previously each replica had to re-hit the threshold independently.</td>
+          </tr>
+          <tr>
+            <td><strong>4. Connector freshness gauge</strong><br/><span class="inline-code">metrics.py</span></td>
+            <td>Unix-timestamp gauge <span class="inline-code">cf_connector_last_sync_seconds{connector}</span> set after each successful ingestion run. PrometheusRule alerts when <span class="inline-code">time() − gauge &gt; 86400</span> for 10m.</td>
+            <td>Stale RAG context is no longer silently invisible.</td>
+          </tr>
+          <tr>
+            <td><strong>5. Anthropic prompt cache</strong><br/><span class="inline-code">capabilities.py</span> + <span class="inline-code">rag.py</span></td>
+            <td>Predicate <span class="inline-code">supports_prompt_caching(provider)</span>; the Anthropic path sends system as <span class="inline-code">[{type:text, cache_control:{type:ephemeral}}]</span>. No-op for every other provider.</td>
+            <td>~90% input-cost cut on cache hits when deployed against Anthropic. Cache-creation/cache-read tokens recorded as <span class="inline-code">cf_prompt_cache_tokens_total{provider,direction}</span>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Cache key construction</h3>
+    <pre><span class="cmt"># services/ai_connector/cache.py</span>
+<span class="kw">def</span> <span class="fn">make_cache_key</span>(
+    *, pseudo_id: <span class="var">str</span>, question: <span class="var">str</span>,
+    workflow_id: <span class="var">str | None</span>, skill_count: <span class="var">int</span>,
+    opp_top_ids: <span class="var">list[str]</span>, extra: <span class="var">list[str] | None</span> = <span class="kw">None</span>,
+) -&gt; <span class="var">str</span>:
+    parts = [pseudo_id, question.strip().lower(), workflow_id <span class="kw">or</span> <span class="str">""</span>,
+             <span class="var">str</span>(skill_count), <span class="str">","</span>.join(<span class="var">sorted</span>(opp_top_ids))]
+    <span class="kw">if</span> extra: parts.extend(extra)
+    digest = hashlib.sha256(<span class="str">"|"</span>.join(parts).encode()).hexdigest()
+    <span class="kw">return</span> <span class="str">f"cf:airesp:</span>{digest}<span class="str">"</span></pre>
+    <p>
+      <span class="inline-code">/ai-chat</span> additionally folds a hash of the recent conversation turns into <span class="inline-code">extra=</span> so a follow-up question with the same words doesn't collide with the original.
+    </p>
+
+    <h3>Provider-portability principle</h3>
+    <p>
+      Layers 1–4 ship benefits regardless of which AI provider the deployment uses. Layer 5 sits behind a capability predicate that returns <span class="inline-code">False</span> on Perplexity, OpenAI (which auto-caches server-side), Ollama, and Gemini. The same call site path will extend to Gemini's <span class="inline-code">CachedContent</span> by adding one entry to the predicate and a body-rewrite branch in <span class="inline-code">_gemini_chat</span> — no caller changes needed.
+    </p>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">✓</div>
+      <div class="callout-body">
+        <strong>Fail-open everywhere</strong>
+        Cache, breaker, and quota helpers all degrade to no-op when Redis is unreachable. Better to serve traffic on a healthy LLM than to block the whole portal on a sidecar outage.
+      </div>
+    </div>
+
+    <h3>Daily quota visible to the user</h3>
+    <p>
+      Phase 1's daily-quota counter is enforced server-side, but historically the user couldn't see it &mdash; the first sign that you'd hit the limit was a 429 on your next AI call. <span class="inline-code">GET /api/v1/quota/me</span> exposes the same Redis counter the breaker enforces (no parallel state, no drift) and the employee portal sidebar polls it every 60s. The chip turns orange at &le; 5 remaining so you get a heads-up before the ceiling.
+    </p>
+    <pre><span class="cmt"># services/employee/routers/quota.py</span>
+@router.get(<span class="str">"/quota/me"</span>)
+<span class="kw">async def</span> <span class="fn">get_my_quota</span>(...) -&gt; <span class="var">dict[str, Any]</span>:
+    pseudo_id = <span class="kw">await</span> _resolve_from_keycloak_sub(...)
+    remaining = <span class="kw">await</span> remaining_daily_quota(pseudo_id)
+    <span class="kw">return</span> {
+        <span class="str">"remaining"</span>: remaining,        <span class="cmt"># -1 if Redis is unreachable</span>
+        <span class="str">"limit"</span>:     DEFAULT_DAILY_LIMIT, <span class="cmt"># 50 / day default</span>
+        <span class="str">"resets_at"</span>: <span class="fn">_next_utc_midnight</span>(),
+    }</pre>
+    <p>
+      Same fail-open posture as the rest of Phase 1: when Redis is down the chip just disappears (<span class="inline-code">remaining = -1</span>) rather than lying about state.
+    </p>
+
+    <h3>Drift gate (two-gate setup)</h3>
+    <p>
+      CI runs both gates in sequence, paired so neither bug class can slip through:
+    </p>
+    <ul style="margin:8px 0 8px 20px;">
+      <li><strong><span class="inline-code">alembic check</span></strong> — fails when a SQLModel field has no matching migration column. The bug class that manifests as <span class="inline-code">UndefinedColumn</span> 500s after a fresh deploy. <span class="inline-code">migrations/env.py</span> uses an <span class="inline-code">_include_object</span> filter that skips index, FK, and unique-constraint <em>naming</em> divergence (cosmetic only) so this gate flags real drift cleanly.</li>
+      <li><strong><span class="inline-code">pytest test_raw_sql_ghost_tables.py</span></strong> — fails when a router uses raw SQL against a table that has no SQLModel at all. The bug class behind the <span class="inline-code">api_keys</span> incident (table referenced via <span class="inline-code">FROM api_keys</span>, no model, no migration → 500 on first admin click). The alembic gate can't see those tables; this one tokenises every <span class="inline-code">.py</span> file in <span class="inline-code">services/</span> and asserts each raw-SQL identifier maps to a real table or a tiny allowlist.</li>
+    </ul>
+  </div>
+
+  <!-- ══ 05 CONNECTORS ══ -->
+  <div class="page-section" id="connectors">
+    <h2 class="section-title">Connector <span>Ingestion</span></h2>
+    <p class="section-intro">
+      Connectors are configurable data sources — REST APIs, RSS feeds, JSON endpoints — that feed real-world market intelligence into CareerForge. The Admin portal provides CRUD for connectors. Ingestion runs hourly via Celery Beat.
+    </p>
+
+    <h3>Data Models</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Table</th><th>Purpose</th><th>Key Fields</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>connector_configs</strong></td>
+            <td>Registry of data sources</td>
+            <td><span class="inline-code">name</span>, <span class="inline-code">source_type</span>, <span class="inline-code">config_json_encrypted</span>, <span class="inline-code">fetch_interval_minutes</span>, <span class="inline-code">trend_score</span></td>
+          </tr>
+          <tr>
+            <td><strong>connector_sources</strong></td>
+            <td>Individual URLs per connector</td>
+            <td><span class="inline-code">connector_id</span>, <span class="inline-code">url</span>, <span class="inline-code">label</span>, <span class="inline-code">last_status_code</span></td>
+          </tr>
+          <tr>
+            <td><strong>ai_documents</strong></td>
+            <td>Ingested content + AI cache</td>
+            <td><span class="inline-code">source_name</span>, <span class="inline-code">content</span>, <span class="inline-code">topics[]</span>, <span class="inline-code">trend_score</span>, <span class="inline-code">metadata_json</span></td>
+          </tr>
+          <tr>
+            <td><strong>ai_document_vectors</strong></td>
+            <td>Chunk embeddings</td>
+            <td><span class="inline-code">document_id</span>, <span class="inline-code">chunk_index</span>, <span class="inline-code">chunk_text</span>, <span class="inline-code">embedding vector(1536)</span></td>
+          </tr>
+          <tr>
+            <td><strong>ingestion_history</strong></td>
+            <td>Audit trail per sync</td>
+            <td><span class="inline-code">connector_id</span>, <span class="inline-code">chunks_ingested</span>, <span class="inline-code">duration_seconds</span>, <span class="inline-code">success</span>, <span class="inline-code">error_message</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Ingestion Pipeline (<span class="inline-code">tasks/ingestion.py</span>)</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div><div class="flow-box flow-box--blue">Beat (hourly)</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box">HTTP GET each source</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box">Normalise fields</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box flow-box--yellow">SHA-256 dedup</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box">Chunk (512 words, 64 overlap)</div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box flow-box--green">Embed + store vector</div></div>
+    </div>
+
+    <p>Response normalisation handles multiple API schemas automatically: <span class="inline-code">items[]</span>, <span class="inline-code">data[]</span>, <span class="inline-code">results[]</span>, or bare dict. Field aliases resolve <span class="inline-code">content/body/description/text</span> and <span class="inline-code">url/link</span> transparently.</p>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Content-addressed dedup</strong>
+        Each document is hashed (SHA-256 of content). Re-ingesting the same document has no effect — the hash is checked in <span class="inline-code">metadata_json["content_hash"]</span> before insertion. This makes repeated hourly syncs of slow-updating sources cheap.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 06 CELERY PIPELINE ══ -->
+  <div class="page-section" id="pipeline">
+    <h2 class="section-title">Celery <span>Pipeline Tasks</span></h2>
+    <p class="section-intro">
+      Long-running AI generation — learning paths and the weekly digest — runs asynchronously in Celery workers, so API responses remain fast. The client polls <span class="inline-code">GET /api/v1/tasks/{task_id}</span> for status.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Task</th><th>Trigger</th><th>LLM Budget</th><th>Output</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>generate_initial_profile</strong><br><span style="font-size:11px;color:var(--gray-400);">pipeline.py:19</span></td>
+            <td>Employee registration (fire-and-forget)</td>
+            <td>Claude with <span class="badge badge-blue">thinking 2048</span></td>
+            <td>LearningPath node graph stored in DB</td>
+          </tr>
+          <tr>
+            <td><strong>generate_learning_path</strong><br><span style="font-size:11px;color:var(--gray-400);">pipeline.py:125</span></td>
+            <td>Manual refresh by employee</td>
+            <td>Claude with <span class="badge badge-blue">thinking 2048</span></td>
+            <td>Updated LearningPath, task_id returned for polling</td>
+          </tr>
+          <tr>
+            <td><strong>generate_intelligence_digest</strong><br><span style="font-size:11px;color:var(--gray-400);">pipeline.py:227</span></td>
+            <td>Weekly (Beat) or coach requests refresh</td>
+            <td>Claude with <span class="badge badge-purple">thinking 4096</span></td>
+            <td>JSON digest: rising skills, role movements, recommended actions</td>
+          </tr>
+          <tr>
+            <td><strong>sync_all_connectors</strong><br><span style="font-size:11px;color:var(--gray-400);">ingestion.py:249</span></td>
+            <td>Hourly Beat schedule</td>
+            <td>No LLM — embedding model only</td>
+            <td>New documents + vectors in ai_documents</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Learning Path Output Schema</h3>
+    <pre>{
+  <span class="str">"target_role"</span>: <span class="str">"Senior Data Engineer"</span>,
+  <span class="str">"summary"</span>: <span class="str">"12-month path targeting 8 skills across 4 phases..."</span>,
+  <span class="str">"nodes"</span>: [
+    {
+      <span class="str">"id"</span>: <span class="str">"n1"</span>,
+      <span class="str">"title"</span>: <span class="str">"Apache Kafka Fundamentals"</span>,
+      <span class="str">"type"</span>: <span class="str">"skill"</span>,            <span class="cmt">// skill | cert | project | milestone</span>
+      <span class="str">"description"</span>: <span class="str">"..."</span>,
+      <span class="str">"estimated_hours"</span>: <span class="num">40</span>,
+      <span class="str">"prerequisites"</span>: [],
+      <span class="str">"resources"</span>: [{ <span class="str">"type"</span>: <span class="str">"course"</span>, <span class="str">"title"</span>: <span class="str">"..."</span>, <span class="str">"url"</span>: <span class="str">"..."</span> }]
+    }
+  ]
+}</pre>
+
+    <h3>Intelligence Digest Schema</h3>
+    <pre>{
+  <span class="str">"week_summary"</span>: <span class="str">"..."</span>,
+  <span class="str">"top_skills_rising"</span>: [{ <span class="str">"skill"</span>: <span class="str">"Rust"</span>, <span class="str">"trend"</span>: <span class="str">"growing 34% YoY"</span> }],
+  <span class="str">"role_movements"</span>: [{ <span class="str">"role"</span>: <span class="str">"AI Engineer"</span>, <span class="str">"direction"</span>: <span class="str">"rising"</span>, <span class="str">"insight"</span>: <span class="str">"..."</span> }],
+  <span class="str">"recommended_actions"</span>: [<span class="str">"Upskill Python ML team in LangGraph"</span>, <span class="str">"..."</span>],
+  <span class="str">"generated_at"</span>: <span class="str">"2026-04-21T08:00:00Z"</span>
+}</pre>
+  </div>
+
+  <!-- ══ 07 CODE WALKTHROUGH ══ -->
+  <div class="page-section" id="code">
+    <h2 class="section-title">Code <span>Walkthrough</span></h2>
+    <p class="section-intro">
+      The following are the key implementation files with their roles and the most important code patterns.
+    </p>
+
+    <div class="file-tree">
+      <span class="ft-dir">services/</span><br>
+      &nbsp;&nbsp;<span class="ft-dir">ai_connector/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">rag.py</span> <span class="ft-comment">&nbsp;← LLM orchestration, caching, all public AI functions (401 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">embeddings.py</span> <span class="ft-comment">&nbsp;← Ollama/OpenAI embedding + chunking (67 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">main.py</span> <span class="ft-comment">&nbsp;← FastAPI app: connector CRUD + task status API (52 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">celery_app.py</span> <span class="ft-comment">&nbsp;← Celery config + Beat schedule (39 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">db.py</span> <span class="ft-comment">&nbsp;← Async SQLAlchemy session (46 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-dir">tasks/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">ingestion.py</span> <span class="ft-comment">&nbsp;← Connector sync: HTTP fetch → chunk → embed → store (273 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">pipeline.py</span> <span class="ft-comment">&nbsp;← Learning path + digest generation with extended thinking (333 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-dir">routers/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">tasks.py</span> <span class="ft-comment">&nbsp;← GET /tasks/{id} status polling (35 lines)</span><br>
+      &nbsp;&nbsp;<span class="ft-dir">employee/routers/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">learning.py</span> <span class="ft-comment">&nbsp;← /learning-path, /skill-gap, /role-suggestions (214 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">registration.py</span> <span class="ft-comment">&nbsp;← triggers generate_initial_profile.delay() (175 lines)</span><br>
+      &nbsp;&nbsp;<span class="ft-dir">coach/routers/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">advice.py</span> <span class="ft-comment">&nbsp;← POST /employees/{pseudo_id}/ai-advice (79 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">catalogues.py</span> <span class="ft-comment">&nbsp;← GET /catalogues/roles (194 lines)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">analytics.py</span> <span class="ft-comment">&nbsp;← GET /analytics/market-trend, /intelligence-digest (288 lines)</span><br>
+      <span class="ft-dir">shared/</span><br>
+      &nbsp;&nbsp;<span class="ft-dir">models/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">ai.py</span> <span class="ft-comment">&nbsp;← ConnectorConfig, AiDocument, AiDocumentVector, IngestionHistory (103 lines)</span><br>
+      &nbsp;&nbsp;<span class="ft-dir">auth/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file ft-highlight">keycloak.py</span> <span class="ft-comment">&nbsp;← RS256 JWT verify, JWKS caching 300s, realm-based verifiers (169 lines)</span>
+    </div>
+
+    <h3>Prompt Engineering Pattern</h3>
+    <p>All prompts follow a consistent 3-part template: identity declaration → context injection → JSON-only output constraint.</p>
+    <pre><span class="cmt"># rag.py:253–265 — role suggestions prompt assembly</span>
+system = (
+    <span class="str">"You are a career intelligence system specialising in IT career paths. "</span>
+    <span class="str">"Suggest emerging roles based on current 2025 market data. "</span>
+    <span class="str">"Respond ONLY with a valid JSON array of objects with keys: "</span>
+    <span class="str">"role_title (string), match_score (0.0-1.0), description (string), "</span>
+    <span class="str">"required_skills (array of strings)."</span>
+)
+context_block = (<span class="str">"Connector market data:\n"</span> + context + <span class="str">"\n\n"</span>) <span class="kw">if</span> context <span class="kw">else</span> <span class="str">""</span>
+prompt = (
+    context_block
+    + <span class="fn">f</span><span class="str">"Suggest 5 emerging IT career roles for a {seniority} {specialization} professional "</span>
+    + <span class="str">"in 2025. Focus on high-demand, growing roles. Return JSON array only."</span>
+)</pre>
+
+    <h3>JSON Parsing with Graceful Fallback</h3>
+    <pre><span class="cmt"># rag.py:81 — robust JSON extraction from LLM output</span>
+<span class="kw">def</span> <span class="fn">_parse_json</span>(text: <span class="var">str</span>) -&gt; <span class="var">list</span>:
+    <span class="kw">if not</span> text: <span class="kw">return</span> []
+    text = text.strip()
+    <span class="kw">if</span> <span class="str">"```"</span> <span class="kw">in</span> text:                        <span class="cmt"># strip markdown code fences</span>
+        <span class="kw">for</span> part <span class="kw">in</span> text.split(<span class="str">"```"</span>):
+            p = part.strip()
+            <span class="kw">if</span> p.startswith(<span class="str">"json"</span>): p = p[<span class="num">4</span>:].strip()
+            <span class="kw">if</span> p.startswith(<span class="str">"["</span>) <span class="kw">or</span> p.startswith(<span class="str">"{"</span>): text = p; <span class="kw">break</span>
+    <span class="kw">try</span>:
+        result = json.loads(text)
+        <span class="kw">return</span> result <span class="kw">if isinstance</span>(result, list) <span class="kw">else</span> [result]
+    <span class="kw">except</span> json.JSONDecodeError:
+        m = re.search(<span class="str">r"\[.*\]"</span>, text, re.DOTALL)  <span class="cmt"># last-chance regex</span>
+        <span class="kw">if</span> m:
+            <span class="kw">try</span>: <span class="kw">return</span> json.loads(m.group())
+            <span class="kw">except</span>: <span class="kw">pass</span>
+    <span class="kw">return</span> []                                      <span class="cmt"># graceful empty on failure</span></pre>
+  </div>
+
+  <!-- ══ 08 GUARDRAILS ══ -->
+  <div class="page-section" id="guardrails">
+    <h2 class="section-title">Safety &amp; <span>Guardrails</span></h2>
+    <p class="section-intro">
+      Guardrails in CareerForge operate at three levels: prompt-level constraints, input validation, and infrastructure-level access control. The goal is to prevent PII leaks, hallucinated identities, runaway API spend, and prompt injection from malicious connector data.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Guardrail</th><th>Layer</th><th>Implementation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PII never sent to LLM</strong></td>
+            <td>Prompt</td>
+            <td>Coaching prompts use <span class="inline-code">pseudo_id</span> + aggregated profile only. System prompt: "Never reveal or speculate about personal identity or PII."</td>
+          </tr>
+          <tr>
+            <td><strong>4-pillar grounding (advice / chat / summary)</strong></td>
+            <td>Prompt</td>
+            <td>The system prompt feeds <strong>only</strong> four named blocks — PROFILE, OPPORTUNITIES, INDUSTRY 4.0 READINESS, COMPANY STRATEGY — and explicitly forbids invented education, certifications, employer history, projects, salaries, locations, or metrics. Off-context questions get a clean refusal asking the user to add the missing detail to their profile.</td>
+          </tr>
+          <tr>
+            <td><strong>Skill UUIDs resolved to names</strong></td>
+            <td>Prompt</td>
+            <td>Skill IDs are joined against <span class="inline-code">SkillTaxonomy</span> before composing the prompt; the model never sees raw UUIDs. Custom user-typed skills round-trip as their name.</td>
+          </tr>
+          <tr>
+            <td><strong>Citation &amp; UUID scrub</strong></td>
+            <td>Post-processing</td>
+            <td>Output passes through a regex pass that strips Perplexity-style citation markers (<span class="inline-code">[1][2]</span>, <span class="inline-code">[digest]</span>, <span class="inline-code">[cache_roles]</span>) and any stray UUIDs that survived the prompt rules. Whitespace and orphaned punctuation are normalised.</td>
+          </tr>
+          <tr>
+            <td><strong>Profile-completeness gate</strong></td>
+            <td>API</td>
+            <td>AI Advice / Career Summary / Career Advisor refuse with <span class="inline-code">422</span> when the profile is too thin (specialisation + seniority + 3 skills + a career goal). Better a clear "complete your profile first" than a confident fabrication.</td>
+          </tr>
+          <tr>
+            <td><strong>Auditable suggestion trail</strong></td>
+            <td>DB</td>
+            <td>Every AI surface (role suggestions, learning path, skill gap, profile summary, AI advice, AI chat, mentor match, opportunity match, market trends, emerging roles) writes an immutable row to <span class="inline-code">ai_suggestion_logs</span> with the suggestion type, employee pseudo-id, model used, and a <span class="inline-code">context_used</span> breakdown. Surfaced in the admin Suggestion Audit page with summaries that lead on the relevant identity.</td>
+          </tr>
+          <tr>
+            <td><strong>Outcome feedback (accepted / dismissed / rated)</strong></td>
+            <td>DB + API</td>
+            <td>Each suggestion log can be paired with one or more <span class="inline-code">ai_suggestion_feedback</span> rows. Employee endpoint <span class="inline-code">POST /ai-suggestions/{log_id}/feedback</span> validates ownership; admin endpoint <span class="inline-code">/audit/feedback-summary</span> aggregates acceptance rate and average rating per <span class="inline-code">suggestion_type</span>. The <span class="inline-code">cf_suggestion_calls_total{outcome="feedback_accepted|feedback_dismissed|feedback_rated"}</span> counter makes the same signal visible in Grafana.</td>
+          </tr>
+          <tr>
+            <td><strong>Per-employee daily quota</strong></td>
+            <td>Redis</td>
+            <td>Default 50 LLM-backed AI calls per <span class="inline-code">pseudo_id</span> per UTC day. <span class="inline-code">/ai-advice</span> and <span class="inline-code">/ai-chat</span> consume one slot each; quota exhausted &rarr; HTTP 429 with a clear message; resets at 00:00 UTC. Backed by Redis <span class="inline-code">INCR + EXPIRE</span>; degrades open if Redis is unreachable.</td>
+          </tr>
+          <tr>
+            <td><strong>Per-provider circuit breaker</strong></td>
+            <td>Process state</td>
+            <td>After 5 consecutive failures (<span class="inline-code">http_error</span> / exception) the breaker opens for 120s. Open-state short-circuits the LLM call and returns <span class="inline-code">""</span> so callers serve the configured fallback message instead of a 5xx. Auto-closes after the cooldown. Visible at <span class="inline-code">GET /ai-workflow/cost-summary</span> and indirectly via the <span class="inline-code">cf_suggestion_calls_total{outcome="blocked_breaker"}</span> counter.</td>
+          </tr>
+          <tr>
+            <td><strong>Monthly token cost cap</strong></td>
+            <td>Redis + Workflow Config</td>
+            <td>Token estimate (~chars/4) recorded per provider in <span class="inline-code">cf:cost:YYYY-MM</span> Redis hash. Set <span class="inline-code">coverage_config.__cost__.monthly_token_cap</span> on the active workflow; once hit, every LLM call returns <span class="inline-code">""</span> until the next month. Unset = unlimited. Surfaces as <span class="inline-code">{ providers: { perplexity: { in, out }}, total }</span> in the admin cost-summary endpoint.</td>
+          </tr>
+          <tr>
+            <td><strong>Audit evidence trail (verbatim prompt + answer)</strong></td>
+            <td>DB + API</td>
+            <td><span class="inline-code">payload_json</span> on conversational suggestions stores the <strong>full system prompt</strong>, the <strong>full user prompt</strong> (the four grounding blocks verbatim), and the <strong>full answer</strong>. Admin endpoint <span class="inline-code">GET /audit/suggestions/{log_id}/evidence</span> returns a downloadable <span class="inline-code">text/markdown</span> document with system prompt, user prompt, answer, context-used breakdown and every feedback event &mdash; ready to print-to-PDF for compliance / HR review.</td>
+          </tr>
+          <tr>
+            <td><strong>JSON-only output (cataloguing endpoints)</strong></td>
+            <td>Prompt</td>
+            <td>For listing endpoints (role suggestions, market trends, emerging roles), the system prompt ends with "Respond ONLY with a valid JSON array". <span class="inline-code">_parse_json()</span> strips markdown fences and falls back to empty list. Conversational endpoints (advice / chat / summary) return Markdown rendered safely via the shared <span class="inline-code">CfMdText</span> component (marked + DOMPurify).</td>
+          </tr>
+          <tr>
+            <td><strong>Input length cap</strong></td>
+            <td>API</td>
+            <td>Coach advice question: max 2000 chars (FastAPI validator, <span class="inline-code">advice.py:42</span>). 422 returned if exceeded.</td>
+          </tr>
+          <tr>
+            <td><strong>LLM timeout</strong></td>
+            <td>HTTP</td>
+            <td><span class="inline-code">httpx.AsyncClient(timeout=45.0)</span> for all LLM calls. Connector fetches use 60s timeout. Prevents stuck requests blocking workers.</td>
+          </tr>
+          <tr>
+            <td><strong>Celery task isolation</strong></td>
+            <td>Infra</td>
+            <td><span class="inline-code">task_acks_late=True</span>, <span class="inline-code">worker_prefetch_multiplier=1</span>: tasks only ACK on success, preventing duplicate processing on crash.</td>
+          </tr>
+          <tr>
+            <td><strong>Connector dedup</strong></td>
+            <td>Ingestion</td>
+            <td>SHA-256 content hash checked before insertion. Prevents prompt poisoning from re-injecting modified documents at the same URL.</td>
+          </tr>
+          <tr>
+            <td><strong>Encrypted connector config</strong></td>
+            <td>DB</td>
+            <td>Connector API keys stored in <span class="inline-code">config_json_encrypted</span> (AES-256-GCM via Vault-backed key). Never logged.</td>
+          </tr>
+          <tr>
+            <td><strong>API key injection</strong></td>
+            <td>Infra</td>
+            <td>LLM keys come from Kubernetes Sealed Secrets → env vars. Never in code or ConfigMaps.</td>
+          </tr>
+          <tr>
+            <td><strong>Retry cap</strong></td>
+            <td>Celery</td>
+            <td><span class="inline-code">max_retries=3</span> on connector sync tasks. Failed ingestion writes to <span class="inline-code">IngestionHistory.error_message</span> and stops retrying after 3 attempts.</td>
+          </tr>
+          <tr>
+            <td><strong>CORS allow-list</strong></td>
+            <td>Network</td>
+            <td>Only the four portal domains are allowed; wildcard CORS is explicitly not configured.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 09 RBAC ══ -->
+  <div class="page-section" id="rbac">
+    <h2 class="section-title">Role-Based <span>AI Access</span></h2>
+    <p class="section-intro">
+      Keycloak enforces which user roles can access which AI features. Each portal authenticates against its own realm; the token's <span class="inline-code">realm_access.roles</span> claim is verified on every request.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>AI Feature</th><th>Required Role</th><th>Endpoint</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Learning path generation</td><td><span class="badge badge-blue">employee</span></td><td><span class="inline-code">GET /learning-path</span></td></tr>
+          <tr><td>Skill gap analysis</td><td><span class="badge badge-blue">employee</span></td><td><span class="inline-code">GET /skill-gap</span></td></tr>
+          <tr><td>Role suggestions</td><td><span class="badge badge-blue">employee</span></td><td><span class="inline-code">GET /role-suggestions</span></td></tr>
+          <tr><td>AI coaching advice</td><td><span class="badge badge-green">coach</span></td><td><span class="inline-code">POST /employees/{pseudo_id}/ai-advice</span></td></tr>
+          <tr><td>Emerging roles catalogue</td><td><span class="badge badge-green">coach</span></td><td><span class="inline-code">GET /catalogues/roles</span></td></tr>
+          <tr><td>Market trends</td><td><span class="badge badge-green">coach</span></td><td><span class="inline-code">GET /analytics/market-trend</span></td></tr>
+          <tr><td>Intelligence digest</td><td><span class="badge badge-green">coach</span></td><td><span class="inline-code">GET /analytics/intelligence-digest</span></td></tr>
+          <tr><td>Connector management</td><td><span class="badge badge-red">SUPER_ADMIN / APP_ADMIN</span></td><td><span class="inline-code">POST/PUT/DELETE /connectors</span></td></tr>
+          <tr><td>Trigger digest refresh</td><td><span class="badge badge-green">coach</span></td><td><span class="inline-code">GET /analytics/intelligence-digest?refresh=true</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 10 PII ══ -->
+  <div class="page-section" id="pii">
+    <h2 class="section-title">PII <span>Protection</span></h2>
+    <p class="section-intro">
+      Personal data is protected at two levels: pseudonymisation of the employee identity before it reaches any AI prompt, and AES-256-GCM encryption of the stored PII fields.
+    </p>
+
+    <h3>Pseudonymisation Flow</h3>
+    <div class="flow" style="justify-content:flex-start;gap:0;flex-wrap:wrap;">
+      <div><div class="flow-box flow-box--red">Keycloak sub<br><span style="font-size:10px;opacity:.8;">(real user ID)</span></div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box flow-box--yellow">HMAC-SHA256<br><span style="font-size:10px;">with HMAC_KEY_HEX</span></div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box flow-box--blue">pseudo_id<br><span style="font-size:10px;opacity:.8;">(opaque token)</span></div></div>
+      <div class="flow-arrow">→</div>
+      <div><div class="flow-box flow-box--green">Sent to LLM<br><span style="font-size:10px;opacity:.8;">(no name/email)</span></div></div>
+    </div>
+
+    <p>Coaches see only the <span class="inline-code">pseudo_id</span>, the employee's specialisation, seniority, experience years, and region (not city). The HMAC key is injected from Sealed Secrets — not derivable from any data in the LLM prompt.</p>
+
+    <h3>At-rest Encryption</h3>
+    <p>Employee PII fields (name, email, exact location) are stored encrypted in <span class="inline-code">employee.encrypted_pii</span> using AES-256-GCM. The key is injected at runtime from <span class="inline-code">DEV_PII_KEY_HEX</span> (Vault-backed in production, Sealed Secret in the demo cluster).</p>
+  </div>
+
+  <!-- ══ 11 STRENGTHS ══ -->
+  <div class="page-section" id="strengths">
+    <h2 class="section-title">Strengths &amp; <span>Weaknesses</span></h2>
+    <p class="section-intro">
+      An honest assessment of what the current AI implementation does well and where it falls short.
+    </p>
+
+    <div class="sw-grid">
+      <div class="sw-col sw-col--str">
+        <h4>Strengths</h4>
+
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Dual-LLM fallback with graceful degradation</strong>
+            The Claude → Perplexity → empty chain means the platform stays usable even if the primary LLM is down. Users see a "being configured" message rather than a crash.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>AI-surface observability</strong>
+            Prometheus counters &amp; histograms cover the bits the HTTP-level instrumentator can&rsquo;t see: <span class="inline-code">cf_llm_calls_total</span> (per provider/model, with outcome <span class="inline-code">success | empty | http_error | exception</span>), <span class="inline-code">cf_llm_call_duration_seconds</span> histogram (0.5&hellip;90s buckets), <span class="inline-code">cf_suggestion_calls_total</span> per <span class="inline-code">suggestion_type</span> &amp; portal (incl. <span class="inline-code">refused_thin_profile</span> / <span class="inline-code">empty_answer</span> / <span class="inline-code">feedback_*</span>), and <span class="inline-code">cf_llm_artifacts_scrubbed_total</span> &mdash; if Perplexity citations or UUIDs start leaking again, that counter spikes and the alert fires before any user notices.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Schema/migration drift gate (CI)</strong>
+            CI runs <span class="inline-code">alembic check</span> after <span class="inline-code">alembic upgrade head</span>; a SQLModel class without a matching migration fails the build. A pytest under <span class="inline-code">tests/integration/</span> runs the same check locally. Closes the class of bug where production 500-ed with <span class="inline-code">UndefinedTableError</span> on the first call to a new endpoint.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Cost &amp; abuse controls</strong>
+            Three layers, all observable in Grafana: a per-employee daily quota (default 50, configurable, Redis-backed, UTC reset), a per-provider circuit breaker that opens after 5 consecutive failures and short-circuits LLM calls for 120s, and a monthly token cost cap configurable per active workflow (<span class="inline-code">coverage_config.__cost__.monthly_token_cap</span>). Admin endpoint <span class="inline-code">/ai-workflow/cost-summary</span> returns the live state. Fail-open on Redis outage so a sidecar problem doesn&rsquo;t take the AI surface down.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Audit evidence trail (verbatim, downloadable)</strong>
+            Every conversational suggestion stores the system prompt, the full user prompt (the four grounding blocks verbatim), and the full answer in <span class="inline-code">payload_json</span>. <span class="inline-code">GET /audit/suggestions/{id}/evidence</span> returns a printable Markdown document with that evidence plus every recorded feedback event. The admin Suggestion-Audit drawer now ships a <strong>Download evidence</strong> button that fetches and saves it as <span class="inline-code">suggestion-{id}-evidence.md</span> &mdash; the artefact HR / compliance / legal asks for when reviewing why the AI made a recommendation, in one click.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Runtime FE configuration on every portal</strong>
+            All four portals (employee, coach, manager, admin) read their KEYCLOAK_URL / API_URL / realm / client-id from <span class="inline-code">window.__APP_CONFIG__</span>, populated by a <span class="inline-code">/config.js</span> file rendered from container env at startup (nginx <span class="inline-code">/docker-entrypoint.d/</span> hook). Build-time <span class="inline-code">VITE_*</span> still works as a fallback so <span class="inline-code">pnpm dev</span> is unaffected. The cf-portal Helm chart accepts an optional <span class="inline-code">env:</span> block, so a single image promotes from demo &rarr; staging &rarr; production by overriding <span class="inline-code">CF_KEYCLOAK_URL</span> / <span class="inline-code">CF_&lt;APP&gt;_API_URL</span> at deploy time &mdash; no rebuilds.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Tiered caching in the DB</strong>
+            TTLs are set by volatility: digest 7 days, role suggestions 24h, market trends 6h, roles catalogue 2h. LLM is called only when the cache expires — typical users never trigger a live call.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>PII-safe by design</strong>
+            Pseudo-IDs and HMAC pseudonymisation ensure real identity never reaches any LLM, regardless of whether the connector documents happen to mention company names.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Structured output enforcement</strong>
+            Every prompt specifies the exact JSON schema. <span class="inline-code">_parse_json()</span> strips markdown and falls back to empty list. The UI never receives free-form prose from the LLM.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Modular connector ingestion</strong>
+            New data sources can be added via the Admin portal without code changes. The ingestion task normalises heterogeneous API schemas automatically.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Async + fire-and-forget</strong>
+            Learning path generation is queued at registration — API responds immediately. If Celery is unavailable, the path is generated on-demand instead. Zero hard dependency.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Extended thinking for deep tasks</strong>
+            Learning path and digest generation use Claude with <span class="inline-code">budget_tokens</span> 2048–4096 for extended thinking, producing higher-quality, more coherent multi-node paths.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Vector cosine RAG retrieval</strong>
+            <span class="inline-code">_cached_text_search()</span> embeds the query (Ollama nomic-embed-text or OpenAI text-embedding-3-large) and orders <span class="inline-code">ai_document_vectors</span> by cosine distance. "AWS" matches "Amazon Web Services", "k8s" matches "Kubernetes". Falls back to LIKE-based search when no embedding service is reachable so retrieval is never blocked.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Conversational endpoints deduplicated (response-hash cache)</strong>
+            <span class="inline-code">/ai-advice</span> and <span class="inline-code">/ai-chat</span> compute <span class="inline-code">sha256(pseudo + question + workflow + skill_count + opp_top_ids)</span> and check Redis (5-min TTL) before any LLM call. Page reloads, double-clicks, and identical follow-up retries cost zero. Cache hits are recorded as <span class="inline-code">cf_suggestion_calls_total{outcome="cache_hit"}</span>.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Daily AI-quota visibility</strong>
+            <span class="inline-code">GET /api/v1/quota/me</span> exposes the same Redis counter the breaker enforces. Employee portal sidebar polls it every 60s and shows <code>AI: 48 / 50 today</code>; turns orange at &le; 5 remaining. Single source of truth &mdash; no parallel state, no drift between what the user sees and what the platform applies.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Outcome feedback loop &mdash; foundation shipped</strong>
+            Every <span class="inline-code">ai_suggestion_logs</span> row can now be paired with one or more <span class="inline-code">ai_suggestion_feedback</span> rows: <span class="inline-code">accepted</span>, <span class="inline-code">dismissed</span>, <span class="inline-code">rated</span> (1&ndash;5), or <span class="inline-code">auto</span>. Employees record their own feedback via <span class="inline-code">POST&nbsp;/api/v1/ai-suggestions/{log_id}/feedback</span>; admins see acceptance-rate and average-rating per <span class="inline-code">suggestion_type</span> via <span class="inline-code">/audit/feedback-summary</span>. Still missing: the rules engine that emits automatic <span class="inline-code">auto</span> events (readiness delta after a learning path, application outcome after an opportunity match) &mdash; the substrate is there; the events aren&rsquo;t.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>AI-document cache pruning</strong>
+            A daily Celery beat task (<span class="inline-code">prune-ai-documents-cache</span>, 86&thinsp;400&thinsp;s schedule) deletes <span class="inline-code">ai_documents</span> rows older than <strong>2&times; their per-key TTL</strong> &mdash; roles 24h&times;2, gap 12h&times;2, roles_catalogue 2h&times;2, trends 6h&times;2, digest 168h&times;2. The 2&times; headroom avoids racing in-flight reads. The table no longer grows unbounded.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--str">✓</div>
+          <div class="sw-text">
+            <strong>Strict ESLint gate in FE CI</strong>
+            Flat-config <span class="inline-code">eslint.config.mjs</span> (eslint v9 + typescript-eslint v8 + eslint-plugin-vue v10) covers every <span class="inline-code">apps/*</span> and <span class="inline-code">packages/*</span> source file. Root <span class="inline-code">pnpm lint</span> runs <span class="inline-code">--max-warnings 0</span>; the FE Type-check workflow fails on any warning regression. Catches the bug class <span class="inline-code">vue-tsc</span> misses: dead bindings, unused imports, empty <span class="inline-code">catch</span> blocks, abandoned refs.
+          </div>
+        </div>
+      </div>
+
+      <div class="sw-col sw-col--wk">
+        <h4>Weaknesses</h4>
+
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>No automatic outcome-feedback events</strong>
+            The <span class="inline-code">ai_suggestion_feedback</span> table accepts the <span class="inline-code">auto</span> action but nothing emits those events yet. Without them, signal stays dependent on humans clicking thumbs-up / dismiss &mdash; rare enough that the rules engine on top can&rsquo;t fire reliably. Wait for manual feedback volume before building.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>No structured-output value-range validation</strong>
+            Conversational surfaces are hardened against fabrication (4-pillar grounding, anti-citation system prompt, post-hoc UUID/citation scrub, 422 refusal on thin profiles). What&rsquo;s still missing is value-range validation on JSON outputs &mdash; asserting <span class="inline-code">match_score</span> stays in [0,1], suggested roles exist in the taxonomy, and a human-review step for high-stakes recommendations.
+          </div>
+        </div>
+        <div class="sw-item">
+          <div class="sw-icon sw-icon--wk">✗</div>
+          <div class="sw-text">
+            <strong>Single embedding dimension assumption</strong>
+            The schema hardcodes <span class="inline-code">Vector(1536)</span>. Switching to a newer embedding model with different dimensions requires a schema migration.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 12 SIMULATION ══ -->
+  <div class="page-section" id="simulation">
+    <h2 class="section-title">Company <span>Simulation</span></h2>
+    <p class="section-intro">
+      CareerForge is seeded with 14 realistic personas across 8 engineering practices, spanning 5 seniority levels and 4 user roles. This creates a miniature simulation of a real outsourcing company's internal dynamics — skill distributions, coaching relationships, cohort readiness, and management visibility.
+    </p>
+
+    <h3>Simulated Population</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Role</th><th>Count</th><th>Practices Covered</th><th>AI Interactions</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">Employees</span></td><td>7</td><td>Backend, Frontend, Data, Cloud, ML, QA, Security, PMO</td><td>Learning paths, role suggestions, skill gap</td></tr>
+          <tr><td><span class="badge badge-green">Coaches</span></td><td>6</td><td>Backend+Frontend, Data+ML, Cloud+Security, Mobile, QA+PMO, Backend</td><td>AI coaching advice, market trends, digest</td></tr>
+          <tr><td><span class="badge badge-orange">Managers</span></td><td>1</td><td>Cross-practice</td><td>Team readiness dashboard (AI-scored)</td></tr>
+          <tr><td><span class="badge badge-red">Admins</span></td><td>4</td><td>HR, Platform, Org, L&amp;D</td><td>Connector management, system config</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Dynamics the Simulation Captures</h3>
+    <ul>
+      <li><strong>Skill distribution heterogeneity</strong> — a junior QA engineer has a different AI-generated learning path than a senior Data Engineer, even within the same company</li>
+      <li><strong>Coach caseload variation</strong> — some coaches cover two practices; their AI advice calls span different specialisations, stress-testing the system prompt's generalism</li>
+      <li><strong>Temporal dynamics</strong> — caches expire at different rates; the snapshot of "current" AI output shifts over the 2h/6h/24h/7d cycle even with no user action</li>
+      <li><strong>Commitment and sign-off workflow</strong> — forms create durable commitments that accumulate; over time the DB grows a history of what was promised vs delivered</li>
+      <li><strong>Manager visibility lag</strong> — the manager sees readiness scores that reflect cached AI output; there is a natural delay between a skill being updated and the manager's dashboard updating</li>
+      <li><strong>Practice-level cohort patterns</strong> — employees in the same practice tend to receive similar role suggestions (same specialisation cache key), surfacing whether the LLM's recommendations are varied enough</li>
+    </ul>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>The simulation is a stress test and a data generator</strong>
+        Running all 14 personas through their natural workflows for 30 days produces a dataset of: coaching questions → advice pairs, employee learning events, skill gap evolutions, role suggestion accept/reject rates, and digest quality scores. This dataset is the foundation for the reconciliation loops described below.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 13 RECONCILIATION LOOPS ══ -->
+  <div class="page-section" id="reconciliation">
+    <h2 class="section-title">Reconciliation <span>Loops</span></h2>
+    <p class="section-intro">
+      A reconciliation loop is a closed feedback cycle: the platform observes the outcome of its AI recommendations, compares them to what actually happened, and adjusts future recommendations accordingly. CareerForge has the infrastructure to support several such loops — some partially built, some requiring additional work.
+    </p>
+
+    <h3>The Current Data Signals</h3>
+    <div class="loop-diagram">
+      <div class="loop-title">Reconciliation Loop — Current + Future</div>
+      <div class="loop-steps">
+        <div class="loop-step">
+          <div class="loop-circle loop-circle--blue">1</div>
+          <p>AI generates recommendation<br>(learning path, role suggestion)</p>
+        </div>
+        <div class="loop-step">
+          <div class="loop-circle loop-circle--green">2</div>
+          <p>Employee accepts &amp; acts<br>(commits, completes skill)</p>
+        </div>
+        <div class="loop-step">
+          <div class="loop-circle loop-circle--yellow">3</div>
+          <p>Coach signs off<br>(IDP form, verified skill)</p>
+        </div>
+        <div class="loop-step">
+          <div class="loop-circle loop-circle--purple">4</div>
+          <p>Outcome measured<br>(readiness Δ, role movement)</p>
+        </div>
+        <div class="loop-step">
+          <div class="loop-circle loop-circle--red">5</div>
+          <p>Signal fed back<br>(update prompt, weights)</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Loop 1 — Connector Quality Feedback</h3>
+    <p><strong>Current state:</strong> fully implemented infrastructure, loop not closed.</p>
+    <p>Every connector source has a <span class="inline-code">trend_score</span> field and <span class="inline-code">last_status_code</span>. The ingestion task records <span class="inline-code">IngestionHistory.chunks_ingested</span> and <span class="inline-code">success</span>. A reconciliation job could:</p>
+    <ol>
+      <li>Correlate connector sources with AI output quality (do documents from source X lead to higher-confidence market trends?)</li>
+      <li>Automatically lower <span class="inline-code">trend_score</span> for sources that repeatedly 404 or return empty content</li>
+      <li>Promote sources whose topics appear frequently in accepted learning paths</li>
+    </ol>
+
+    <h3>Loop 2 — Learning Path Acceptance Rate</h3>
+    <p><strong>Current state:</strong> data exists, loop not implemented.</p>
+    <p>The <span class="inline-code">learning_path_nodes</span> table records which nodes employees mark complete. A weekly digest job could compute:</p>
+    <pre><span class="cmt">-- Proposed reconciliation query</span>
+<span class="kw">SELECT</span> node_type, skill_name,
+       <span class="fn">COUNT</span>(*) FILTER (<span class="kw">WHERE</span> status = <span class="str">'completed'</span>) <span class="kw">AS</span> completed,
+       <span class="fn">COUNT</span>(*) FILTER (<span class="kw">WHERE</span> status = <span class="str">'skipped'</span>)  <span class="kw">AS</span> skipped,
+       <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total
+<span class="kw">FROM</span> learning_path_nodes
+<span class="kw">WHERE</span> created_at &gt; NOW() - INTERVAL <span class="str">'30 days'</span>
+<span class="kw">GROUP BY</span> node_type, skill_name
+<span class="kw">ORDER BY</span> (skipped::float / NULLIF(total, <span class="num">0</span>)) <span class="kw">DESC</span>;</pre>
+    <p>Nodes with high skip rates could feed back into the system prompt: "Avoid recommending <em>X</em> for <em>specialisation</em> at <em>seniority</em> level — historically low completion rate."</p>
+
+    <h3>Loop 3 — Role Suggestion Relevance</h3>
+    <p><strong>Current state:</strong> data partially exists.</p>
+    <p>If an employee clicks through a role suggestion and sets it as their target role, that is an acceptance signal. The ratio of suggested-to-accepted roles, broken down by specialisation and seniority, tells us whether the LLM is recommending roles people actually want. This can be used to:</p>
+    <ul>
+      <li>Adjust the role suggestion prompt to reflect which roles in which practices actually get accepted</li>
+      <li>Build a fine-tuning dataset of (profile → accepted role) pairs</li>
+      <li>Invalidate the 24h cache early for a sub-segment if the acceptance rate drops below a threshold</li>
+    </ul>
+
+    <h3>Loop 4 — Coaching Advice Quality Score</h3>
+    <p><strong>Current state:</strong> not implemented. Requires UI addition.</p>
+    <p>Add a thumbs-up/down widget after each AI coaching response. Store the score in a new <span class="inline-code">ai_feedback</span> table keyed by <span class="inline-code">(pseudo_id, question_hash, model_used, score)</span>. The reconciliation job then:</p>
+    <ol>
+      <li>Computes per-model quality scores over rolling 30-day windows</li>
+      <li>Routes to the higher-scoring model when both are available</li>
+      <li>Feeds low-scored (question, answer) pairs back to the prompt as negative examples</li>
+    </ol>
+
+    <h3>Loop 5 — Market Trend Accuracy</h3>
+    <p><strong>Current state:</strong> infrastructure exists for <span class="inline-code">trend_direction</span> tracking. Loop not closed.</p>
+    <p>Perplexity <span class="inline-code">sonar-pro</span> returns real-time web search context. Store the predicted <span class="inline-code">trend_direction</span> at time T. At time T+30d, re-run the trend query and compare. If the direction is consistent, increase the <span class="inline-code">confidence</span> score for that topic. If it reversed, lower it and flag for human review. Over time this builds a calibration curve for the AI's trend forecasting ability.</p>
+
+    <h3>Self-Improvement Architecture (Target State)</h3>
+    <pre><span class="cmt"># Proposed: weekly reconciliation task</span>
+<span class="kw">@celery_app.task</span>(name=<span class="str">"reconcile_ai_quality"</span>)
+<span class="kw">async def</span> <span class="fn">reconcile_ai_quality</span>():
+    signals = {
+        <span class="str">"path_skip_rates"</span>:   <span class="kw">await</span> compute_node_skip_rates(),
+        <span class="str">"role_accept_rates"</span>: <span class="kw">await</span> compute_role_acceptance(),
+        <span class="str">"advice_scores"</span>:     <span class="kw">await</span> aggregate_feedback_scores(),
+        <span class="str">"connector_quality"</span>: <span class="kw">await</span> score_connector_sources(),
+    }
+    <span class="cmt"># Write signals as a new ai_document for RAG context injection</span>
+    <span class="kw">await</span> store_cached_response(<span class="str">"__reconciliation_signals__"</span>, signals)
+    <span class="cmt"># Update connector trend_scores based on quality signals</span>
+    <span class="kw">await</span> update_connector_scores(signals[<span class="str">"connector_quality"</span>])
+    <span class="cmt"># Invalidate stale caches for sub-segments with poor outcomes</span>
+    <span class="kw">await</span> invalidate_poor_performing_caches(signals)</pre>
+  </div>
+
+  <!-- ══ 14 ROADMAP ══ -->
+  <div class="page-section" id="roadmap">
+    <h2 class="section-title">Future <span>Roadmap</span></h2>
+    <p class="section-intro">
+      The following developments are ordered by impact and implementation complexity. Each builds on the existing infrastructure without requiring architectural rewrites.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Feature</th><th>Impact</th><th>Complexity</th><th>Depends On</th></tr>
+        </thead>
+        <tbody>
+          <tr style="opacity:.55;">
+            <td><strong>1</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">Vector similarity search (replace LIKE)</strong>&nbsp;<span class="badge badge-green">SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);"><code>_cached_text_search()</code> now embeds the query (Ollama or OpenAI), orders <code>ai_document_vectors</code> by cosine distance, and falls back to LIKE on any error so retrieval never blocks. See AI-Ops &amp; Cost Resilience above.</span>
+            </td>
+            <td><span class="badge badge-red">High</span></td>
+            <td><span class="badge badge-green">Low</span></td>
+            <td>Done</td>
+          </tr>
+          <tr style="opacity:.55;">
+            <td><strong>2</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">LLM rate limiter per user/hour</strong>&nbsp;<span class="badge badge-green">SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);">Implemented as a per-employee daily quota (default 50/day, UTC reset) plus a per-provider circuit breaker and a monthly token cost cap. See the Guardrails table.</span>
+            </td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><span class="badge badge-green">Low</span></td>
+            <td>Redis &mdash; done</td>
+          </tr>
+          <tr style="opacity:.55;">
+            <td><strong>3</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">Cache the coaching advice on question hash</strong>&nbsp;<span class="badge badge-green">SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);">Response-hash cache implemented with sha256(pseudo + question + workflow_id + skill_count + opp_top_ids), 5-min TTL, Redis-backed. Wired into <code>/ai-advice</code> and <code>/ai-chat</code>; double-clicks &amp; reloads cost zero.</span>
+            </td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><span class="badge badge-green">Low</span></td>
+            <td>Done</td>
+          </tr>
+          <tr style="opacity:.55;">
+            <td><strong>4</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">Cache pruning task</strong>&nbsp;<span class="badge badge-green">SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);"><code>prune-ai-documents-cache</code> Celery beat task runs every 86&thinsp;400&thinsp;s and deletes <code>ai_documents</code> rows older than 2&times; their per-key TTL (per <code>_CACHE_TTL_HOURS</code>: roles 24h, gap 12h, roles_catalogue 2h, trends 6h, digest 168h). The 2&times; headroom avoids racing in-flight reads.</span>
+            </td>
+            <td><span class="badge badge-blue">Low-med</span></td>
+            <td><span class="badge badge-green">Low</span></td>
+            <td>Done</td>
+          </tr>
+          <tr style="opacity:.55;">
+            <td><strong>5</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">Coaching advice feedback widget</strong>&nbsp;<span class="badge badge-green">BACKEND SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);">Backend half complete: <code>ai_suggestion_feedback</code> table + employee POST/GET endpoints + admin <code>/audit/feedback-summary</code> rollup (acceptance_rate, avg_rating). FE button in the audit drawer is the remaining ~30 LoC.</span>
+            </td>
+            <td><span class="badge badge-red">High</span></td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td>FE drawer button</td>
+          </tr>
+          <tr>
+            <td><strong>5b</strong></td>
+            <td>
+              <strong>Skill data model rewrite + semantic matching</strong><br>
+              <span style="font-size:12px;color:var(--gray-400);">Replace the <code>skills_json.skill_ids</code> JSONB array with a typed <code>employee_skills</code> association table and a single <code>attach_skill()</code> normalisation funnel. Add <code>vector(1536)</code> embeddings to <code>skill_taxonomy</code> for cosine matching so &quot;AWS&quot; ≈ &quot;Amazon Web Services&quot;. ADR <a href="https://git.lupulup.com/careerforge/backend/src/branch/main/docs/adr/0002-skill-data-model-rewrite.md">0002</a> with two-phase online migration is ready to execute.</span>
+            </td>
+            <td><span class="badge badge-red">Very high</span></td>
+            <td><span class="badge badge-red">High</span></td>
+            <td>3-week project, ADR signed off</td>
+          </tr>
+          <tr>
+            <td><strong>6</strong></td>
+            <td>
+              <strong>Reconciliation Celery task</strong><br>
+              <span style="font-size:12px;color:var(--gray-400);">Weekly job: compute skip rates, acceptance rates, feedback scores; update connector <code>trend_score</code>; inject signals into next prompt</span>
+            </td>
+            <td><span class="badge badge-red">High</span></td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td>Feedback widget (#5) + path completion tracking</td>
+          </tr>
+          <tr style="opacity:.55;">
+            <td><strong>7</strong></td>
+            <td>
+              <strong style="text-decoration:line-through;">Anthropic prompt caching</strong>&nbsp;<span class="badge badge-green">SHIPPED</span><br>
+              <span style="font-size:12px;color:var(--gray-400);">Implemented behind the <code>supports_prompt_caching(provider)</code> capability predicate so it stays inert on Perplexity / Ollama / OpenAI deployments. The Anthropic path sends system as <code>[{type:text, cache_control:{type:ephemeral}}]</code>. Cache-creation / cache-read tokens recorded as <code>cf_prompt_cache_tokens_total{provider,direction}</code>.</span>
+            </td>
+            <td><span class="badge badge-red">High</span></td>
+            <td><span class="badge badge-green">Low</span></td>
+            <td>Done (gated; activates on Anthropic deploys)</td>
+          </tr>
+          <tr>
+            <td><strong>8</strong></td>
+            <td>
+              <strong>Fine-tuning dataset pipeline</strong><br>
+              <span style="font-size:12px;color:var(--gray-400);">Export (profile, question) → (accepted advice) pairs as JSONL for fine-tuning Claude or a smaller local model</span>
+            </td>
+            <td><span class="badge badge-red">High</span></td>
+            <td><span class="badge badge-red">High</span></td>
+            <td>Feedback loop (#6) + 3+ months of data</td>
+          </tr>
+          <tr>
+            <td><strong>9</strong></td>
+            <td>
+              <strong>Local LLM option (Ollama Mistral/Llama)</strong><br>
+              <span style="font-size:12px;color:var(--gray-400);">Add Ollama as a third fallback in <code>_ai_chat()</code> for air-gapped environments; already used for embeddings</span>
+            </td>
+            <td><span class="badge badge-blue">Low-med</span></td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td>Ollama service already in cluster for embeddings</td>
+          </tr>
+          <tr>
+            <td><strong>10</strong></td>
+            <td>
+              <strong>Anomaly detection on skill gap evolution</strong><br>
+              <span style="font-size:12px;color:var(--gray-400);">Alert when an employee's readiness score drops unexpectedly fast — possible skill obsolescence or coaching relationship issue</span>
+            </td>
+            <td><span class="badge badge-orange">Medium</span></td>
+            <td><span class="badge badge-red">High</span></td>
+            <td>Reconciliation task (#6) + Alertmanager integration</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-success">
+      <div class="callout-icon">🚀</div>
+      <div class="callout-body">
+        <strong>Items 1, 2, 3, 4, 5, 7 all shipped on 2026-04-29</strong>
+        Vector similarity, LLM rate limiter (per-employee daily quota + per-provider circuit breaker + monthly cost cap), response-hash cache, daily AI-document cache pruning, outcome feedback foundation, and Anthropic prompt caching are all live. The remaining big-impact items are <strong>#5b skill-data-model rewrite</strong> (3-week project, ADR signed off), <strong>#6 reconciliation Celery task</strong> (needs FE feedback widget + path-completion data), and <strong>#8&ndash;10</strong> (fine-tuning, local LLM, anomaly detection &mdash; all dependent on #6).
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <div style="border-top:1px solid var(--gray-200);padding-top:32px;margin-top:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+        </div>
+      <p>CareerForge AI Deep Dive — Internal use only</p>
+    </div>
+    <a href="index.html" style="font-size:13px;color:var(--blue);text-decoration:none;font-weight:600;">← Back to Info Portal</a>
+  </div>
+
+</main>
+
+<script>
+  // Active nav highlight on scroll
+  const sections = document.querySelectorAll('.page-section[id]');
+  const navLinks = document.querySelectorAll('nav#sidebar a[href^="#"]');
+
+  function updateActiveNav() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+</script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cf-marketing
+  namespace: cf-marketing
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - cf.lupulup.com
+        - demo.lupulup.com
+        - info.lupulup.com
+      secretName: cf-tls
+  rules:
+    - host: cf.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cf-marketing
+                port:
+                  number: 80
+    - host: demo.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cf-marketing
+                port:
+                  number: 80
+    - host: info.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cf-marketing
+                port:
+                  number: 80

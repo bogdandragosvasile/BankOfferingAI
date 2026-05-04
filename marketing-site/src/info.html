@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- ─── SHARED HEAD: token block + theme-init. Must remain byte-identical
+       across index.html / demo.html / info.html / ai-deep-dive.html. ─── -->
+<meta charset="UTF-8">
+<!-- Theme-init runs BEFORE any stylesheet so first paint matches the
+     resolved theme — no flash on hard reload. Reuses the same
+     `cf-theme` localStorage key as the portals' CfThemeToggle. -->
+<script>(function(){try{var s=localStorage.getItem('cf-theme');var t=(s==='dark'||s==='light')?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<style id="cf-tokens">
+  /* ─── CareerForge design tokens — aligned with portal token contract.
+         Light is default; data-theme="dark" re-binds the values.
+         Bridge aliases map old --bg/--surface/--text names so the compat
+         layer and any inline styles continue to resolve correctly. ─── */
+  :root,
+  :root[data-theme="light"] {
+    --bg-canvas:      #F1EEE8;
+    --bg-elevated:    #FFFFFF;
+    --hairline:       #D9D6CF;
+    --text-primary:   #111111;
+    --text-secondary: #555555;
+    --text-disabled:  #8A8A86;
+    --text-inverse:   #FFFFFF;
+    --accent:         #E63E11;
+    --disc-neutral:   #5C3A20;
+    --sidebar-w:      260px;
+    --font: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    /* Bridge aliases */
+    --bg:           var(--bg-canvas);
+    --surface:      var(--bg-elevated);
+    --surface-2:    var(--bg-canvas);
+    --border:       var(--hairline);
+    --text:         var(--text-primary);
+    --text-muted:   var(--text-secondary);
+    --text-subtle:  var(--text-disabled);
+    --font-sans:    var(--font);
+    --font-mono:    var(--mono);
+    --accent-hover: #C9461F;
+    --focus:        var(--text-primary);
+    --signal-warn:  #C9A227;
+    --code-bg:      #1A1A1A;
+    --code-fg:      #E2E8F0;
+    --gray-400:     var(--text-disabled);
+    --gray-500:     var(--text-disabled);
+    --gray-600:     var(--text-secondary);
+    --black:        var(--text-primary);
+    --white:        var(--bg-elevated);
+    --red:          var(--accent);
+    --blue:         var(--disc-neutral);
+    --ok:           #2E6F4B;
+    --warn:         #C9A227;
+    --danger:       #B23B2A;
+    --ambient:      #6E5E4A;
+  }
+  :root[data-theme="dark"] {
+    --bg-canvas:      #0A0A0A;
+    --bg-elevated:    #141312;
+    --hairline:       #2A2724;
+    --text-primary:   #ECEAE3;
+    --text-secondary: #A8A39A;
+    --text-disabled:  #6E685F;
+    --text-inverse:   #ECEAE3;
+    --accent:         #E6432A;
+    --disc-neutral:   #8B6845;
+    /* Bridge aliases */
+    --bg:           var(--bg-canvas);
+    --surface:      var(--bg-elevated);
+    --surface-2:    var(--bg-canvas);
+    --border:       var(--hairline);
+    --text:         var(--text-primary);
+    --text-muted:   var(--text-secondary);
+    --text-subtle:  var(--text-disabled);
+    --accent-hover: #FF5C3F;
+    --focus:        var(--text-primary);
+    --signal-warn:  #E8B41E;
+    --code-bg:      #000000;
+    --code-fg:      #ECEAE3;
+    --gray-400:     var(--text-disabled);
+    --gray-500:     var(--text-disabled);
+    --gray-600:     var(--text-secondary);
+    --black:        var(--text-primary);
+    --white:        var(--bg-elevated);
+    --red:          var(--accent);
+    --blue:         var(--disc-neutral);
+    --ok:           #1F7A3E;
+    --warn:         #E8B41E;
+    --danger:       #C23A24;
+    --ambient:      #5A4A3A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --bg-canvas:#0A0A0A; --bg-elevated:#141312; --hairline:#2A2724;
+      --text-primary:#ECEAE3; --text-secondary:#A8A39A; --text-disabled:#6E685F;
+      --text-inverse:#ECEAE3; --accent:#E6432A; --disc-neutral:#8B6845;
+      --bg:var(--bg-canvas); --surface:var(--bg-elevated); --surface-2:var(--bg-canvas);
+      --border:var(--hairline); --text:var(--text-primary); --text-muted:var(--text-secondary);
+      --text-subtle:var(--text-disabled); --accent-hover:#FF5C3F; --focus:var(--text-primary);
+      --signal-warn:#E8B41E; --code-bg:#000000; --code-fg:#ECEAE3;
+      --gray-400:var(--text-disabled); --gray-500:var(--text-disabled); --gray-600:var(--text-secondary);
+      --black:var(--text-primary); --white:var(--bg-elevated); --red:var(--accent); --blue:var(--disc-neutral);
+      --ok:#1F7A3E; --warn:#E8B41E; --danger:#C23A24; --ambient:#5A4A3A;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+</style>
+
+<title>CareerForge — Info Portal</title>
+
+<style>
+  /* ─── Compat layer — re-binds legacy class names onto the new
+         tokens. Every prose page (demo / info / ai-deep-dive) uses
+         this so existing markup keeps working without a rewrite. ─── */
+
+  body { font-size: 16px; line-height: 1.5; color: var(--text); background: var(--bg); }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  h4 { font-size: 16px; font-weight: 600; }
+  p { color: var(--text); margin: 0 0 16px 0; }
+  small { font-size: 12px; color: var(--text-subtle); }
+  strong, b { font-weight: 600; }
+  em, i { font-style: italic; }
+  ul, ol { padding-left: 24px; margin: 0 0 16px 0; color: var(--text); }
+  li { margin-bottom: 6px; line-height: 1.5; }
+
+  /* Wipe Bauhaus shapes and any container that only held them. */
+  .b-circle, .b-square, .b-triangle, .b-c, .b-s, .b-t,
+  .bh-circle, .bh-square, .bh-tri, .bh-tri-flat,
+  .bauhaus-logo, .bauhaus, .sidebar-brand__bauhaus,
+  .hero-shapes { display: none !important; }
+
+  /* Tabular figures globally — every number on the marketing site
+     is tabular by default, matching portal behaviour. */
+  body {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Accent discipline: --accent is reserved for actual links, the
+     active TOC rail, and focus rings. Headings, section numbers, and
+     decorative spans inside running prose must NOT use it. */
+  h1 span, h2 span, h3 span, h4 span, h5 span, h6 span {
+    color: inherit !important;
+    font-weight: inherit !important;
+  }
+  /* Inline emphasis spans that legacy markup colored with var(--accent)
+     or other legacy hues — neutralise to text. */
+  p span[style*="color:"], li span[style*="color:"],
+  td span[style*="color:"], summary span[style*="color:"],
+  .step-tip, .step__tip {
+    color: var(--text) !important;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  /* Section numbers (TOC). */
+  .toc-num, .section-num, .section-no {
+    display: inline-block;
+    width: 28px;
+    color: var(--text-subtle) !important;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    margin-right: 8px;
+  }
+
+  /* In-prose Table of Contents (info.html): muted by default, full
+     text on hover, accent rail only when active. No vermilion default. */
+  .toc { list-style: none; padding: 0; margin: 24px 0; }
+  .toc li { margin: 0; padding: 0; }
+  .toc a {
+    display: flex; align-items: baseline; gap: 12px;
+    color: var(--text-muted) !important;
+    font-weight: 400 !important;
+    border-left: 2px solid transparent;
+    padding: 6px 12px;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .toc a:hover {
+    color: var(--text) !important;
+  }
+  .toc a.active, .toc a.is-active {
+    color: var(--text) !important;
+    border-left-color: var(--accent);
+  }
+  .toc a .toc-num {
+    flex: 0 0 auto;
+    color: var(--text-subtle);
+  }
+
+  /* Sidebar wordmark (rendered as a plain <div>, not <h1>). */
+  .sidebar-brand-name {
+    font-size: 15px; font-weight: 800;
+    color: var(--bg-elevated);
+    line-height: 1.2;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin: 0;
+  }
+  .sidebar-brand-eyebrow {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-disabled);
+    margin-top: 2px;
+  }
+
+  /* Sidebar bottom: theme-toggle anchored at the bottom of the column. */
+  nav#sidebar { display: flex; flex-direction: column; }
+  .sidebar-toggle-wrap {
+    margin-top: auto;
+    padding: 16px 12px 8px;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-toggle-wrap .theme-toggle { width: 100%; justify-content: center; }
+
+  /* Anchor links with arrow trailers / leaders should read as actions —
+     bump weight to 500 across the site. */
+  a[href]:where(:has(*)) { font-weight: inherit; }
+  a.portal__open, a.action-link, a.back-link, .topbar-back,
+  .stats__links a, .footer__links a,
+  .portal__open, .topbar-brand, .topbar-back {
+    font-weight: 500;
+  }
+  /* Catch-all: arrow-suffix or arrow-prefix anchors — any text-link
+     that contains → or ← should render at 500. */
+  a { font-weight: 500; }
+  /* Reset weight on body links nested inside running prose so they
+     don't gain weight from the catch-all when authors expected 400. */
+  p > a, li > a, td > a, summary > a { font-weight: 500; }
+
+  /* ── info.html / ai-deep-dive.html ship a top-level
+        <nav id="sidebar"> + <main>. Wire the body as a flex
+        layout so the sidebar sits on the left and main fills
+        the rest. ── */
+  body:has(> nav#sidebar) {
+    display: flex;
+    align-items: flex-start;
+    background: var(--bg-canvas);
+    margin: 0;
+  }
+  nav#sidebar {
+    position: fixed; top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--text-primary);
+    color: var(--bg-elevated);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  nav#sidebar .sidebar-brand {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  nav#sidebar .sidebar-brand h1 {
+    font-size: 15px; font-weight: 800;
+    color: var(--bg-elevated); margin: 0;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  nav#sidebar .sidebar-brand p {
+    font-size: 10px; color: var(--text-disabled);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    margin: 2px 0 0;
+  }
+  nav#sidebar .sidebar-section {
+    padding: 12px 20px 4px;
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-disabled);
+    margin-top: 8px;
+  }
+  nav#sidebar > a, nav#sidebar a {
+    display: block; padding: 8px 20px;
+    font-size: 13px; color: var(--text-disabled) !important;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  nav#sidebar a:hover { color: var(--text-inverse) !important; background: rgba(255,255,255,0.06); border-left-color: var(--accent); }
+  nav#sidebar a.active, nav#sidebar a.is-active {
+    color: var(--bg-elevated) !important; font-weight: 600;
+    border-left-color: var(--accent); background: rgba(255,255,255,0.06);
+  }
+  body:has(> nav#sidebar) > main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-width: 0;
+    max-width: 960px;
+    padding: 48px 32px;
+    background: var(--bg-canvas);
+  }
+
+  /* Override the inline-styled hero h1 in info.html / ai-deep-dive.html
+     (font-size:42px;font-weight:900;text-transform:uppercase). The
+     attribute styles win the cascade, so we use a strong selector
+     with !important to bring them down to the marketing scale. */
+  body:has(> nav#sidebar) main h1 {
+    font-size: 32px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: -0.005em !important;
+    line-height: 1.2 !important;
+    margin-bottom: 12px !important;
+    color: var(--text) !important;
+  }
+  /* Sidebar-page headings: spans stay as text — no accent on h1/h2/h3
+     decorations. (Active links handled separately.) */
+  body:has(> nav#sidebar) main h1 span,
+  body:has(> nav#sidebar) main h1 br + span,
+  body:has(> nav#sidebar) main h2 span,
+  body:has(> nav#sidebar) main h3 span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+  body:has(> nav#sidebar) main h2 {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: var(--text) !important;
+  }
+  body:has(> nav#sidebar) main h3 {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    color: var(--text) !important;
+  }
+  /* Info Portal / AI Deep Dive lede paragraph: 16px / 1.5 / muted.
+     Targets the first <p> after the page <h1>. */
+  body:has(> nav#sidebar) main h1 + p {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    color: var(--text-muted) !important;
+    max-width: 720px;
+    margin: 16px 0 0 !important;
+    letter-spacing: 0;
+  }
+  /* Last-updated/internal-use line — 12px small caps, subtle. */
+  body:has(> nav#sidebar) main h1 + p + p {
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: var(--text-subtle) !important;
+    margin: 8px 0 0 !important;
+    line-height: 1.4;
+  }
+  /* Section title spans (e.g. "Table of <span>Contents</span>") —
+     same color as the rest of the heading. */
+  body:has(> nav#sidebar) main .section-title span,
+  .section-title span, .ai-section-title span {
+    color: var(--text) !important;
+    font-weight: inherit !important;
+  }
+
+  /* ── Topbar (demo.html / ai-deep-dive.html). Now a flat hairline
+        bar in canvas tone. ── */
+  .topbar, .top-bar {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .topbar-brand, .top-bar__brand {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .topbar-title, .top-bar__title {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    letter-spacing: 0; text-transform: none;
+  }
+  .topbar-back, .top-bar__back, .back-link {
+    font-size: 14px; font-weight: 500; color: var(--text-muted);
+    border: 0; background: transparent; padding: 0;
+    text-transform: none; letter-spacing: 0;
+  }
+  .topbar-back:hover, .top-bar__back:hover, .back-link:hover {
+    color: var(--text);
+  }
+
+  /* ── Hero variants — strip the dark teal panel; use a flat
+        typographic header instead. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    background: var(--bg); color: var(--text);
+    border: 0; border-bottom: 1px solid var(--border);
+    padding: 56px 32px 40px;
+  }
+  .usecase-eyebrow, .hero-eyebrow, .ai-hero-eyebrow,
+  .info-hero__eyebrow, .hero-badge {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle); margin-bottom: 16px;
+  }
+  .usecase-heading, .hero-title, .ai-hero-heading, .ai-hero-title,
+  .info-hero__title {
+    font-size: 32px; font-weight: 600; line-height: 1.2;
+    color: var(--text); letter-spacing: -0.005em; margin: 0 0 8px 0;
+    text-transform: none;
+  }
+  .hero-sub, .ai-hero-sub, .info-hero__sub, .usecase-sub {
+    font-size: 16px; font-weight: 400; color: var(--text-muted);
+    line-height: 1.5; max-width: 720px; text-transform: none;
+    letter-spacing: 0;
+  }
+  .hero-meta, .hero-stamp, .ai-hero-stamp, .last-updated {
+    font-size: 12px; color: var(--text-subtle); margin-top: 16px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .accesa-mark { color: var(--text-muted); font-weight: 500; }
+  .hero-accent { border-left: 0; padding-left: 0; }
+
+  /* ── Section labels & dividers. ── */
+  .section-label {
+    display: flex; align-items: center; gap: 16px;
+    padding: 0;
+    margin: 64px 0 24px 0;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Cards / panels — flat, hairline, no shadow, 4px max radius. ── */
+  .feat-card, .card, .panel, .info-card, .step-card, .demo-card,
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: none !important;
+  }
+  .feat-card *, .card * { box-shadow: none !important; }
+
+  /* ── Feature lists — drop coloured pill backgrounds; switch to
+        a single neutral chip. ── */
+  .feat-tag, .feature-tag, .feature-pill, .tag, .pill,
+  .green-tag, .orange-tag, .purple-tag, .yellow-tag, .blue-tag,
+  .red-tag, .teal-tag {
+    display: inline-block;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 0; padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  /* Drop decorative section-prefix glyphs (▶ ◈ ▦ ◉ etc.) when
+     they're rendered as ::before content. */
+  .feat-card::before, .feature-card::before,
+  .ai-feature::before, .ai-mechanic::before { content: '' !important; }
+
+  /* ── Definition list (demo.html "AI features & what they
+        depend on"): two-column term/dependency. ── */
+  .feat-grid, .feature-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    margin: 0 0 24px 0;
+  }
+  .feat-grid > *, .feature-grid > *, .ai-feature-grid > * {
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    background: transparent !important;
+  }
+  .feat-grid > .term, .feat-grid > dt {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  .feat-grid > .dep, .feat-grid > dd {
+    font-size: 14px; font-weight: 400; color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── Tables. ── */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; padding: 12px 16px;
+    background: var(--surface-2);
+    color: var(--text-subtle);
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  td.mono, td .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Code blocks. The actual styling lives in the shared cf-tokens
+        block — only legacy class aliases like `.code-block` are
+        normalised here so they pick up the shipping-label treatment. ── */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 24px 0;
+  }
+
+  /* ── Steps (demo.html walkthrough). ── */
+  .steps { list-style: none; padding: 0; margin: 24px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 16px;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+  }
+  .step-num, .step__num {
+    width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--text-subtle);
+    border: 1px solid var(--border); border-radius: 50%;
+    font-size: 12px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .step--employee, .step--coach, .step--manager, .step--admin {
+    background: transparent !important; color: var(--text-subtle) !important;
+    border-color: var(--border) !important;
+  }
+  .step-title, .step__title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .step-detail, .step__detail { color: var(--text-muted); font-size: 14px; }
+  .step-tip, .step__tip {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── Tabs (demo.html persona tabs). ── */
+  .tabs, .tab-bar, .demo-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin: 24px 0 16px; }
+  .tab, .tab-button {
+    background: transparent; border: 0;
+    padding: 10px 16px;
+    font-family: var(--font-sans); font-size: 14px;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-transform: none; letter-spacing: 0;
+  }
+  .tab.active, .tab-button.active, .tab--active {
+    color: var(--text); font-weight: 500;
+    border-bottom-color: var(--text);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Sidebar (info.html / ai-deep-dive.html). ── */
+  .sidebar, .docs-sidebar, .info-sidebar {
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    width: 260px; padding: 24px 16px;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar a, .docs-sidebar a, .info-sidebar a,
+  .sidebar-link, .toc-link {
+    display: block; padding: 6px 12px;
+    color: var(--text-muted); font-size: 14px;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .sidebar a:hover, .docs-sidebar a:hover, .info-sidebar a:hover,
+  .sidebar-link:hover, .toc-link:hover { color: var(--text); }
+  .sidebar a.active, .sidebar-link.active, .toc-link.active,
+  .sidebar a.is-active {
+    color: var(--text); font-weight: 500;
+    border-left-color: var(--accent);
+  }
+  .sidebar-section, .toc-section {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+    padding: 16px 12px 6px;
+  }
+  .docs-layout, .info-layout {
+    display: flex; align-items: flex-start; gap: 0;
+    max-width: 1280px; margin: 0 auto;
+  }
+  .docs-content, .info-content, .doc-main {
+    flex: 1; max-width: 960px;
+    padding: 48px 32px;
+  }
+  .docs-content > *, .info-content > * { max-width: 760px; }
+  .docs-content table, .info-content table { max-width: 960px; }
+
+  /* ── Footer / bottom strip. ── */
+  footer, .footer {
+    border-top: 1px solid var(--border);
+    padding: 32px;
+    color: var(--text-subtle);
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  footer a, .footer a { color: var(--text-muted); margin-left: 12px; }
+  footer a:hover, .footer a:hover { color: var(--accent); }
+
+  /* ── Anything else with the legacy --black/--white/--yellow/--blue/
+        --teal/--red CSS variables falls back here. ── */
+  [style*="--black"], [style*="--white"], [style*="--yellow"],
+  [style*="--blue"], [style*="--teal"], [style*="--red"] {
+    color: var(--text);
+  }
+
+  /* Drop drop-shadows everywhere. */
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+
+  /* Border-radius cap. */
+  * { transition-property: color, background-color, border-color, opacity; }
+  .btn, .button, .pill, button, .card, .feat-card, .panel,
+  .info-card, .step-card, .demo-card, .feature-card { border-radius: 4px; }
+
+  /* ── Architecture / system diagrams (info.html). SVG <rect>/<text>
+        elements use legacy presentation attributes; rebind via CSS so
+        the diagram inverts cleanly in dark mode. ── */
+  .arch-diagram, .system-diagram, .data-flow-diagram {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 16px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .arch-diagram svg, .system-diagram svg, .data-flow-diagram svg {
+    color: var(--text);
+    max-width: 100%;
+    height: auto;
+  }
+  .arch-diagram svg rect, .system-diagram svg rect,
+  .data-flow-diagram svg rect {
+    fill: var(--surface);
+    stroke: var(--text);
+  }
+  .arch-diagram svg line, .system-diagram svg line,
+  .data-flow-diagram svg line,
+  .arch-diagram svg polygon, .system-diagram svg polygon,
+  .data-flow-diagram svg polygon {
+    stroke: var(--border);
+    fill: var(--border);
+  }
+  /* Primary heading text inside diagram: use main text token. */
+  .arch-diagram svg text, .system-diagram svg text,
+  .data-flow-diagram svg text { fill: var(--text); }
+  /* Mid-grey labels (#5a5a54 / #9a9a94 / #9ca3af) — soften to muted. */
+  .arch-diagram svg text[fill^="#5"],
+  .arch-diagram svg text[fill^="#9"],
+  .system-diagram svg text[fill^="#5"],
+  .system-diagram svg text[fill^="#9"] { fill: var(--text-muted); }
+
+  /* ── Marketing page width constraints. demo.html / ai-deep-dive.html
+        bodies are flat top-level divs with no wrapper, so target the
+        common section classes directly. ── */
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero,
+  .features-grid, .feature-grid, .feat-grid,
+  .ai-features, .ai-mechanics, .ai-stack, .ai-mechanic,
+  .steps, .demo-tabs, .tabs, .tab-bar,
+  .arch-diagram, .system-diagram, .data-flow-diagram,
+  .table-wrap, .ai-stack-table {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  .usecase-hero, .hero, .ai-hero, .docs-hero, .info-hero {
+    padding-top: 56px; padding-bottom: 40px;
+  }
+  /* Feature cards (demo.html — AI features & what they depend on). */
+  .features-grid, .feat-grid, .feature-list, .ai-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px auto;
+  }
+  .feature-card, .feat-card, .ai-feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex; flex-direction: column;
+    gap: 8px;
+  }
+  .feature-header, .feat-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px;
+  }
+  .feature-title, .feat-title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+  }
+  .feature-desc, .feat-desc, .ai-feature-desc {
+    font-size: 14px; line-height: 1.5; color: var(--text-muted);
+  }
+  .feature-needs, .feat-needs, .ai-feature-needs {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-subtle);
+    border-top: 1px solid var(--border);
+    padding-top: 8px; margin-top: 4px;
+  }
+
+  /* Top-level sections that carry their own h2 with a section-label
+     style applied via JS — keep the same width container. */
+  .section-label, .section-title, .ai-section-title,
+  details, p:not([class]), h2:not([class]), h3:not([class]) {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px; padding-right: 32px;
+  }
+  /* Sidebar layouts override the centred max-width — info / ai-deep-dive
+     prose lives inside .docs-content / .info-content. */
+  .docs-layout *:not([class]), .info-layout *:not([class]),
+  .docs-content *, .info-content *,
+  .docs-content p, .info-content p, .docs-content h2, .info-content h2,
+  .docs-content h3, .info-content h3 {
+    max-width: none;
+    padding-left: 0; padding-right: 0;
+    margin-left: 0; margin-right: 0;
+  }
+
+  /* ── demo.html: 720px centred prose column. The page does not carry
+        a sidebar, so the topbar lives inside the same centred column
+        as the rest of the article — single rhythm, no full-bleed band. ── */
+  body.page-demo > .topbar {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 24px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: nowrap;
+  }
+  body.page-demo > .topbar .topbar-back {
+    order: -1;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-back:hover { color: var(--text); }
+  body.page-demo > .topbar .topbar-brand {
+    flex-direction: row; align-items: baseline; gap: 8px;
+    margin: 0;
+  }
+  body.page-demo > .topbar .topbar-brand::before { display: none; }
+  body.page-demo > .topbar .topbar-brand .sidebar-brand-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  body.page-demo > .topbar .topbar-eyebrow {
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  body.page-demo > .topbar .topbar-toggle-wrap {
+    margin-left: auto; display: flex; align-items: center;
+  }
+  body.page-demo > *:not(.topbar) {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  body.page-demo > .usecase-hero { padding-top: 48px; }
+  body.page-demo > .usecase-hero {
+    padding-top: 48px; padding-bottom: 32px;
+  }
+  /* Force feature-grid to single column at 720px so cards aren't
+     squashed; auto-fit fallback below 480px stays the same. */
+  body.page-demo .features-grid, body.page-demo .feat-grid {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 600px) {
+    body.page-demo .features-grid, body.page-demo .feat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* TTL bars (ai-deep-dive.html). Bar background uses accent or
+     muted surface; readable text inside. */
+  .ttl-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; margin: 8px 0; }
+  .ttl-label { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .ttl-bar-wrap { background: var(--surface-2); border: 1px solid var(--border); border-radius: 2px; height: 22px; position: relative; }
+  .ttl-bar {
+    background: var(--accent) !important;
+    color: var(--bg-elevated);
+    height: 100%; padding: 0 8px;
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    min-width: 32px;
+    border-radius: 2px;
+  }
+</style>
+
+</head>
+<body class="page-info">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    
+    <div class="sidebar-brand-name">CareerForge</div><div class="sidebar-brand-eyebrow">Info Portal</div>
+  </div>
+
+  <div class="sidebar-section">Overview</div>
+  <a href="#overview">What is CareerForge?</a>
+  <a href="#portals">The Four Portals</a>
+
+  <div class="sidebar-section">Architecture</div>
+  <a href="#architecture">System Architecture</a>
+  <a href="#services">Backend Services</a>
+  <a href="#auth">Authentication &amp; SSO</a>
+  <a href="#data-flow">Data Flow</a>
+
+  <div class="sidebar-section">User Manuals</div>
+  <a href="#manual-employee">Employee Portal</a>
+  <a href="#manual-coach">Coach Portal</a>
+  <a href="#manual-manager">Manager Portal</a>
+  <a href="#manual-admin">Admin Portal</a>
+
+  <div class="sidebar-section">Workflows</div>
+  <a href="#forms-workflow">Forms &amp; Commitments</a>
+  <a href="#api-reference">API Reference</a>
+
+  <div class="sidebar-section">Directory</div>
+  <a href="#users">Users &amp; Roles</a>
+  <a href="#credentials">Access Credentials</a>
+
+  <div class="sidebar-section">AI</div>
+  <a href="#manual-admin">AI Workflow Connector</a>
+  <a href="ai-deep-dive.html">🤖 AI Deep Dive →</a>
+<div class="sidebar-toggle-wrap"><!-- ─── Theme switch markup + behaviour. Same key + DOM contract as
+       the portals' CfThemeToggle. ─── -->
+<button id="cf-theme-toggle" type="button" class="theme-toggle" aria-label="Switch theme">
+  <span class="theme-toggle__icon" id="cf-theme-icon" aria-hidden="true">☀</span>
+  <span id="cf-theme-label">Light</span>
+</button>
+<script>
+  (function () {
+    var btn = document.getElementById('cf-theme-toggle');
+    if (!btn) return;
+    var iconEl  = document.getElementById('cf-theme-icon');
+    var labelEl = document.getElementById('cf-theme-label');
+    var KEY = 'cf-theme';
+    function read() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark' || attr === 'light') return attr;
+      var stored = localStorage.getItem(KEY);
+      if (stored === 'dark' || stored === 'light') return stored;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    function paint(t) {
+      iconEl.textContent  = t === 'dark' ? '◐' : '☀';
+      labelEl.textContent = t === 'dark' ? 'Dark' : 'Light';
+      btn.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme');
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem(KEY, t); } catch (e) { /* quota / private */ }
+      paint(t);
+    }
+    paint(read());
+    btn.addEventListener('click', function () { apply(read() === 'dark' ? 'light' : 'dark'); });
+    /* React to system theme changes only when the user hasn't picked one. */
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var listener = function (e) { if (!localStorage.getItem(KEY)) apply(e.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', listener);
+      else if (mq.addListener) mq.addListener(listener);
+    }
+  })();
+</script>
+</div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<main>
+
+  <!-- ══ HERO ══ -->
+  <div style="margin-bottom: 56px;">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+      </div>
+    <h1>Info Portal</h1>
+    <p>
+      Internal reference documentation for the CareerForge career development platform — architecture, user guides, forms workflows, and the complete user directory.
+    </p>
+    <p>Last updated: 27 April 2026 &nbsp;·&nbsp; Internal use only</p>
+  </div>
+
+  <!-- ══ TABLE OF CONTENTS ══ -->
+  <div class="page-section">
+    <h2 class="section-title">Table of <span>Contents</span></h2>
+    <ul class="toc">
+      <li><a href="#overview"><span class="toc-num">01</span>What is CareerForge?</a></li>
+      <li><a href="#portals"><span class="toc-num">02</span>The Four Portals</a></li>
+      <li><a href="#architecture"><span class="toc-num">03</span>System Architecture</a></li>
+      <li><a href="#services"><span class="toc-num">04</span>Backend Services</a></li>
+      <li><a href="#auth"><span class="toc-num">05</span>Authentication &amp; SSO</a></li>
+      <li><a href="#data-flow"><span class="toc-num">06</span>Data Flow</a></li>
+      <li><a href="#manual-employee"><span class="toc-num">07</span>Employee Portal Manual</a></li>
+      <li><a href="#manual-coach"><span class="toc-num">08</span>Coach Portal Manual</a></li>
+      <li><a href="#manual-manager"><span class="toc-num">09</span>Manager Portal Manual</a></li>
+      <li><a href="#manual-admin"><span class="toc-num">10</span>Admin Portal Manual</a></li>
+      <li><a href="#forms-workflow"><span class="toc-num">11</span>Forms &amp; Commitments</a></li>
+      <li><a href="#api-reference"><span class="toc-num">12</span>API Reference</a></li>
+      <li><a href="#users"><span class="toc-num">13</span>Users &amp; Roles Directory</a></li>
+      <li><a href="#credentials"><span class="toc-num">14</span>Access Credentials</a></li>
+      <li><a href="ai-deep-dive.html"><span class="toc-num" style="background:var(--blue);color:white;">AI</span>AI Deep Dive — Architecture, Guardrails &amp; Roadmap</a></li>
+    </ul>
+  </div>
+
+  <!-- ══ 01 OVERVIEW ══ -->
+  <div class="page-section" id="overview">
+    <h2 class="section-title">What is <span>CareerForge?</span></h2>
+    <p class="section-intro">
+      CareerForge is an internal career development platform for a software IT outsourcing company with eight engineering practices. It connects employees, coaches, and practice managers in a structured, data-driven growth workflow — from skill assessment through structured commitments to verified sign-off.
+    </p>
+
+    <div class="cards">
+      <div class="card card--blue">
+        <div class="card__icon">🎯</div>
+        <div class="card__title">Career Development</div>
+        <div class="card__body">Employees define career goals, track skill gaps, and commit to growth milestones with coach and manager oversight.</div>
+      </div>
+      <div class="card card--red">
+        <div class="card__icon">🤝</div>
+        <div class="card__title">Coaching Relationship</div>
+        <div class="card__body">Six specialist coaches create Individual Development Plans (IDPs) and 1-on-1 forms, guiding employees through structured programs.</div>
+      </div>
+      <div class="card card--yellow">
+        <div class="card__icon">📊</div>
+        <div class="card__title">Manager Visibility</div>
+        <div class="card__body">Practice managers see their team's readiness scores, pending sign-offs, and career progression in real time.</div>
+      </div>
+      <div class="card" style="border-color:var(--blue);">
+        <div class="card__icon">🤖</div>
+        <div class="card__title">AI Coaching</div>
+        <div class="card__body">AI-powered advice grounded in <strong>4 explicit pillars</strong> — anonymised profile, ranked opportunities, Industry 4.0 readiness, and the company strategy set by the admin. Strict system prompt forbids invented facts; UUIDs and Perplexity-style citations are scrubbed before the response is rendered. Every suggestion writes to an immutable audit log; users can mark it <strong>accepted / dismissed / rated</strong>, and admins see acceptance rate per suggestion type. <strong>Cost controls</strong>: per-employee daily quota, per-provider circuit breaker, monthly token cap. <strong>Evidence trail</strong>: each suggestion's system prompt + user prompt + full answer are exportable as Markdown for compliance review. Prometheus metrics (<code>cf_llm_*</code>, <code>cf_suggestion_calls_*</code>) make AI quality visible in Grafana. <a href="ai-deep-dive.html">Read the AI Deep Dive →</a></div>
+      </div>
+      <div class="card" style="border-color:var(--border);">
+        <div class="card__icon">⚙️</div>
+        <div class="card__title">AI Workflow Connector</div>
+        <div class="card__body">Admins configure which AI provider (Anthropic, OpenAI, Perplexity, Gemini, or self-hosted Ollama/vLLM) drives all suggestions. One active config at a time. Every AI call is logged in an append-only audit trail.</div>
+      </div>
+    </div>
+
+    <h3>Key Concepts</h3>
+    <ul>
+      <li><strong>Pseudo-ID</strong> — a privacy-preserving identifier derived from Keycloak's <code>sub</code> via HMAC-SHA256. Format: <code>EMP-XXXXX</code>. PII is encrypted at rest (AES-256-GCM); the pseudo-id is the only identifier visible to managers and coaches without explicit employee consent.</li>
+      <li><strong>IDP Form</strong> — Individual Development Plan created by a coach, committed by the employee, signed off by both coach and manager.</li>
+      <li><strong>1-on-1 Form</strong> — Regular meeting summary created by the coach, committed to by the employee.</li>
+      <li><strong>Commitment</strong> — A formal record of the employee's acceptance of a form. Required before sign-off workflow begins.</li>
+      <li><strong>Practice</strong> — An engineering discipline (Frontend, Backend, Cloud &amp; DevOps, Data, ML/AI, Mobile, QA, Security). Each practice has one Practice Manager and is served by one or more Coaches.</li>
+      <li><strong>Opportunity</strong> — A growth opportunity that employees can discover and apply to. Coaches publish skill-development opportunities; managers publish project, bench, L&amp;D, and R&amp;D opportunities.</li>
+      <li><strong>Opportunity Match Score</strong> — A 0–100% figure computed by the AI Workflow engine showing how well an employee's skills overlap with an opportunity's requirements. Displayed as a colour-coded badge: green ≥70%, yellow 40–69%, grey &lt;40%.</li>
+      <li><strong>AI Workflow Config</strong> — An admin-managed record that defines which AI provider/model drives all suggestions across all portals. Only one config is active at a time. Each feature (role suggestions, coaching advice, mentor matching, etc.) has its own TTL, guardrails, and optional model override. The active config can point to a cloud provider or a self-hosted LLM (Ollama, LM Studio, vLLM).</li>
+      <li><strong>Mentor Matcher</strong> — Algorithm in the Coach portal that scores mentors against an employee: 55% skill coverage overlap, 30% seniority fit (gap ≤ 2 ideal), 15% current assignment load. Filters to mentors who are available and at equal or higher seniority.</li>
+    </ul>
+  </div>
+
+  <!-- ══ 02 PORTALS ══ -->
+  <div class="page-section" id="portals">
+    <h2 class="section-title">The Four <span>Portals</span></h2>
+    <p class="section-intro">CareerForge is delivered as four separate single-page applications, each scoped to one user role, with independent authentication.</p>
+
+    <div class="cards" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="card card--blue">
+        <div class="card__title">Employee Portal</div>
+        <div style="margin-bottom:8px;"><a href="https://demo.lupulup.com" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--blue);">demo.lupulup.com</a></div>
+        <div class="card__body">Self-service career hub. View profile, explore opportunities, apply, view forms, give AI-assisted advice, and manage PII consent.</div>
+        <div style="margin-top:10px;"><span class="badge badge--employee">employee realm</span></div>
+      </div>
+      <div class="card card--red">
+        <div class="card__title">Coach Portal</div>
+        <div style="margin-bottom:8px;"><a href="https://demo-coach.lupulup.com" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--red);">demo-coach.lupulup.com</a></div>
+        <div class="card__body">Coach workspace. Manage opportunities, review applications, create IDP/1-on-1 forms, track employee progress, and sign off on commitments.</div>
+        <div style="margin-top:10px;"><span class="badge badge--coach">coach realm</span></div>
+      </div>
+      <div class="card card--yellow">
+        <div class="card__title">Manager Portal</div>
+        <div style="margin-bottom:8px;"><a href="https://demo-manager.lupulup.com" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--text);">demo-manager.lupulup.com</a></div>
+        <div class="card__body">Practice Manager view. Team overview, readiness scores, pending form sign-offs, and progression analytics — without raw PII.</div>
+        <div style="margin-top:10px;"><span class="badge badge--manager">manager role</span></div>
+      </div>
+      <div class="card">
+        <div class="card__title">Admin Portal</div>
+        <div style="margin-bottom:8px;"><a href="https://demo-admin.lupulup.com" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">demo-admin.lupulup.com</a></div>
+        <div class="card__body">Platform operations. Skill taxonomy management, system analytics, bulk data import, model training triggers, and global audit log.</div>
+        <div style="margin-top:10px;"><span class="badge badge--pmo">admin realm</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 03 ARCHITECTURE ══ -->
+  <div class="page-section" id="architecture">
+    <h2 class="section-title">System <span>Architecture</span></h2>
+    <p class="section-intro">CareerForge is composed of four portals (employee, coach, manager, admin), each backed by a dedicated FastAPI service. A shared PostgreSQL database holds canonical state; Redis provides caching and session storage. Authentication is delegated to Keycloak.</p>
+
+    <div class="arch-diagram">
+      <svg width="860" height="380" viewBox="0 0 860 380" font-family="Inter,Helvetica Neue,Arial,sans-serif">
+        <!-- Frontend apps row -->
+        <rect x="10" y="10" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="107" y="35" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">EMPLOYEE PORTAL</text>
+        <text x="107" y="52" text-anchor="middle" fill="currentColor" font-size="10">demo.lupulup.com</text>
+
+        <rect x="218" y="10" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="315" y="35" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">COACH PORTAL</text>
+        <text x="315" y="52" text-anchor="middle" fill="currentColor" font-size="10">demo-coach.lupulup.com</text>
+
+        <rect x="426" y="10" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="523" y="35" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">MANAGER PORTAL</text>
+        <text x="523" y="52" text-anchor="middle" fill="currentColor" font-size="10">demo-manager.lupulup.com</text>
+
+        <rect x="634" y="10" width="216" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="742" y="35" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">ADMIN PORTAL</text>
+        <text x="742" y="52" text-anchor="middle" fill="currentColor" font-size="10">demo-admin.lupulup.com</text>
+
+        <!-- Arrows down -->
+        <line x1="107" y1="70" x2="107" y2="105" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="315" y1="70" x2="315" y2="105" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="523" y1="70" x2="523" y2="105" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="742" y1="70" x2="742" y2="105" stroke="currentColor" stroke-width="2" marker-end="url(#arr)"/>
+
+        <!-- Backend services row -->
+        <rect x="10" y="105" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="107" y="130" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">EMPLOYEE SERVICE</text>
+        <text x="107" y="147" text-anchor="middle" fill="currentColor" font-size="10">FastAPI</text>
+
+        <rect x="218" y="105" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="315" y="130" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">COACH SERVICE</text>
+        <text x="315" y="147" text-anchor="middle" fill="currentColor" font-size="10">FastAPI</text>
+
+        <rect x="426" y="105" width="194" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="523" y="130" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">MANAGER SERVICE</text>
+        <text x="523" y="147" text-anchor="middle" fill="currentColor" font-size="10">FastAPI</text>
+
+        <rect x="634" y="105" width="216" height="60" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="742" y="130" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">ADMIN SERVICE</text>
+        <text x="742" y="147" text-anchor="middle" fill="currentColor" font-size="10">FastAPI</text>
+
+        <!-- Auth arrows -->
+        <line x1="107" y1="165" x2="107" y2="198" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+        <line x1="315" y1="165" x2="315" y2="198" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+        <line x1="523" y1="165" x2="523" y2="198" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+        <line x1="742" y1="165" x2="742" y2="198" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+
+        <!-- Keycloak -->
+        <rect x="10" y="198" width="840" height="50" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="430" y="222" text-anchor="middle" fill="currentColor" font-size="12" font-weight="700">KEYCLOAK  ·  auth-demo.lupulup.com</text>
+        <text x="430" y="238" text-anchor="middle" fill="currentColor" font-size="10">Realms: employee · coach · admin  ·  OIDC PKCE flow</text>
+
+        <!-- Database row -->
+        <line x1="200" y1="165" x2="430" y2="275" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="350" y1="165" x2="430" y2="275" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="523" y1="165" x2="523" y2="275" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="700" y1="165" x2="590" y2="275" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+        <!-- PostgreSQL -->
+        <rect x="100" y="275" width="240" height="55" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="220" y="299" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">POSTGRESQL</text>
+        <text x="220" y="316" text-anchor="middle" fill="currentColor" font-size="10">employees · coach_forms · audit_log</text>
+        <text x="220" y="328" text-anchor="middle" fill="currentColor" font-size="9">AES-256-GCM PII encryption</text>
+
+        <!-- Redis -->
+        <rect x="380" y="275" width="180" height="55" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="470" y="299" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">REDIS</text>
+        <text x="470" y="316" text-anchor="middle" fill="currentColor" font-size="10">Sessions · Consent tokens</text>
+        <text x="470" y="328" text-anchor="middle" fill="currentColor" font-size="9">Cache &amp; notifications</text>
+
+        <!-- ML layer -->
+        <rect x="600" y="275" width="250" height="55" fill="white" stroke="currentColor" stroke-width="2"/>
+        <text x="725" y="299" text-anchor="middle" fill="currentColor" font-size="11" font-weight="700">ML LAYER</text>
+        <text x="725" y="316" text-anchor="middle" fill="currentColor" font-size="10">scikit-learn · XGBoost</text>
+        <text x="725" y="328" text-anchor="middle" fill="currentColor" font-size="9">Readiness scores · Skill gap models</text>
+
+        <!-- Arrow defs -->
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="currentColor"/>
+          </marker>
+          <marker id="arr2" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+            <polygon points="0 0, 6 2.5, 0 5" fill="currentColor"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══ 04 SERVICES ══ -->
+  <div class="page-section" id="services">
+    <h2 class="section-title">Backend <span>Services</span></h2>
+    <p class="section-intro">Each FastAPI service owns a bounded domain. Services share the same PostgreSQL database but access only their own tables.</p>
+
+    <details open>
+      <summary>Employee Service &nbsp;<span style="color:var(--gray-400);font-weight:400;font-size:12px;">:8002 / employee-service</span></summary>
+      <div class="details-body">
+        <p>Core employee operations. Verifies JWTs from the <strong>employee</strong> Keycloak realm. Decrypts PII only after consent token validation.</p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Profile retrieval (anonymised by default, full PII with consent token)</li>
+          <li>Skill heatmap &amp; readiness score aggregation</li>
+          <li>Opportunity discovery and application submission</li>
+          <li>AI coaching advice generation</li>
+          <li>PII reveal request (generates consent token via notification)</li>
+          <li>Audit log write for all employee actions</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Coach Service &nbsp;<span style="color:var(--gray-400);font-weight:400;font-size:12px;">:8003 / coach-service</span></summary>
+      <div class="details-body">
+        <p>Coach workspace operations. Verifies JWTs from the <strong>coach</strong> Keycloak realm.</p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Opportunity CRUD (create, list, accept/reject applications)</li>
+          <li>Form creation (IDP, 1-on-1, nomination, performance review)</li>
+          <li>Coach sign-off on committed forms</li>
+          <li>Team analytics (skill heatmap, applications pipeline, cohort readiness)</li>
+          <li>Employee profile lookup (anonymised or PII-unlocked)</li>
+          <li><strong>Mentor Matcher</strong> — <code>GET /employees/{pseudo_id}/mentor-suggestions?top_n=N</code> — scores available mentors against a given employee using skill overlap (55%), seniority fit (30%), and load (15%); returns ranked list with match %, skill overlap, seniority gap, and active assignment count</li>
+          <li>Market intelligence and AI coaching advice (per-feature TTL from active AI Workflow Config)</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Manager Service &nbsp;<span style="color:var(--gray-400);font-weight:400;font-size:12px;">:8004 / manager-service</span></summary>
+      <div class="details-body">
+        <p>Practice Manager views. Verifies JWTs from the <strong>employee</strong> Keycloak realm; additionally requires the <code>manager</code> realm role. Runs as a separate image: <code>careerforge-manager-backend:latest</code>.</p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Team member listing (filtered by <code>line_manager_pseudo_id</code>)</li>
+          <li>Team member detail view (readiness score, skills, active forms)</li>
+          <li>Manager sign-off on forms (after coach sign-off is done)</li>
+          <li>Pending sign-off queue</li>
+          <li>Team analytics (skill gaps, progression heatmap)</li>
+          <li><strong>Opportunity Publishing</strong> — Managers create and publish opportunities of type <code>project</code>, <code>bench</code>, <code>lnd</code>, <code>rnd</code>, or <code>role</code>; includes publish/unpublish lifecycle</li>
+          <li><strong>AI Candidate Match</strong> — <code>POST /opportunities/{id}/ai-match</code> — deterministic skill-overlap scoring across all employees + AI narrative for top 3 candidates; results cached per the <code>opportunities_ai_match</code> feature TTL from the active AI Workflow Config</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Admin Service &nbsp;<span style="color:var(--gray-400);font-weight:400;font-size:12px;">:8000 / admin-service</span></summary>
+      <div class="details-body">
+        <p>Platform administration. Verifies JWTs from the <strong>admin</strong> Keycloak realm.</p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Skills taxonomy management (create, update, deprecate skills)</li>
+          <li>System-wide analytics and KPI dashboards</li>
+          <li>Bulk employee data import</li>
+          <li>Global audit log browser</li>
+          <li>ML model training job triggers</li>
+          <li>Keycloak user synchronisation</li>
+          <li><strong>AI Workflow Connector</strong> — Full CRUD for <code>AIWorkflowConfig</code> records; activate/deactivate; per-feature coverage config (TTL, guardrails, model override per feature per portal); self-hosted LLM support via <code>base_url</code>; sources catalog endpoint; AI suggestion audit log browser</li>
+        </ul>
+        <h4>AI Workflow Config structure</h4>
+        <p>The active config drives every AI call across all portals. Coverage config structure:</p>
+        <pre><code>{
+  "employee": {
+    "role_suggestions":       { "enabled": true, "ttl_hours": 24, "guardrails": { "max_roles": 5, "min_match_score": 0.3 }, "model_override": null },
+    "learning_path":          { "enabled": true, "ttl_hours": 48, "guardrails": { "max_nodes": 12, "include_certs": true }, "model_override": null },
+    "opportunities_matching": { "enabled": true, "ttl_hours": 6, ... },
+    "ai_chat":                { "enabled": true, "ttl_hours": 1, ... }
+  },
+  "coach": {
+    "coaching_advice":   { "enabled": true, "ttl_hours": 4, "guardrails": { "require_pseudo_id": true, "safe_mode": true }, ... },
+    "market_intelligence": { "enabled": true, "ttl_hours": 6, ... },
+    "mentor_matching":   { "enabled": true, "ttl_hours": 24, "guardrails": { "min_match_score": 0.2, "max_mentors": 5 }, ... }
+  },
+  "manager": {
+    "team_readiness":         { "enabled": true, "ttl_hours": 24, "guardrails": { "show_names": false }, ... },
+    "opportunities_ai_match": { "enabled": true, "ttl_hours": 2, "guardrails": { "max_candidates": 10, "min_match_score": 0.3 }, ... }
+  }
+}</code></pre>
+      </div>
+    </details>
+  </div>
+
+  <!-- ══ 05 AUTH ══ -->
+  <div class="page-section" id="auth">
+    <h2 class="section-title">Authentication <span>&amp; SSO</span></h2>
+    <p class="section-intro">All portals use OpenID Connect with PKCE (Proof Key for Code Exchange). No passwords are stored by CareerForge — credentials live in Keycloak.</p>
+
+    <h3>Keycloak Realms</h3>
+    <table class="cred-table">
+      <tr><th>Realm</th><th>Used by</th><th>Issuer URL</th></tr>
+      <tr><td><code>employee</code></td><td>Employee Portal, Manager Portal</td><td><code>https://auth-demo.lupulup.com/realms/employee</code></td></tr>
+      <tr><td><code>coach</code></td><td>Coach Portal</td><td><code>https://auth-demo.lupulup.com/realms/coach</code></td></tr>
+      <tr><td><code>admin</code></td><td>Admin Portal</td><td><code>https://auth-demo.lupulup.com/realms/admin</code></td></tr>
+    </table>
+
+    <h3>Manager Role Check</h3>
+    <p>The Manager Portal uses the <strong>employee</strong> realm but additionally requires the <code>manager</code> realm role to be present in the JWT. If the user authenticates successfully but lacks this role, they are redirected to <code>/access-denied</code>.</p>
+
+    <h3>OIDC PKCE Flow</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Portal generates code_verifier + code_challenge</strong><p>Stored in sessionStorage. Used for PKCE security.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Redirect to Keycloak authorize endpoint</strong><p>With <code>response_type=code</code>, <code>code_challenge_method=S256</code>.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>User logs in at Keycloak</strong><p>Credentials never touch the portal app.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Callback with authorization code</strong><p>Portal exchanges code + verifier for access_token + refresh_token.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Access token sent as Bearer on every API call</strong><p>Backend validates signature against Keycloak's JWKS endpoint.</p></div>
+      </div>
+    </div>
+
+    <h3>PII Privacy Model</h3>
+    <p>Employee personally identifiable information (full name, email, phone) is stored encrypted with AES-256-GCM. The encryption key is derived per-employee and stored in a secrets manager.</p>
+    <p>Coaches and managers see only pseudo-ids by default. To reveal PII, the employee must explicitly approve a <strong>PII reveal request</strong> — a push notification is sent, and on approval a short-lived consent token is issued. The requesting party redeems the token to temporarily decrypt the profile.</p>
+  </div>
+
+  <!-- ══ 06 DATA FLOW ══ -->
+  <div class="page-section" id="data-flow">
+    <h2 class="section-title">Data <span>Flow</span></h2>
+
+    <h3>Opportunity &amp; Application Flow</h3>
+    <div class="flow">
+      <div class="flow-node flow-node--blue">Coach Creates Opportunity</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">Employee Discovers &amp; Applies</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--blue">Coach Reviews Application</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--green">Accepted / Rejected</div>
+    </div>
+
+    <h3>Form Sign-off Flow</h3>
+    <div class="flow">
+      <div class="flow-node flow-node--blue">Coach Creates Form</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">Employee Commits</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--blue">Coach Signs Off</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--yellow">Manager Signs Off</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--green">Form ACTIVE</div>
+    </div>
+
+    <h3>Manager Opportunity &amp; AI Match Flow</h3>
+    <div class="flow">
+      <div class="flow-node flow-node--yellow">Manager Creates Opportunity</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--yellow">Publishes (project / bench / lnd / rnd / role)</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">AI Match triggered</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--blue">Skill-overlap scored vs all employees</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node flow-node--green">Ranked candidates + AI narrative (top 3)</div>
+    </div>
+
+    <h3>Pseudo-ID Derivation</h3>
+    <p>Each employee's identifier is derived deterministically from their Keycloak <code>sub</code> (UUID) using HMAC-SHA256 + Base32:</p>
+    <pre><code>HMAC_KEY = bytes.fromhex("77b1c3ed6d3a24931aef148f4099eabc355c79de084f5c10701d5de6044d16f0")
+
+def derive_pseudo_id(keycloak_sub: str) -> str:
+    digest = hmac.new(key=HMAC_KEY, msg=sub.encode(), digestmod=hashlib.sha256).digest()
+    encoded = base64.b32encode(digest[:4]).decode("ascii")[:5]
+    return f"EMP-{encoded}"</code></pre>
+    <p>This means pseudo-ids are stable (same sub → same id), reversible only by someone with the HMAC key, and safe to expose to coaches and managers.</p>
+  </div>
+
+  <!-- ══ 07 EMPLOYEE MANUAL ══ -->
+  <div class="page-section" id="manual-employee">
+    <h2 class="section-title">Employee Portal <span>Manual</span></h2>
+    <p class="section-intro">The Employee Portal at <code>demo.lupulup.com</code> is your personal career development hub. Sign in with your company SSO credentials (employee realm).</p>
+
+    <h3>Dashboard</h3>
+    <p>The dashboard shows your current <strong>readiness score</strong> (0–100), recent activity, skill heatmap, and quick links to pending actions. The readiness score is computed from your skills, certifications, education, learning history, and engagement.</p>
+
+    <h3>My Profile</h3>
+    <ul>
+      <li>View your current role, seniority, specialisation, and experience years.</li>
+      <li>Your <strong>Pseudo-ID</strong> is displayed — this is how coaches and managers identify you in their portals.</li>
+      <li>PII (name, email, contact) is hidden by default. To share it temporarily with a coach or manager, they submit a PII reveal request and you approve it from a push notification.</li>
+      <li>Update career goals, learning style preference, and mentoring availability.</li>
+    </ul>
+
+    <h3>Skills &amp; Heatmap</h3>
+    <ul>
+      <li>Browse your skill inventory — each skill has a proficiency level (beginner → expert) and a last-validated date.</li>
+      <li>The heatmap shows coverage across technical domains, highlighting gaps relative to your seniority benchmark.</li>
+      <li>Earn skill validation by completing courses, certifications, or coach-verified IDP milestones.</li>
+    </ul>
+
+    <h3>Opportunities</h3>
+    <ul>
+      <li>Browse open opportunities posted by coaches and managers — project rotations, bench assignments, certification sponsorships, L&amp;D programmes, R&amp;D initiatives, speaking slots, and mentoring assignments.</li>
+      <li>Each opportunity shows a <strong>Match Score badge</strong> computed from your skill profile vs the opportunity's required skills: <span style="background:var(--surface-2);color:var(--text);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:700;">≥70% green</span> · <span style="background:var(--surface-2);color:var(--text);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:700;">40–69% yellow</span> · <span style="background:var(--surface-2);color:var(--text);padding:1px 6px;border-radius:3px;font-size:12px;font-weight:700;">&lt;40% grey</span></li>
+      <li>Filter by specialisation, seniority, type, and tags.</li>
+      <li>Apply with a cover note. You can track application status (pending → accepted / rejected) under <strong>My Applications</strong>.</li>
+      <li>Withdraw a pending application at any time.</li>
+    </ul>
+
+    <h3>My Forms</h3>
+    <ul>
+      <li>View all forms addressed to you (IDP, 1-on-1, nomination, performance review).</li>
+      <li>A form in <strong>pending_commitment</strong> status requires your action — read the content and click <em>Commit</em> to accept the goals.</li>
+      <li>Once committed, the form moves through coach sign-off → manager sign-off → <strong>ACTIVE</strong>.</li>
+      <li>Active forms are your live commitments. Check milestones and update progress.</li>
+    </ul>
+
+    <h3>AI Advice</h3>
+    <ul>
+      <li>Ask the AI coach for personalised guidance — career path options, skill gap recommendations, learning resource suggestions.</li>
+      <li>The AI uses your anonymised profile (no PII). You can provide extra context in free text.</li>
+      <li>Save useful advice snippets to your profile notes.</li>
+    </ul>
+
+    <h3>Notifications</h3>
+    <ul>
+      <li>Receive in-app notifications for: new form assignments, application decisions, PII reveal requests, form sign-off completions.</li>
+      <li>Approve or deny PII reveal requests directly from the notification panel.</li>
+    </ul>
+  </div>
+
+  <!-- ══ 08 COACH MANUAL ══ -->
+  <div class="page-section" id="manual-coach">
+    <h2 class="section-title">Coach Portal <span>Manual</span></h2>
+    <p class="section-intro">The Coach Portal at <code>demo-coach.lupulup.com</code> is your workspace for managing employee development. Sign in with your coach realm credentials.</p>
+
+    <h3>Dashboard</h3>
+    <p>Overview of your active opportunities, pending applications, forms awaiting your sign-off, and cohort readiness trends.</p>
+
+    <h3>Opportunities</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Create Opportunity</strong>
+          <p>Set title, description, specialisation tags, seniority range, and application deadline. Published immediately — employees can discover and apply.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Review Applications</strong>
+          <p>See each applicant's pseudo-id, readiness score, and cover note. Request PII reveal if you need to contact them directly.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Accept or Reject</strong>
+          <p>Accepted applicants are notified automatically. Rejected applicants receive a note. You can change decision while the opportunity is open.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Forms</h3>
+    <h4>Creating a Form</h4>
+    <p>Select form type, target employee pseudo-id, and optionally assign a practice manager. Form types:</p>
+    <ul>
+      <li><strong>IDP</strong> — Individual Development Plan. Full goals, milestones, timeline, skills targeted.</li>
+      <li><strong>One-on-One</strong> — Meeting summary. Discussion topics, action items, follow-up date.</li>
+      <li><strong>Nomination</strong> — Recommend an employee for a role, award, or programme.</li>
+      <li><strong>Performance Review</strong> — Structured 360° review with ratings and narrative.</li>
+    </ul>
+    <p>After creation, the form status is <code>pending_commitment</code> — waiting for the employee to commit.</p>
+
+    <h4>Sign-off</h4>
+    <p>Once the employee commits, the form appears in your <strong>Sign-off Queue</strong>. Review the commitment, add coach notes, and sign. The form then moves to the manager for final sign-off (if a manager is assigned).</p>
+
+    <h3>Mentor Matcher</h3>
+    <p>On any employee's detail page, the <strong>Mentor Match</strong> card shows the top-N mentors best suited to that employee — ranked by a weighted score:</p>
+    <ul>
+      <li><strong>55% — Skill coverage</strong>: fraction of the employee's skills covered by the mentor's skill set.</li>
+      <li><strong>30% — Seniority fit</strong>: gap of 0–2 levels scores full marks; each extra level deducts 0.15.</li>
+      <li><strong>15% — Load</strong>: mentors with fewer active assignments score higher.</li>
+    </ul>
+    <p>Mentors are only considered if they have <code>available_for_mentoring = true</code> and are at equal or higher seniority than the employee. Match scores are colour-coded: green ≥70%, yellow 40–69%, grey &lt;40%.</p>
+
+    <h3>AI Coaching Advice</h3>
+    <p>On an employee's detail page, enter a coaching question — the AI receives a strictly-grounded context (the anonymised profile, top-matched opportunities, Industry 4.0 readiness snapshot, and the active company strategy) and returns auditable advice. The system prompt forbids any invented education, certifications, or metrics; Perplexity-style citation markers and raw UUIDs are scrubbed. Every call is logged in the AI suggestion audit trail with a <code>context_used</code> breakdown showing which pillars actually fed the answer. Users can mark each suggestion <strong>accepted / dismissed / rated&nbsp;1&ndash;5</strong> via <code>POST /api/v1/ai-suggestions/{log_id}/feedback</code>; admins see <strong>acceptance rate</strong> and <strong>average rating</strong> per <code>suggestion_type</code> at <code>/api/v1/admin/ai-workflow/audit/feedback-summary</code>. The TTL and guardrails for coaching advice are configurable per-feature in the Admin → AI Workflow Connector.</p>
+
+    <h3>Analytics</h3>
+    <ul>
+      <li><strong>Skill Heatmap</strong> — coverage and gaps across your coaching cohort.</li>
+      <li><strong>Applications Pipeline</strong> — funnel view from applied to placed.</li>
+      <li><strong>Cohort Readiness</strong> — average and distribution of readiness scores.</li>
+      <li><strong>Opportunity Performance</strong> — fill rate, time-to-fill, application volume.</li>
+    </ul>
+  </div>
+
+  <!-- ══ 09 MANAGER MANUAL ══ -->
+  <div class="page-section" id="manual-manager">
+    <h2 class="section-title">Manager Portal <span>Manual</span></h2>
+    <p class="section-intro">The Manager Portal at <code>demo-manager.lupulup.com</code> gives Practice Managers visibility into their team's career progression. Requires the <code>manager</code> Keycloak role.</p>
+
+    <div class="alert alert--info">
+      <strong>Role Requirement:</strong> Only employees with the <code>manager</code> realm role in the <strong>employee</strong> Keycloak realm can access this portal. If you see an "Access Denied" page, contact IT to have the role assigned to your account.
+    </div>
+
+    <h3>Dashboard</h3>
+    <p>Summary of your team: total members, average readiness score, pending sign-offs, active IDPs, and recent form activity.</p>
+
+    <h3>My Team</h3>
+    <ul>
+      <li>List of all employees where your pseudo-id is their <code>line_manager_pseudo_id</code>.</li>
+      <li>Each row shows pseudo-id, seniority, specialisation, readiness score, and active form count.</li>
+      <li>Click a team member to see their full profile: skill breakdown, active forms, readiness score components, and progression history.</li>
+      <li>Team member PII is hidden by default. Submit a reveal request to temporarily view name and contact.</li>
+    </ul>
+
+    <h3>Sign-offs</h3>
+    <ul>
+      <li>Forms appear in your queue after the employee has committed and the coach has signed off.</li>
+      <li>Review the full form content, coach notes, and employee commitment.</li>
+      <li>Add your manager comments and sign off to mark the form <strong>ACTIVE</strong>.</li>
+      <li>You can request clarification from the coach before signing.</li>
+    </ul>
+
+    <h3>Opportunities</h3>
+    <p>Managers can create and publish opportunities visible to all employees in the Employee Portal.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Create Opportunity</strong>
+          <p>Set title, description, required skills, type (<code>project</code>, <code>bench</code>, <code>lnd</code>, <code>rnd</code>, <code>role</code>), and seniority range. New opportunities start as <strong>draft</strong> — not yet visible to employees.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Publish / Unpublish</strong>
+          <p>Click <em>Publish</em> to make the opportunity live in the Employee Portal. Use <em>Unpublish</em> to pull it back without deleting it.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>AI Candidate Match</strong>
+          <p>Click <em>AI Match</em> on any opportunity. The system scores all employees by skill overlap and returns a ranked candidate list with match percentages, matched skills (green), and missing skills (strikethrough). The top 3 candidates also receive an AI-generated narrative. Results are cached per the <code>opportunities_ai_match</code> TTL in the active AI Workflow Config.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Practice Managers</h3>
+    <table class="cred-table" style="margin-top:12px;">
+      <tr><th>Manager</th><th>Pseudo-ID</th><th>Practice</th></tr>
+      <tr><td>alice.johnson</td><td><code>EMP-HCUZE</code></td><td>Frontend</td></tr>
+      <tr><td>bob.smith</td><td><code>EMP-OJ5RQ</code></td><td>Backend</td></tr>
+      <tr><td>chris.evans</td><td><code>EMP-IRUKS</code></td><td>Cloud &amp; DevOps</td></tr>
+      <tr><td>diana.morgan</td><td><code>EMP-EN5FU</code></td><td>Data Engineering</td></tr>
+      <tr><td>edward.hughes</td><td><code>EMP-HZ2CC</code></td><td>ML / AI</td></tr>
+      <tr><td>fiona.taylor</td><td><code>EMP-VGB6P</code></td><td>Mobile</td></tr>
+      <tr><td>grace.chen</td><td><code>EMP-LNASW</code></td><td>Quality Assurance</td></tr>
+      <tr><td>henry.kim</td><td><code>EMP-LCJZV</code></td><td>Security</td></tr>
+    </table>
+  </div>
+
+  <!-- ══ 10 ADMIN MANUAL ══ -->
+  <div class="page-section" id="manual-admin">
+    <h2 class="section-title">Admin Portal <span>Manual</span></h2>
+    <p class="section-intro">The Admin Portal at <code>demo-admin.lupulup.com</code> is for platform operations. Restricted to users in the <strong>admin</strong> Keycloak realm.</p>
+
+    <div class="alert alert--danger">
+      <strong>Caution:</strong> Admin operations affect all users. Destructive actions (bulk delete, model retrain, data purge) require confirmation and are irreversible.
+    </div>
+
+    <h3>Skills Taxonomy</h3>
+    <ul>
+      <li>Browse the global skill catalogue — ~200 skills across all engineering practices.</li>
+      <li>Add new skills: set name, category, description, and related skills.</li>
+      <li>Deprecate obsolete skills — existing proficiency records are preserved but the skill is hidden from new entries.</li>
+      <li>Merge duplicate skills: all employee records are remapped.</li>
+    </ul>
+
+    <h3>System Analytics</h3>
+    <ul>
+      <li>Platform-wide KPIs: active users (7d / 30d), forms created, form completion rate, opportunity fill rate.</li>
+      <li>Drill down by practice, seniority, or coach.</li>
+      <li>Export data as CSV for external reporting.</li>
+    </ul>
+
+    <h3>Audit Log</h3>
+    <ul>
+      <li>Every create / update / delete action is logged with actor pseudo-id, action type, resource, and timestamp.</li>
+      <li>Filter by date range, actor, resource type, or action.</li>
+      <li>Audit log is append-only — records cannot be modified or deleted through the UI.</li>
+    </ul>
+
+    <h3>ML Model Management</h3>
+    <ul>
+      <li>View current model versions tracked in MLflow.</li>
+      <li>Trigger re-training jobs (runs as a background worker).</li>
+      <li>Promote a model version to production — employee service will use it for readiness scoring.</li>
+    </ul>
+
+    <h3>AI Workflow Connector</h3>
+    <p>Configure which AI engine drives all CareerForge suggestions. Navigate to <strong>Connectors → AI Workflow</strong> tab.</p>
+    <ul>
+      <li><strong>Create a config</strong> — choose provider (<code>anthropic</code>, <code>openai</code>, <code>perplexity</code>, <code>gemini</code>, <code>self_hosted</code>), model name, and API key. For self-hosted, set the <code>Base URL</code> (e.g. <code>http://ollama:11434</code>) — the connector auto-appends <code>/v1</code> if needed.</li>
+      <li><strong>Activate</strong> — only one config is active at a time. Activating one automatically deactivates all others. The active config is cached for 5 minutes across all services.</li>
+      <li><strong>Per-feature coverage</strong> — expand each feature panel (e.g. <em>role_suggestions</em>, <em>coaching_advice</em>, <em>mentor_matching</em>, <em>opportunities_ai_match</em>) to set:
+        <ul>
+          <li>Enabled toggle</li>
+          <li>TTL (hours) — how long a suggestion result is cached before re-generation</li>
+          <li>Model override — use a different model for this feature only</li>
+          <li>Guardrails — key/value pairs (e.g. <code>max_roles: 5</code>, <code>safe_mode: true</code>)</li>
+        </ul>
+      </li>
+      <li><strong>Suggestion Audit</strong> tab — browse the append-only log of every AI call: suggestion type, portal, feature, employee pseudo-id (if applicable), model used, sources used, generated_at, expires_at.</li>
+    </ul>
+    <div class="alert alert--info">
+      <strong>Privacy note:</strong> Audit log entries use pseudo-ids, not PII. The log cannot be modified or deleted through the UI.
+    </div>
+  </div>
+
+  <!-- ══ 11 FORMS WORKFLOW ══ -->
+  <div class="page-section" id="forms-workflow">
+    <h2 class="section-title">Forms <span>&amp; Commitments</span></h2>
+    <p class="section-intro">Forms are the core unit of documented career development in CareerForge. Every form goes through a structured lifecycle from creation to full sign-off.</p>
+
+    <h3>Form Lifecycle</h3>
+    <div style="background:var(--white);border:2px solid var(--black);padding:28px;margin:20px 0;">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;text-align:center;">
+        <div>
+          <div style="background:var(--black);color:white;padding:10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">CREATED</div>
+          <div style="font-size:11px;color:var(--gray-600);padding:8px 4px;line-height:1.5;">Coach creates form &amp; assigns employee</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gray-400);">→</div>
+        <div>
+          <div style="background: var(--accent);color:white;padding:10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">PENDING COMMIT</div>
+          <div style="font-size:11px;color:var(--gray-600);padding:8px 4px;line-height:1.5;">Employee reads &amp; commits to goals</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gray-400);">→</div>
+        <div>
+          <div style="background:var(--surface-2);color:white;padding:10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">COMMITTED</div>
+          <div style="font-size:11px;color:var(--gray-600);padding:8px 4px;line-height:1.5;">Coach sign-off queue</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;text-align:center;margin-top:16px;">
+        <div>
+          <div style="background: var(--signal-warn);color: var(--text);padding:10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">COACH SIGNED</div>
+          <div style="font-size:11px;color:var(--gray-600);padding:8px 4px;line-height:1.5;">Manager sign-off queue</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gray-400);">→</div>
+        <div>
+          <div style="background:var(--surface-2);color:white;padding:10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">ACTIVE</div>
+          <div style="font-size:11px;color:var(--gray-600);padding:8px 4px;line-height:1.5;">Live commitment, progress tracked</div>
+        </div>
+        <div></div>
+      </div>
+    </div>
+
+    <h3>Form Types</h3>
+    <table class="cred-table">
+      <tr><th>Type</th><th>Creator</th><th>Manager Sign-off</th><th>Typical Content</th></tr>
+      <tr><td><code>idp</code></td><td>Coach</td><td>Required</td><td>Goals, milestones, target skills, timeline, success criteria</td></tr>
+      <tr><td><code>one_on_one</code></td><td>Coach</td><td>Optional</td><td>Meeting agenda, discussion points, action items, next meeting date</td></tr>
+      <tr><td><code>nomination</code></td><td>Coach</td><td>Required</td><td>Role/programme being nominated for, justification, evidence</td></tr>
+      <tr><td><code>performance_review</code></td><td>Coach</td><td>Required</td><td>Competency ratings, strengths, development areas, overall rating</td></tr>
+    </table>
+
+    <h3>Commitment Object</h3>
+    <p>When an employee commits to a form, a <code>FormCommitment</code> record is created:</p>
+    <pre><code>{
+  "form_id": "uuid",
+  "employee_pseudo_id": "EMP-XXXXX",
+  "status": "committed",          // or: in_progress, completed, abandoned
+  "commitment_date": "2026-04-21T10:00:00Z",
+  "employee_notes": "I accept and will focus on Kubernetes certification first.",
+  "progress_percentage": 0,
+  "milestones_completed": 0
+}</code></pre>
+  </div>
+
+  <!-- ══ 12 API REFERENCE ══ -->
+  <div class="page-section" id="api-reference">
+    <h2 class="section-title">API <span>Reference</span></h2>
+    <p class="section-intro">All services expose OpenAPI docs at <code>/docs</code> (Swagger UI) and <code>/redoc</code> (ReDoc). Base paths are <code>/api/v1</code>.</p>
+
+    <details open>
+      <summary>Employee Service — <code>api-demo.lupulup.com/api/v1</code></summary>
+      <div class="details-body">
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/profile</span><span class="endpoint-desc">— Own anonymised profile</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/profile/full</span><span class="endpoint-desc">— Full profile with PII (requires consent token header)</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/skills/heatmap</span><span class="endpoint-desc">— Own skill heatmap by domain</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/readiness-score</span><span class="endpoint-desc">— Current readiness score breakdown</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/opportunities</span><span class="endpoint-desc">— Browse open opportunities</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities/{id}/apply</span><span class="endpoint-desc">— Submit application</span></div>
+        <div class="endpoint"><span class="method method--delete">DELETE</span><span class="endpoint-path">/applications/{id}</span><span class="endpoint-desc">— Withdraw application</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/forms</span><span class="endpoint-desc">— My assigned forms</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/forms/{id}/commit</span><span class="endpoint-desc">— Commit to a form</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/ai/advice</span><span class="endpoint-desc">— Request AI coaching advice</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/notifications</span><span class="endpoint-desc">— Inbox (unread + read)</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/notifications/{id}/respond</span><span class="endpoint-desc">— Approve or deny PII reveal</span></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Coach Service — <code>api-demo-coach.lupulup.com/api/v1</code></summary>
+      <div class="details-body">
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities</span><span class="endpoint-desc">— Create opportunity</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/opportunities</span><span class="endpoint-desc">— List own opportunities</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/opportunities/{id}/applications</span><span class="endpoint-desc">— Applications for an opportunity</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/applications/{id}/decide</span><span class="endpoint-desc">— Accept or reject application</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/forms</span><span class="endpoint-desc">— Create form (IDP, 1-on-1, etc.)</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/forms</span><span class="endpoint-desc">— All forms created by me</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/forms/{id}/sign-off</span><span class="endpoint-desc">— Coach sign-off on committed form</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/analytics/skills-heatmap</span><span class="endpoint-desc">— Cohort skill heatmap</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/analytics/applications</span><span class="endpoint-desc">— Applications pipeline analytics</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/analytics/readiness</span><span class="endpoint-desc">— Cohort readiness scores</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/employees/{pseudo_id}/mentor-suggestions</span><span class="endpoint-desc">— Top-N mentor fits for an employee (score = skill overlap 55% + seniority fit 30% + load 15%)</span></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Manager Service — <code>api-demo-manager.lupulup.com/api/v1</code></summary>
+      <div class="details-body">
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/team</span><span class="endpoint-desc">— List team members</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/team/{pseudo_id}</span><span class="endpoint-desc">— Team member detail &amp; readiness</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/sign-offs</span><span class="endpoint-desc">— Pending sign-off queue</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/sign-offs/{form_id}</span><span class="endpoint-desc">— Manager sign-off</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/analytics/team</span><span class="endpoint-desc">— Team progression analytics</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/opportunities</span><span class="endpoint-desc">— List all opportunities (draft + published)</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities</span><span class="endpoint-desc">— Create opportunity (type: project/bench/lnd/rnd/role)</span></div>
+        <div class="endpoint"><span class="method method--patch">PATCH</span><span class="endpoint-path">/opportunities/{id}</span><span class="endpoint-desc">— Update opportunity details</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities/{id}/publish</span><span class="endpoint-desc">— Publish (makes visible to employees)</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities/{id}/unpublish</span><span class="endpoint-desc">— Unpublish (returns to draft)</span></div>
+        <div class="endpoint"><span class="method method--delete">DELETE</span><span class="endpoint-path">/opportunities/{id}</span><span class="endpoint-desc">— Delete opportunity</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/opportunities/{id}/ai-match</span><span class="endpoint-desc">— AI candidate matching: skill-overlap score for all employees + narrative for top 3</span></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Admin Service — <code>api-demo-admin.lupulup.com/api/v1/admin</code></summary>
+      <div class="details-body">
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/ai-workflows</span><span class="endpoint-desc">— List all AI Workflow configs</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/ai-workflows</span><span class="endpoint-desc">— Create AI Workflow config</span></div>
+        <div class="endpoint"><span class="method method--put">PUT</span><span class="endpoint-path">/ai-workflows/{id}</span><span class="endpoint-desc">— Update config (provider, model, coverage, base_url)</span></div>
+        <div class="endpoint"><span class="method method--post">POST</span><span class="endpoint-path">/ai-workflows/{id}/activate</span><span class="endpoint-desc">— Activate config (deactivates all others)</span></div>
+        <div class="endpoint"><span class="method method--delete">DELETE</span><span class="endpoint-path">/ai-workflows/{id}</span><span class="endpoint-desc">— Delete config</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/ai-workflows/sources-catalog</span><span class="endpoint-desc">— Available data sources for AI grounding</span></div>
+        <div class="endpoint"><span class="method method--get">GET</span><span class="endpoint-path">/ai-suggestion-logs</span><span class="endpoint-desc">— Paginated suggestion audit log (filter by type/portal/feature/date)</span></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- ══ 13 USERS ══ -->
+  <div class="page-section" id="users">
+    <h2 class="section-title">Users <span>&amp; Roles</span></h2>
+    <p class="section-intro">Complete directory of all CareerForge demo users. The employee realm contains 214 users (212 generated employees plus the <code>maria.demo</code> and <code>alex.manager</code> seed accounts); the coach realm contains 1 coach; the admin realm contains 1 administrator. All simulation accounts use the password <code>Demo2026!</code>.</p>
+
+    <details class="user-group" open>
+      <summary><h3>Administrators (admin realm) <span class="muted">— 1 user</span></h3></summary>
+      <table class="users-table" style="margin-bottom:32px;">
+        <thead>
+          <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Portal</th><th>Password</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>admin.demo</code></td><td>Admin Demo</td><td>admin.demo@accesa.eu</td><td><a href="https://demo-admin.lupulup.com" target="_blank">demo-admin.lupulup.com</a></td><td><code>Demo2026!</code></td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details class="user-group" open>
+      <summary><h3>Coaches (coach realm) <span class="muted">— 1 user</span></h3></summary>
+      <table class="users-table" style="margin-bottom:32px;">
+        <thead>
+          <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Portal</th><th>Password</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>coach.demo</code></td><td>Coach Demo</td><td>coach.demo@accesa.eu</td><td><a href="https://demo-coach.lupulup.com" target="_blank">demo-coach.lupulup.com</a></td><td><code>Demo2026!</code></td></tr>
+        </tbody>
+      </table>
+    </details>
+
+    <details class="user-group" open>
+      <summary><h3>Employees (employee realm) <span class="muted">— 214 users (13 with manager role)</span></h3></summary>
+    <div class="table-controls">
+      <input type="text" id="userSearch" placeholder="Search username, pseudo-id, or job title…" oninput="filterUsers()" />
+      <select id="specFilter" onchange="filterUsers()">
+        <option value="">All Specializations</option>
+        <option value="architect">Architect</option>
+        <option value="backend">Backend</option>
+        <option value="data">Data</option>
+        <option value="devops">DevOps / Cloud</option>
+        <option value="frontend">Frontend</option>
+        <option value="fullstack">Fullstack</option>
+        <option value="mobile">Mobile</option>
+        <option value="qa">QA</option>
+        <option value="security">Security</option>
+      </select>
+      <select id="seniorityFilter" onchange="filterUsers()">
+        <option value="">All Seniorities</option>
+        <option value="junior">Junior</option>
+        <option value="mid">Mid</option>
+        <option value="senior">Senior</option>
+        <option value="lead">Lead</option>
+        <option value="principal">Principal</option>
+      </select>
+      <select id="roleFilter" onchange="filterUsers()">
+        <option value="">All Roles</option>
+        <option value="manager">Manager (Keycloak)</option>
+        <option value="employee">Employee</option>
+      </select>
+    </div>
+    <div class="users-table-wrap users-table-wrap--scroll">
+      <table class="users-table users-table--sticky" id="usersTable">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Pseudo-ID</th>
+            <th>Job Title</th>
+            <th>Seniority</th>
+            <th>Specialization</th>
+            <th>Reports To</th>
+            <th>Keycloak Role</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+        </tbody>
+      </table>
+    </div>
+    <p id="userCount"></p>
+    </details>
+  </div>
+
+  <!-- ══ 14 CREDENTIALS ══ -->
+  <div class="page-section" id="credentials">
+    <h2 class="section-title">Access <span>Credentials</span></h2>
+    <h3>Simulation Accounts (all portals)</h3>
+    <table class="cred-table">
+      <tr><th>Realm</th><th>Users</th><th>Password</th></tr>
+      <tr><td>employee</td><td>All 214 employees listed above (incl. <code>maria.demo</code>, <code>alex.manager</code>)</td><td><code>Demo2026!</code></td></tr>
+      <tr><td>coach</td><td><code>coach.demo</code></td><td><code>Demo2026!</code></td></tr>
+      <tr><td>admin</td><td><code>admin.demo</code></td><td><code>Demo2026!</code></td></tr>
+    </table>
+
+    <h3>Container Registry</h3>
+    <table class="cred-table">
+      <tr><th>Registry</th><td><code>git.lupulup.com</code></td></tr>
+      <tr><th>Namespace</th><td><code>admin/</code></td></tr>
+      <tr><th>Images</th><td><code>careerforge-backend:latest</code>, <code>careerforge-employee:latest</code>, <code>careerforge-coach:latest</code>, <code>careerforge-manager:latest</code>, <code>careerforge-admin:latest</code>, <code>careerforge-manager-backend:latest</code> (manager API — separate image)</td></tr>
+    </table>
+
+  </div>
+
+  <footer>
+    <p>CareerForge Info Portal &nbsp;·&nbsp; Internal documentation &nbsp;·&nbsp; April 2026</p>
+    <p style="margin-top:4px;">Built on: FastAPI · Vue 3 · React · Keycloak · PostgreSQL · Redis</p>
+  </footer>
+</main>
+
+<script>
+  // ── User directory — sourced from DB (employees table) + Keycloak roles ──
+  // u=username, pid=pseudo_id, title=current_role_title, sen=seniority,
+  // spec=specialization, mgr=line manager username, role=keycloak role
+  const USERS = [
+    { u:"adrian.constantin020",     pid:"EMP-6PIAE", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"adrian.moldovan059",       pid:"EMP-HLDRW", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"adrian.stoica079",         pid:"EMP-PNWUQ", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"alex.manager",             pid:"EMP-GRMVG", title:"lead backend engineer",       sen:"lead",      spec:"backend",    mgr:"—",                    role:"manager"  },
+    { u:"alexandra.barbu099",       pid:"EMP-YZB5W", title:"Senior Security Engineer",    sen:"senior",    spec:"security",   mgr:"iulian.popm10",        role:"employee" },
+    { u:"alexandru.constantin085",  pid:"EMP-YEHUN", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"alexandru.florescu068",    pid:"EMP-5R7GJ", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"florin.tanasem07",     role:"employee" },
+    { u:"alexandru.ionescu020",     pid:"EMP-YFGKN", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"alina.dinu039",            pid:"EMP-O73UY", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"alina.florescu012",        pid:"EMP-IK5IK", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"alina.marin015",           pid:"EMP-BJIMO", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"alina.marin040",           pid:"EMP-INDX3", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"cristian.enachem04",   role:"employee" },
+    { u:"ana.gheorghe072",          pid:"EMP-74CRC", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"ana.rusu033",              pid:"EMP-6N7CG", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"cristian.enachem04",   role:"employee" },
+    { u:"andrei.chiriac038",        pid:"EMP-CIEFI", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"cristian.enachem04",   role:"employee" },
+    { u:"andrei.constantin007",     pid:"EMP-YPQHH", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"andrei.gheorghem01",       pid:"EMP-JITNN", title:"Principal Backend Engineer",  sen:"principal", spec:"backend",    mgr:"—",                    role:"manager"  },
+    { u:"andrei.negru061",          pid:"EMP-RHABH", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"andrei.olteanu036",        pid:"EMP-75QOJ", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"cristian.enachem04",   role:"employee" },
+    { u:"andrei.popa031",           pid:"EMP-7Z75N", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"andrei.ungureanu053",      pid:"EMP-MDEQZ", title:"Senior Qa Engineer",          sen:"senior",    spec:"qa",         mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"andrei.voicu070",          pid:"EMP-GFDMV", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"florin.tanasem07",     role:"employee" },
+    { u:"bianca.barbu014",          pid:"EMP-4DY2Y", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"bianca.constantin040",     pid:"EMP-U22C3", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"bogdan.barbu062",          pid:"EMP-C5F7N", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"florin.tanasem07",     role:"employee" },
+    { u:"bogdan.dumitrescum02",     pid:"EMP-OOMTH", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"—",                    role:"manager"  },
+    { u:"bogdan.negru033",          pid:"EMP-CRWIG", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"bogdan.serban084",         pid:"EMP-CB6I6", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"bogdan.voicu083",          pid:"EMP-VLY3H", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"camelia.barbu047",         pid:"EMP-KWP2N", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"camelia.enache003",        pid:"EMP-W24MO", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"camelia.stoica043",        pid:"EMP-AYKE6", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"carmen.dragomir070",       pid:"EMP-I3SSH", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"florin.tanasem07",     role:"employee" },
+    { u:"carmen.enache029",         pid:"EMP-ZGCRP", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"catalin.marinm03",     role:"employee" },
+    { u:"carmen.stan058",           pid:"EMP-WHKZJ", title:"Mid Qa Engineer",             sen:"mid",       spec:"qa",         mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"catalin.dragomir060",      pid:"EMP-ZFYYY", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"catalin.lazar071",         pid:"EMP-FQGE2", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"catalin.marinm03",         pid:"EMP-TSAZ6", title:"Senior Devops Engineer",      sen:"senior",    spec:"devops",     mgr:"—",                    role:"manager"  },
+    { u:"catalin.serban028",        pid:"EMP-J5SQO", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"catalin.marinm03",     role:"employee" },
+    { u:"catalin.stan066",          pid:"EMP-EIYLA", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"florin.tanasem07",     role:"employee" },
+    { u:"claudia.stan098",          pid:"EMP-M4W4M", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"claudia.stoica091",        pid:"EMP-PJLGR", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"iulian.popm10",        role:"employee" },
+    { u:"cosmin.barbu013",          pid:"EMP-KWPJX", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"cosmin.dumitrescu004",     pid:"EMP-KZ5C7", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"cosmin.filimon030",        pid:"EMP-GG6Q2", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"catalin.marinm03",     role:"employee" },
+    { u:"cosmin.petrescu094",       pid:"EMP-SHDPD", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"cosmin.rusu059",           pid:"EMP-QCC42", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"cosmin.zamfir073",         pid:"EMP-OG6MJ", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"cristian.enachem04",       pid:"EMP-ZIKHG", title:"Lead Data Engineer",          sen:"lead",      spec:"data",       mgr:"—",                    role:"manager"  },
+    { u:"cristian.grigore024",      pid:"EMP-RQK2W", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"catalin.marinm03",     role:"employee" },
+    { u:"cristian.pop042",          pid:"EMP-UZURL", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"cristian.zamfir090",       pid:"EMP-BXHRA", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"cristina.dragomir085",     pid:"EMP-J6GIB", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"cristina.florescu050",     pid:"EMP-P4RUI", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"cristina.lazar044",        pid:"EMP-QVQSX", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"cristina.olteanu052",      pid:"EMP-RZQXN", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"cristina.pop003",          pid:"EMP-T7ELF", title:"Mid Qa Engineer",             sen:"mid",       spec:"qa",         mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"cristina.popa088",         pid:"EMP-SWZPZ", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"cristina.ungureanu017",    pid:"EMP-XI6VF", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"cristina.voicu067",        pid:"EMP-TDER7", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"daniel.enache098",         pid:"EMP-UCEBC", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"iulian.popm10",        role:"employee" },
+    { u:"daniel.moldovanm05",       pid:"EMP-3UJUE", title:"Lead Architect Engineer",     sen:"lead",      spec:"architect",  mgr:"—",                    role:"manager"  },
+    { u:"daniel.rusu055",           pid:"EMP-62YRA", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"darius.enache010",         pid:"EMP-TAMT3", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"alex.manager",         role:"employee" },
+    { u:"darius.olteanu065",        pid:"EMP-NZWKV", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"florin.tanasem07",     role:"employee" },
+    { u:"darius.pop058",            pid:"EMP-UHLQ2", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"darius.rusu100",           pid:"EMP-FJZNB", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"darius.serban084",         pid:"EMP-UIDJV", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"darius.voicu025",          pid:"EMP-WRSOV", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"catalin.marinm03",     role:"employee" },
+    { u:"denisa.dobre037",          pid:"EMP-SCJTF", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"denisa.petrescu094",       pid:"EMP-BJRU3", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"diana.chiriac043",         pid:"EMP-FCLIP", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"diana.chiriac079",         pid:"EMP-J2XPP", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"diana.dobre021",           pid:"EMP-O5F2R", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"catalin.marinm03",     role:"employee" },
+    { u:"diana.enache049",          pid:"EMP-TSFCT", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"diana.enache096",          pid:"EMP-CFR3E", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"iulian.popm10",        role:"employee" },
+    { u:"diana.serban057",          pid:"EMP-LI46H", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"diana.voicu095",           pid:"EMP-SPEIM", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"iulian.popm10",        role:"employee" },
+    { u:"dragos.enache086",         pid:"EMP-ENB3D", title:"Mid Qa Engineer",             sen:"mid",       spec:"qa",         mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"dragos.petrescu041",       pid:"EMP-XILLZ", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"dragos.petrescum06",       pid:"EMP-WRNYI", title:"Principal Frontend Engineer", sen:"principal", spec:"frontend",   mgr:"—",                    role:"manager"  },
+    { u:"dragos.pop034",            pid:"EMP-2PGH7", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"elena.dinu049",            pid:"EMP-YOOVP", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"elena.enache048",          pid:"EMP-O4GSO", title:"Senior Frontend Engineer",    sen:"senior",    spec:"frontend",   mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"elena.tanase012",          pid:"EMP-X2OOU", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"emil.tanase077",           pid:"EMP-CYGMC", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"emil.ungureanu018",        pid:"EMP-RVONF", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"flavius.lazar071",         pid:"EMP-YZTMT", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"flavius.marin045",         pid:"EMP-Z5SFG", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"flavius.olteanu056",       pid:"EMP-QKMFC", title:"Senior Frontend Engineer",    sen:"senior",    spec:"frontend",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"flavius.olteanu077",       pid:"EMP-TBCW6", title:"Senior Backend Engineer",     sen:"senior",    spec:"backend",    mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"flavius.popa081",          pid:"EMP-PUV75", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"florentina.dumitrescu088", pid:"EMP-OZIE2", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"florentina.olteanu028",    pid:"EMP-2Z5S2", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"catalin.marinm03",     role:"employee" },
+    { u:"florin.constantin053",     pid:"EMP-ODF6Z", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"florin.dobre023",          pid:"EMP-DUCMQ", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"catalin.marinm03",     role:"employee" },
+    { u:"florin.tanase013",         pid:"EMP-EJ6VM", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"florin.tanasem07",         pid:"EMP-MA6HN", title:"Lead Security Engineer",      sen:"lead",      spec:"security",   mgr:"—",                    role:"manager"  },
+    { u:"gabriel.olteanu026",       pid:"EMP-OWEGR", title:"Senior Backend Engineer",     sen:"senior",    spec:"backend",    mgr:"catalin.marinm03",     role:"employee" },
+    { u:"gabriel.rusu075",          pid:"EMP-U5ULF", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"gabriel.tanase025",        pid:"EMP-3PGQC", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"catalin.marinm03",     role:"employee" },
+    { u:"gabriel.zamfirm08",        pid:"EMP-5YQPA", title:"Lead Mobile Engineer",        sen:"lead",      spec:"mobile",     mgr:"—",                    role:"manager"  },
+    { u:"gabriela.dobre011",        pid:"EMP-MXFY7", title:"Mid Qa Engineer",             sen:"mid",       spec:"qa",         mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"gabriela.dobre042",        pid:"EMP-XPRFO", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"gabriela.dobre060",        pid:"EMP-KRBPJ", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"gabriela.ionescu051",      pid:"EMP-ECBKQ", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"gabriela.stan097",         pid:"EMP-FX3W4", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"iulian.popm10",        role:"employee" },
+    { u:"gabriela.stoica056",       pid:"EMP-AN5VS", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"gabriela.tudor052",        pid:"EMP-7W62M", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"george.dobre026",          pid:"EMP-AQXE7", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"catalin.marinm03",     role:"employee" },
+    { u:"george.tanase029",         pid:"EMP-UD3YI", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"catalin.marinm03",     role:"employee" },
+    { u:"georgiana.dragomir006",    pid:"EMP-EFPPF", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"georgiana.dragomir067",    pid:"EMP-RF5MA", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"florin.tanasem07",     role:"employee" },
+    { u:"georgiana.lazar038",       pid:"EMP-S3SCT", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"horatiu.dinu050",          pid:"EMP-QSPIL", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"horatiu.ionescu082",       pid:"EMP-2FEGD", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"ioan.dobrem09",            pid:"EMP-RE4FN", title:"Senior Qa Engineer",          sen:"senior",    spec:"qa",         mgr:"—",                    role:"manager"  },
+    { u:"ioan.filimon024",          pid:"EMP-FNMFO", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"catalin.marinm03",     role:"employee" },
+    { u:"ioan.florescu010",         pid:"EMP-CU3GD", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"ioan.tanase011",           pid:"EMP-3R4EH", title:"Senior Security Engineer",    sen:"senior",    spec:"security",   mgr:"alex.manager",         role:"employee" },
+    { u:"ioan.ungureanu007",        pid:"EMP-BTGHT", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"alex.manager",         role:"employee" },
+    { u:"ioana.dragomir061",        pid:"EMP-V4BJO", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"florin.tanasem07",     role:"employee" },
+    { u:"ioana.dumitrescu072",      pid:"EMP-U2ZQ4", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"ioana.filimon019",         pid:"EMP-E3RSK", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"ioana.lead",               pid:"—", title:"Ioana Lead",                  sen:"—",         spec:"—",          mgr:"—",                    role:"manager"  },
+    { u:"irina.chiriac046",         pid:"EMP-PSFOS", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"irina.ungureanu035",       pid:"EMP-73L2E", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"cristian.enachem04",   role:"employee" },
+    { u:"iulian.dragomir002",       pid:"EMP-BPU7J", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"alex.manager",         role:"employee" },
+    { u:"iulian.petrescu063",       pid:"EMP-NJK26", title:"Senior Data Engineer",        sen:"senior",    spec:"data",       mgr:"florin.tanasem07",     role:"employee" },
+    { u:"iulian.pop086",            pid:"EMP-NDCBE", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"iulian.popm10",            pid:"EMP-OZBQG", title:"Lead Backend Engineer",       sen:"lead",      spec:"backend",    mgr:"—",                    role:"manager"  },
+    { u:"iulian.stoica023",         pid:"EMP-PT22I", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"catalin.marinm03",     role:"employee" },
+    { u:"iulian.tanase022",         pid:"EMP-6EG6J", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"catalin.marinm03",     role:"employee" },
+    { u:"iulian.voicu100",          pid:"EMP-MUVFV", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"larisa.ionescu080",        pid:"EMP-DHLCR", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"larisa.pop006",            pid:"EMP-IS542", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"alex.manager",         role:"employee" },
+    { u:"laura.dobre036",           pid:"EMP-UQE2G", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"laura.gheorghe001",        pid:"EMP-WUB64", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"laura.moldovan087",        pid:"EMP-2THOP", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"laura.petrescu078",        pid:"EMP-FYDWJ", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"laura.pop074",             pid:"EMP-UBLI3", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"liviu.filimon030",         pid:"EMP-YMF75", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"catalin.marinm03",     role:"employee" },
+    { u:"liviu.serban032",          pid:"EMP-22AKI", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"liviu.stan017",            pid:"EMP-NJXYN", title:"Senior Security Engineer",    sen:"senior",    spec:"security",   mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"lucian.florescu095",       pid:"EMP-BCPZV", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"iulian.popm10",        role:"employee" },
+    { u:"lucian.grigore022",        pid:"EMP-K2PE4", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"catalin.marinm03",     role:"employee" },
+    { u:"lucian.lazar075",          pid:"EMP-KDAIL", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"lucian.negru045",          pid:"EMP-YDOXZ", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"maria.chiriac014",         pid:"EMP-4DX3H", title:"Senior Devops Engineer",      sen:"senior",    spec:"devops",     mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"maria.demo",               pid:"EMP-WUZNZ", title:"mid fullstack engineer",      sen:"mid",       spec:"fullstack",  mgr:"—",                    role:"employee" },
+    { u:"maria.olteanu089",         pid:"EMP-QRJZL", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"marius.dragomir054",       pid:"EMP-NZLMN", title:"Senior Devops Engineer",      sen:"senior",    spec:"devops",     mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"marius.dumitrescu027",     pid:"EMP-SYWCA", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"catalin.marinm03",     role:"employee" },
+    { u:"marius.dumitrescu062",     pid:"EMP-ULBGT", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"marius.gheorghe016",       pid:"EMP-JZTWU", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"marius.grigore021",        pid:"EMP-I5O3M", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"catalin.marinm03",     role:"employee" },
+    { u:"marius.serban093",         pid:"EMP-UNK6Y", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"mihai.constantin051",      pid:"EMP-IQIAD", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"mihai.gheorghe055",        pid:"EMP-52C5E", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"mihai.grigore069",         pid:"EMP-LBQEV", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"florin.tanasem07",     role:"employee" },
+    { u:"mihai.negru082",           pid:"EMP-IFLI4", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"mihai.ungureanu037",       pid:"EMP-5ZHIM", title:"Senior Security Engineer",    sen:"senior",    spec:"security",   mgr:"cristian.enachem04",   role:"employee" },
+    { u:"monica.constantin073",     pid:"EMP-DHN46", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"monica.petrescu041",       pid:"EMP-CL4NB", title:"Mid Security Engineer",       sen:"mid",       spec:"security",   mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"monica.pop015",            pid:"EMP-3BN4K", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"monica.pop081",            pid:"EMP-EJG2W", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"nicolae.filimon092",       pid:"EMP-WPJAI", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"nicolae.negru076",         pid:"EMP-NTUUN", title:"Senior Fullstack Engineer",   sen:"senior",    spec:"fullstack",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"nicolae.stan064",          pid:"EMP-MBB6Y", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"florin.tanasem07",     role:"employee" },
+    { u:"nicoleta.moldovan099",     pid:"EMP-AYFBN", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"iulian.popm10",        role:"employee" },
+    { u:"nicoleta.stan001",         pid:"EMP-I25BT", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"alex.manager",         role:"employee" },
+    { u:"nicoleta.ungureanu063",    pid:"EMP-26IAK", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"oana.chiriac008",          pid:"EMP-YT6XB", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"alex.manager",         role:"employee" },
+    { u:"oana.gheorghe004",         pid:"EMP-F64EM", title:"Junior Devops Engineer",      sen:"junior",    spec:"devops",     mgr:"alex.manager",         role:"employee" },
+    { u:"oana.ionescu047",          pid:"EMP-UQR45", title:"Mid Architect Engineer",      sen:"mid",       spec:"architect",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"oana.stoica018",           pid:"EMP-IKMVO", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"octavian.enache074",       pid:"EMP-MQ266", title:"Mid Devops Engineer",         sen:"mid",       spec:"devops",     mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"paul.dobre054",            pid:"EMP-WH2IZ", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"radu.voicu019",            pid:"EMP-4UIKU", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"radu.zamfir090",           pid:"EMP-K6RBJ", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"raluca.enache005",         pid:"EMP-O4MAD", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"alex.manager",         role:"employee" },
+    { u:"raluca.olteanu069",        pid:"EMP-GD4U4", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"raluca.petrescu080",       pid:"EMP-WU6FS", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"roxana.chiriac044",        pid:"EMP-JGEOD", title:"Junior Fullstack Engineer",   sen:"junior",    spec:"fullstack",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"roxana.ionescu097",        pid:"EMP-Q2BAP", title:"Senior Backend Engineer",     sen:"senior",    spec:"backend",    mgr:"iulian.popm10",        role:"employee" },
+    { u:"silvia.florescu046",       pid:"EMP-JCVC3", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"silvia.florescu092",       pid:"EMP-DZ5VR", title:"Junior Backend Engineer",     sen:"junior",    spec:"backend",    mgr:"iulian.popm10",        role:"employee" },
+    { u:"silvia.lazar068",          pid:"EMP-VP3DD", title:"Mid Frontend Engineer",       sen:"mid",       spec:"frontend",   mgr:"florin.tanasem07",     role:"employee" },
+    { u:"silvia.tanase048",         pid:"EMP-FVSJ4", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"daniel.moldovanm05",   role:"employee" },
+    { u:"silvia.zamfir016",         pid:"EMP-T4MBR", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"bogdan.dumitrescum02", role:"employee" },
+    { u:"simona.moldovan031",       pid:"EMP-HD2TV", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"cristian.enachem04",   role:"employee" },
+    { u:"stefan.head",              pid:"—", title:"Stefan Head",                 sen:"—",         spec:"—",          mgr:"—",                    role:"manager"  },
+    { u:"teodor.dumitrescu091",     pid:"EMP-2OJWW", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"iulian.popm10",        role:"employee" },
+    { u:"teodor.ungureanu083",      pid:"EMP-GMCNC", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"teodor.zamfir065",         pid:"EMP-FGPDC", title:"Junior Frontend Engineer",    sen:"junior",    spec:"frontend",   mgr:"florin.tanasem07",     role:"employee" },
+    { u:"teodora.dinu009",          pid:"EMP-P6SRL", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"teodora.dobre008",         pid:"EMP-IZQ2V", title:"Mid Qa Engineer",             sen:"mid",       spec:"qa",         mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"teodora.voicu009",         pid:"EMP-CJMVT", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"alex.manager",         role:"employee" },
+    { u:"valentina.dinu002",        pid:"EMP-I662E", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"valentina.gheorghe066",    pid:"EMP-GCUFL", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"florin.tanasem07",     role:"employee" },
+    { u:"valentina.marin064",       pid:"EMP-RDMBK", title:"Mid Backend Engineer",        sen:"mid",       spec:"backend",    mgr:"florin.tanasem07",     role:"employee" },
+    { u:"valentina.pop093",         pid:"EMP-KIJRE", title:"Junior Security Engineer",    sen:"junior",    spec:"security",   mgr:"iulian.popm10",        role:"employee" },
+    { u:"valentina.serban078",      pid:"EMP-ZUU6B", title:"Junior Qa Engineer",          sen:"junior",    spec:"qa",         mgr:"gabriel.zamfirm08",    role:"employee" },
+    { u:"victor.constantin057",     pid:"EMP-SPNNJ", title:"Mid Mobile Engineer",         sen:"mid",       spec:"mobile",     mgr:"dragos.petrescum06",   role:"employee" },
+    { u:"victor.dumitrescu034",     pid:"EMP-TXVRF", title:"Junior Architect Engineer",   sen:"junior",    spec:"architect",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"victor.filimon005",        pid:"EMP-7WWQF", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"andrei.gheorghem01",   role:"employee" },
+    { u:"victor.gheorghe035",       pid:"EMP-BYYM3", title:"Junior Data Engineer",        sen:"junior",    spec:"data",       mgr:"cristian.enachem04",   role:"employee" },
+    { u:"victor.gheorghe039",       pid:"EMP-43SAY", title:"Senior Architect Engineer",   sen:"senior",    spec:"architect",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"victor.petrescu089",       pid:"EMP-SGKEY", title:"Senior Security Engineer",    sen:"senior",    spec:"security",   mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"victor.stoica027",         pid:"EMP-ZRAUZ", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"catalin.marinm03",     role:"employee" },
+    { u:"vlad.constantin096",       pid:"EMP-DBNSZ", title:"Senior Mobile Engineer",      sen:"senior",    spec:"mobile",     mgr:"iulian.popm10",        role:"employee" },
+    { u:"vlad.enache087",           pid:"EMP-7L534", title:"Mid Data Engineer",           sen:"mid",       spec:"data",       mgr:"ioan.dobrem09",        role:"employee" },
+    { u:"vlad.tanase032",           pid:"EMP-AE3YL", title:"Mid Fullstack Engineer",      sen:"mid",       spec:"fullstack",  mgr:"cristian.enachem04",   role:"employee" },
+    { u:"vlad.zamfir076",           pid:"EMP-4YRVH", title:"Junior Mobile Engineer",      sen:"junior",    spec:"mobile",     mgr:"gabriel.zamfirm08",    role:"employee" },
+  ];
+
+  const SPEC_LABELS = {
+    architect:"Architect", backend:"Backend", data:"Data", devops:"DevOps/Cloud",
+    frontend:"Frontend", fullstack:"Fullstack", mobile:"Mobile",
+    pm:"PM / Agile", qa:"QA", security:"Security", other:"Other"
+  };
+  const SPEC_CSS = {
+    architect:"p-pmo", backend:"p-backend", data:"p-data", devops:"p-cloud",
+    frontend:"p-frontend", fullstack:"p-backend", mobile:"p-mobile",
+    pm:"p-pmo", qa:"p-qa", security:"p-security", other:"p-pmo"
+  };
+  const SEN_CSS = {
+    junior:"p-pmo", mid:"p-qa", senior:"p-backend", lead:"p-frontend",
+    principal:"p-ml", staff:"p-security"
+  };
+  const ROLE_BADGE = {
+    manager: '<span class="badge badge--manager">Manager</span>',
+    employee: '<span class="badge badge--employee">Employee</span>',
+    pmo:      '<span class="badge badge--pmo">PMO</span>',
+  };
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('usersBody');
+    tbody.innerHTML = users.map(u => {
+      const senCell = SEN_CSS[u.sen]
+        ? `<span class="practice-tag ${SEN_CSS[u.sen]}">${u.sen}</span>`
+        : `<span style="color:var(--gray-400);">${u.sen}</span>`;
+      const specCell = SPEC_CSS[u.spec]
+        ? `<span class="practice-tag ${SPEC_CSS[u.spec]}">${SPEC_LABELS[u.spec] || u.spec}</span>`
+        : `<span style="color:var(--gray-400);">${u.spec}</span>`;
+      return `
+      <tr>
+        <td><code>${u.u}</code></td>
+        <td class="mono" style="font-weight:700;">${u.pid}</td>
+        <td style="font-size:13px;">${u.title}</td>
+        <td>${senCell}</td>
+        <td>${specCell}</td>
+        <td style="font-size:12px;color:var(--gray-600);">${u.mgr}</td>
+        <td>${ROLE_BADGE[u.role] || ''}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('userCount').textContent = `Showing ${users.length} of ${USERS.length} users`;
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    const spec = document.getElementById('specFilter').value;
+    const sen = document.getElementById('seniorityFilter').value;
+    const role = document.getElementById('roleFilter').value;
+    const filtered = USERS.filter(u => {
+      const matchQ = !q || u.u.includes(q) || u.pid.toLowerCase().includes(q) || u.title.toLowerCase().includes(q);
+      const matchS = !spec || u.spec === spec;
+      const matchSen = !sen || u.sen === sen;
+      const matchR = !role || u.role === role;
+      return matchQ && matchS && matchSen && matchR;
+    });
+    renderUsers(filtered);
+  }
+
+  renderUsers(USERS);
+
+  // ── Active nav highlight ────────────────────────────────
+  const sections = document.querySelectorAll('.page-section[id]');
+  const navLinks = document.querySelectorAll('nav#sidebar a[href^="#"]');
+
+  function updateActiveNav() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+</script>
+</body>
+</html>

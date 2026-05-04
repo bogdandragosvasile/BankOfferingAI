@@ -1,0 +1,41 @@
+<!-- ─── Theme switch markup + behaviour. Same key + DOM contract as
+       the portals' CfThemeToggle. ─── -->
+<button id="cf-theme-toggle" type="button" class="theme-toggle" aria-label="Switch theme">
+  <span class="theme-toggle__icon" id="cf-theme-icon" aria-hidden="true">☀</span>
+  <span id="cf-theme-label">Light</span>
+</button>
+<script>
+  (function () {
+    var btn = document.getElementById('cf-theme-toggle');
+    if (!btn) return;
+    var iconEl  = document.getElementById('cf-theme-icon');
+    var labelEl = document.getElementById('cf-theme-label');
+    var KEY = 'cf-theme';
+    function read() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark' || attr === 'light') return attr;
+      var stored = localStorage.getItem(KEY);
+      if (stored === 'dark' || stored === 'light') return stored;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    function paint(t) {
+      iconEl.textContent  = t === 'dark' ? '◐' : '☀';
+      labelEl.textContent = t === 'dark' ? 'Dark' : 'Light';
+      btn.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme');
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem(KEY, t); } catch (e) { /* quota / private */ }
+      paint(t);
+    }
+    paint(read());
+    btn.addEventListener('click', function () { apply(read() === 'dark' ? 'light' : 'dark'); });
+    /* React to system theme changes only when the user hasn't picked one. */
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var listener = function (e) { if (!localStorage.getItem(KEY)) apply(e.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', listener);
+      else if (mq.addListener) mq.addListener(listener);
+    }
+  })();
+</script>

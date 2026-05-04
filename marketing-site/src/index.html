@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- ─── SHARED HEAD: token block + theme-init. Must remain byte-identical
+       across index.html / demo.html / info.html / ai-deep-dive.html. ─── -->
+<meta charset="UTF-8">
+<!-- Theme-init runs BEFORE any stylesheet so first paint matches the
+     resolved theme — no flash on hard reload. Reuses the same
+     `cf-theme` localStorage key as the portals' CfThemeToggle. -->
+<script>(function(){try{var s=localStorage.getItem('cf-theme');var t=(s==='dark'||s==='light')?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EC" media="(prefers-color-scheme: light)">
+<style id="cf-tokens">
+  /* ─── CareerForge design tokens — the same vocabulary the four portals
+         use, exposed for the marketing site so cf.lupulup.com reads as
+         the same product. Light is default; explicit data-theme="dark"
+         (and the prefers-color-scheme fallback) re-binds the values. ─── */
+  :root,
+  :root[data-theme="light"] {
+    --bg:           #F4F2EC;
+    --surface:      #FFFFFF;
+    --surface-2:    #ECEAE3;
+    --border:       #D8D5CC;
+    --text:         #14110D;
+    --text-muted:   #5A554C;
+    --text-subtle:  #8A847A;
+    --accent:       #E8552A;
+    --accent-hover: #C9461F;
+    --warn:         #C9A227;
+    --ok:           #2E6F4B;
+    --danger:       #B23B2A;
+    --ambient:      #6E5E4A;
+    --focus:        #14110D;
+    --code-bg:      #1A1814;
+    --code-fg:      #ECEAE3;
+    --font-sans:    'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:           #0A0A0A;
+    --surface:      #141312;
+    --surface-2:    #1C1A18;
+    --border:       #2A2724;
+    --text:         #ECEAE3;
+    --text-muted:   #A8A39A;
+    --text-subtle:  #6E685F;
+    --accent:       #E6432A;
+    --accent-hover: #FF5C3F;
+    --warn:         #E8B41E;
+    --ok:           #1F7A3E;
+    --danger:       #C23A24;
+    --ambient:      #5A4A3A;
+    --focus:        #ECEAE3;
+    --code-bg:      #000000;
+    --code-fg:      #ECEAE3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      --bg:           #0A0A0A;
+      --surface:      #141312;
+      --surface-2:    #1C1A18;
+      --border:       #2A2724;
+      --text:         #ECEAE3;
+      --text-muted:   #A8A39A;
+      --text-subtle:  #6E685F;
+      --accent:       #E6432A;
+      --accent-hover: #FF5C3F;
+      --warn:         #E8B41E;
+      --ok:           #1F7A3E;
+      --danger:       #C23A24;
+      --ambient:      #5A4A3A;
+      --focus:        #ECEAE3;
+      --code-bg:      #000000;
+      --code-fg:      #ECEAE3;
+    }
+  }
+
+  /* Resets + body defaults. */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.2; font-weight: 600; }
+  p { line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 120ms ease; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  code, kbd, samp, pre { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* Inline <code> — accent-coloured identifier on a subtle inset of
+     the canvas. The accent here is allowed: code is signal-critical,
+     genuinely informational content, and stays rare. */
+  code {
+    background: var(--surface-2);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 0;
+    font-feature-settings: "tnum" 0, "calt" 0;
+    letter-spacing: 0;
+  }
+  /* Multi-line <pre> blocks — same dark code-block treatment in both
+     themes; --code-bg flips between warm-near-black (light) and pure
+     black (dark) so it remains a meaningfully recessed surface. */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 0;
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: none;
+    font-feature-settings: "tnum" 0, "calt" 0;
+  }
+  pre code {
+    background: transparent !important;
+    color: var(--code-fg) !important;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  /* Syntax-highlighter classes already in the markup — restrained
+     5-colour Regie 308 palette, applied identically in both themes
+     since the code-block surface is dark in both. */
+  pre .kw, pre .keyword { color: #E6432A; font-weight: 500; }
+  pre .fn, pre .function { color: #ECEAE3; font-weight: 500; }
+  pre .var, pre .variable, pre .type { color: #ECEAE3; font-weight: 400; }
+  pre .str, pre .string { color: #E8B41E; font-weight: 400; }
+  pre .num, pre .number { color: #1F7A3E; font-weight: 400; }
+  pre .cmt, pre .comment { color: #6E685F; font-weight: 400; font-style: italic; }
+  /* Filename caption strip above a <pre>: same surface, fused border. */
+  .code-filename {
+    background: var(--code-bg);
+    color: var(--text-subtle);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 16px;
+    margin: 24px 0 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+  }
+  .code-filename + pre {
+    margin-top: 0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .meta {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  }
+
+  /* Theme switch — same affordance as the portals' sidebar-footer toggle. */
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 10px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text); }
+  .theme-toggle__icon { font-size: 13px; line-height: 1; }
+</style>
+
+
+<title>CareerForge — Demo Hub</title>
+<style>
+  /* Page-specific layout for the Demo Hub. */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 64px 32px 48px;
+  }
+  .header { margin-bottom: 64px; }
+  .header__eyebrow { margin-bottom: 16px; }
+  .header__wordmark {
+    font-size: 32px; font-weight: 600; line-height: 1.2;
+    letter-spacing: -0.005em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .header__sub {
+    font-size: 16px; font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .section { margin-top: 48px; }
+  .section__head {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .section__head::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+  }
+
+  .portals {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .portal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    display: flex; flex-direction: column;
+    transition: border-color 120ms ease;
+  }
+  .portal:hover { border-color: var(--text); }
+  .portal__role { margin-bottom: 6px; }
+  .portal__title {
+    font-size: 20px; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .portal__features { list-style: none; margin: 0 0 24px 0; padding: 0; }
+  .portal__features li {
+    font-size: 14px; line-height: 1.5;
+    color: var(--text-muted);
+    border-left: 1px solid var(--border);
+    padding: 4px 0 4px 12px;
+    margin-bottom: 4px;
+  }
+  .portal__open {
+    margin-top: auto;
+    font-size: 14px; font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .portal__open:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .creds {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .creds th, .creds td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .creds th {
+    font-size: 12px; font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-subtle);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  .creds td.mono { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+  .creds td.action { text-align: right; }
+  .creds td.action a { font-weight: 500; }
+  .creds .role { color: var(--text-muted); }
+
+  .stats {
+    margin-top: 48px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px; align-items: center;
+  }
+  .stats__line {
+    font-size: 14px; line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .stats__line strong { color: var(--text); font-weight: 600; }
+  .stats__links { display: flex; gap: 24px; flex-shrink: 0; }
+  .stats__links a { font-size: 14px; font-weight: 500; }
+
+  .footer {
+    margin-top: 48px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .footer__brand { font-size: 12px; color: var(--text-subtle); }
+  .footer__links {
+    display: flex; gap: 0; align-items: center;
+    color: var(--text-subtle);
+    font-size: 12px;
+  }
+  .footer__links a { color: var(--text-muted); margin-left: 12px; }
+  .footer__links a:not(:last-child)::after {
+    content: '·'; margin: 0 0 0 12px; color: var(--text-subtle);
+  }
+  .footer__links a:hover { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .page { padding: 32px 16px; }
+    .portals { grid-template-columns: 1fr; }
+    .creds th, .creds td { padding: 10px 8px; }
+    .creds .col-portal, .creds td.col-portal { display: none; }
+    .stats { grid-template-columns: 1fr; }
+    .stats__links { flex-wrap: wrap; }
+    .footer { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="header">
+    <div class="header__eyebrow meta">Accesa · Demo environment</div>
+    <h1 class="header__wordmark">CareerForge</h1>
+    <p class="header__sub">Organisational Readiness System</p>
+  </header>
+
+  <section class="section" id="portals" aria-labelledby="portals-head">
+    <div class="section__head">
+      <span id="portals-head" class="meta">Portals</span>
+    </div>
+
+    <div class="portals">
+
+      <article class="portal">
+        <div class="portal__role meta">Role — Employee</div>
+        <h2 class="portal__title">Employee Portal</h2>
+        <ul class="portal__features">
+          <li>AI Learning Path &amp; Dev Plan</li>
+          <li>Role suggestions &amp; skill gap</li>
+          <li>Opportunities &amp; applications</li>
+          <li>AI career chat &amp; advice</li>
+        </ul>
+        <a class="portal__open" href="https://demo.lupulup.com" target="_blank" rel="noopener">Open portal →</a>
+      </article>
+
+      <article class="portal">
+        <div class="portal__role meta">Role — Coach / HR</div>
+        <h2 class="portal__title">Coach Portal</h2>
+        <ul class="portal__features">
+          <li>Employee skill heatmap</li>
+          <li>AI coaching per pseudo-ID</li>
+          <li>Intelligence digest (weekly AI)</li>
+          <li>Mentor Matcher (AI-ranked fits)</li>
+          <li>Forms, coaching &amp; analytics</li>
+        </ul>
+        <a class="portal__open" href="https://demo-coach.lupulup.com" target="_blank" rel="noopener">Open portal →</a>
+      </article>
+
+      <article class="portal">
+        <div class="portal__role meta">Role — Line Manager</div>
+        <h2 class="portal__title">Manager Portal</h2>
+        <ul class="portal__features">
+          <li>Team readiness dashboard</li>
+          <li>Per-member skill overview</li>
+          <li>Dev plan sign-offs</li>
+          <li>Publish &amp; manage opportunities</li>
+          <li>AI candidate matching</li>
+        </ul>
+        <a class="portal__open" href="https://demo-manager.lupulup.com" target="_blank" rel="noopener">Open portal →</a>
+      </article>
+
+      <article class="portal">
+        <div class="portal__role meta">Role — Platform Admin</div>
+        <h2 class="portal__title">Admin Portal</h2>
+        <ul class="portal__features">
+          <li>Platform dashboard &amp; live stats</li>
+          <li>AI Workflow Connector config</li>
+          <li>Data connector management</li>
+          <li>Suggestion audit log (append-only)</li>
+          <li>4.0 Readiness score &amp; users</li>
+        </ul>
+        <a class="portal__open" href="https://demo-admin.lupulup.com" target="_blank" rel="noopener">Open portal →</a>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="section" id="credentials" aria-labelledby="creds-head">
+    <div class="section__head">
+      <span id="creds-head" class="meta">Demo credentials</span>
+    </div>
+
+    <table class="creds" aria-label="Demo credentials">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Role</th>
+          <th scope="col">Email</th>
+          <th scope="col">Password</th>
+          <th scope="col" class="col-portal">Portal</th>
+          <th scope="col" class="action">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Maria Demo</td>
+          <td class="role">Fullstack Engineer · Mid</td>
+          <td class="mono">maria.demo@accesa.eu</td>
+          <td class="mono">Demo2026!</td>
+          <td class="col-portal">Employee Portal</td>
+          <td class="action"><a href="https://demo.lupulup.com" target="_blank" rel="noopener">Login →</a></td>
+        </tr>
+        <tr>
+          <td>Coach Demo</td>
+          <td class="role">HR Coach</td>
+          <td class="mono">coach.demo@accesa.eu</td>
+          <td class="mono">Demo2026!</td>
+          <td class="col-portal">Coach Portal</td>
+          <td class="action"><a href="https://demo-coach.lupulup.com" target="_blank" rel="noopener">Login →</a></td>
+        </tr>
+        <tr>
+          <td>Alex Manager</td>
+          <td class="role">Backend Lead · Manager</td>
+          <td class="mono">alex.manager@accesa.eu</td>
+          <td class="mono">Demo2026!</td>
+          <td class="col-portal">Employee + Manager Portal</td>
+          <td class="action"><a href="https://demo-manager.lupulup.com" target="_blank" rel="noopener">Login →</a></td>
+        </tr>
+        <tr>
+          <td>Admin Demo</td>
+          <td class="role">Platform Administrator</td>
+          <td class="mono">admin.demo@accesa.eu</td>
+          <td class="mono">Demo2026!</td>
+          <td class="col-portal">Admin Portal</td>
+          <td class="action"><a href="https://demo-admin.lupulup.com" target="_blank" rel="noopener">Login →</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="stats" aria-label="Environment summary">
+    <div class="stats__line">
+      <strong>212 employees · 10 managers · 25 opportunities · 57 skills</strong> — fully seeded demo environment.<br>
+      Auth: <strong>Keycloak</strong> · AI: configurable via <strong>AI Workflow Connector</strong> (Anthropic / Perplexity / OpenAI / Gemini / self-hosted)
+    </div>
+    <div class="stats__links">
+      <a href="demo.html">Demo Guide →</a>
+      <a href="info.html">Info Portal →</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <button id="cf-theme-toggle" type="button" class="theme-toggle" aria-label="Switch theme">
+        <span class="theme-toggle__icon" id="cf-theme-icon" aria-hidden="true">☀</span>
+        <span id="cf-theme-label">Light</span>
+      </button>
+    </div>
+    <nav class="footer__links" aria-label="Utilities">
+      <a href="demo.html">Demo Guide</a>
+      <a href="info.html">Info Portal</a>
+      <a href="https://auth-demo.lupulup.com" target="_blank" rel="noopener">Keycloak Admin</a>
+      <a href="https://api-demo.lupulup.com/api/v1/docs" target="_blank" rel="noopener">API Docs</a>
+    </nav>
+  </footer>
+</main>
+<script>
+  (function () {
+    var btn = document.getElementById('cf-theme-toggle');
+    if (!btn) return;
+    var iconEl  = document.getElementById('cf-theme-icon');
+    var labelEl = document.getElementById('cf-theme-label');
+    var KEY = 'cf-theme';
+    function read() {
+      var attr = document.documentElement.getAttribute('data-theme');
+      if (attr === 'dark' || attr === 'light') return attr;
+      var stored = localStorage.getItem(KEY);
+      if (stored === 'dark' || stored === 'light') return stored;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    function paint(t) {
+      iconEl.textContent  = t === 'dark' ? '◐' : '☀';
+      labelEl.textContent = t === 'dark' ? 'Dark' : 'Light';
+      btn.setAttribute('aria-label', 'Switch to ' + (t === 'dark' ? 'light' : 'dark') + ' theme');
+    }
+    function apply(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem(KEY, t); } catch (e) {}
+      paint(t);
+    }
+    paint(read());
+    btn.addEventListener('click', function () { apply(read() === 'dark' ? 'light' : 'dark'); });
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      var listener = function (e) { if (!localStorage.getItem(KEY)) apply(e.matches ? 'dark' : 'light'); };
+      if (mq.addEventListener) mq.addEventListener('change', listener);
+      else if (mq.addListener) mq.addListener(listener);
+    }
+  })();
+</script>
+</body>
+</html>
