@@ -4,14 +4,9 @@ metadata:
   name: cf-marketing
   namespace: cf-marketing
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
-  tls:
-    - hosts:
-        - cf.lupulup.com
-      secretName: cf-tls
   rules:
     - host: cf.lupulup.com
       http:
