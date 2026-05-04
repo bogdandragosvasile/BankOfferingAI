@@ -13,6 +13,22 @@ spec:
     targetRevision: 0.14.9
     helm:
       releaseName: metallb
+      values: |
+        prometheus:
+          serviceMonitor:
+            enabled: false
+          prometheusRule:
+            enabled: false
+        controller:
+          serviceMonitor:
+            enabled: false
+        speaker:
+          serviceMonitor:
+            enabled: false
+        frr-k8s:
+          prometheus:
+            serviceMonitor:
+              enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: metallb-system
