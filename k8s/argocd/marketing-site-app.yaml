@@ -6,9 +6,9 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
-    argocd-image-updater.argoproj.io/image-list: site=git.lupulup.com/admin/marketing-site
-    argocd-image-updater.argoproj.io/site.update-strategy: digest
-    argocd-image-updater.argoproj.io/site.image-name: git.lupulup.com/admin/marketing-site
+    argocd-image-updater.argoproj.io/image-list: site=git.lupulup.com/admin/marketing-site:latest
+    argocd-image-updater.argoproj.io/site.update-strategy: name
+    argocd-image-updater.argoproj.io/site.allow-tags: regexp:^latest$
     argocd-image-updater.argoproj.io/write-back-method: argocd
     argocd-image-updater.argoproj.io/site.kustomize.image-name: git.lupulup.com/admin/marketing-site
 spec:
