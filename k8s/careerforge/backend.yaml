@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-uploads
+  namespace: cf-demo
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: cf-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z postgres 5432; do sleep 2; done']
+      containers:
+        - name: backend
+          image: git.lupulup.com/admin/careerforge-backend:latest
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cf-demo-secrets
+                  key: db-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cf-demo-secrets
+                  key: redis-url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cf-demo-secrets
+                  key: secret-key
+            - name: KEYCLOAK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cf-demo-secrets
+                  key: keycloak-url
+            - name: KEYCLOAK_REALM
+              value: careerforge
+            - name: ENVIRONMENT
+              value: development
+            - name: CORS_ORIGINS
+              value: "https://demo.lupulup.com,https://demo-coach.lupulup.com,https://demo-manager.lupulup.com,https://demo-admin.lupulup.com"
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: backend-uploads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: cf-demo
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend
+  namespace: cf-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api-demo.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8000

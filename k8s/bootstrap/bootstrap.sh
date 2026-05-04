@@ -50,6 +50,15 @@ kubectl create secret docker-registry gitea-registry \
   -n cf-marketing \
   --dry-run=client -o yaml | kubectl apply -f -
 
+echo "==> Creating Gitea image pull secret in cf-demo"
+kubectl create namespace cf-demo --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret docker-registry gitea-registry \
+  --docker-server=${GITEA_HOST} \
+  --docker-username=admin \
+  --docker-password=${GITEA_TOKEN} \
+  -n cf-demo \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 echo "==> Setting up iptables routes for k3d MetalLB"
 PANGOLIN_BR=br-fc0c74747834
 K3D_BR=br-501329b585e3

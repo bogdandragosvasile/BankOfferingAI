@@ -1,0 +1,251 @@
+# employee portal — demo.lupulup.com
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-employee
+  namespace: cf-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal-employee
+  template:
+    metadata:
+      labels:
+        app: portal-employee
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      containers:
+        - name: portal
+          image: git.lupulup.com/admin/careerforge-employee:dev
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-employee
+  namespace: cf-demo
+spec:
+  selector:
+    app: portal-employee
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-employee
+  namespace: cf-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-employee
+                port:
+                  number: 80
+---
+# coach portal — demo-coach.lupulup.com
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-coach
+  namespace: cf-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal-coach
+  template:
+    metadata:
+      labels:
+        app: portal-coach
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      containers:
+        - name: portal
+          image: git.lupulup.com/admin/careerforge-coach:dev
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-coach
+  namespace: cf-demo
+spec:
+  selector:
+    app: portal-coach
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-coach
+  namespace: cf-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo-coach.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-coach
+                port:
+                  number: 80
+---
+# manager portal — demo-manager.lupulup.com
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-manager
+  namespace: cf-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal-manager
+  template:
+    metadata:
+      labels:
+        app: portal-manager
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      containers:
+        - name: portal
+          image: git.lupulup.com/admin/careerforge-manager:dev
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-manager
+  namespace: cf-demo
+spec:
+  selector:
+    app: portal-manager
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-manager
+  namespace: cf-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo-manager.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-manager
+                port:
+                  number: 80
+---
+# admin portal — demo-admin.lupulup.com
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-admin
+  namespace: cf-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal-admin
+  template:
+    metadata:
+      labels:
+        app: portal-admin
+    spec:
+      imagePullSecrets:
+        - name: gitea-registry
+      containers:
+        - name: portal
+          image: git.lupulup.com/admin/careerforge-admin:dev
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal-admin
+  namespace: cf-demo
+spec:
+  selector:
+    app: portal-admin
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-admin
+  namespace: cf-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo-admin.lupulup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portal-admin
+                port:
+                  number: 80
