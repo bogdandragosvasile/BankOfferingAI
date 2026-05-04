@@ -30,4 +30,19 @@ jobs:
           docker push ${IMAGE}:latest
 
           docker logout git.lupulup.com
+
+      - name: Update image tag in kustomization
+        run: |
+          cd /tmp/repo
+          SHA=${{ github.sha }}
+
+          # Update the kustomization.yaml to pin to the new SHA
+          sed -i "s|newTag:.*|newTag: ${SHA}|" k8s/marketing-site/kustomization.yaml
+
+          git config user.email "ci@git.lupulup.com"
+          git config user.name "Gitea CI"
+          git add k8s/marketing-site/kustomization.yaml
+          git diff --staged --quiet || git commit -m "ci: update marketing-site image to ${SHA:0:8}"
+          git push origin main
+
           rm -rf /tmp/repo
