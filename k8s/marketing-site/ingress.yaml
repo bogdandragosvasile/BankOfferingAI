@@ -11,31 +11,9 @@ spec:
   tls:
     - hosts:
         - cf.lupulup.com
-        - demo.lupulup.com
-        - info.lupulup.com
       secretName: cf-tls
   rules:
     - host: cf.lupulup.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: cf-marketing
-                port:
-                  number: 80
-    - host: demo.lupulup.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: cf-marketing
-                port:
-                  number: 80
-    - host: info.lupulup.com
       http:
         paths:
           - path: /
