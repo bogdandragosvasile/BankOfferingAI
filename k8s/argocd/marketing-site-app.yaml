@@ -7,9 +7,10 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd-image-updater.argoproj.io/image-list: site=git.lupulup.com/admin/marketing-site
-    argocd-image-updater.argoproj.io/site.update-strategy: latest
+    argocd-image-updater.argoproj.io/site.update-strategy: digest
     argocd-image-updater.argoproj.io/site.image-name: git.lupulup.com/admin/marketing-site
-    argocd-image-updater.argoproj.io/site.force-update: "true"
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+    argocd-image-updater.argoproj.io/site.kustomize.image-name: git.lupulup.com/admin/marketing-site
 spec:
   project: default
   source:
